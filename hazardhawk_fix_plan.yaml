@@ -1,0 +1,232 @@
+# HazardHawk Android Build Fix Plan
+# Generated: 2025-08-27
+# Version: 1.0.0
+
+project:
+  name: HazardHawk
+  platform: Android (Kotlin Multiplatform)
+  current_status: Build Failed
+  target_status: Build Success
+  
+issues:
+  critical:
+    - id: SHARED_MODULE_DISABLED
+      description: "Shared module dependency is commented out in androidApp/build.gradle.kts"
+      impact: "Database models, repositories, and core business logic unavailable"
+      solution:
+        - action: "Uncomment shared module dependency"
+        - file: "androidApp/build.gradle.kts"
+        - line: 46
+        - code: |
+          dependencies {
+              implementation(project(":shared"))
+          }
+      priority: 1
+      
+    - id: SQLDELIGHT_SCHEMA_GENERATION
+      description: "SQLDelight not generating database classes properly"
+      impact: "HazardHawkDatabase class and related models not available"
+      solution:
+        - action: "Fix SQLDelight configuration and rebuild"
+        - files:
+          - "shared/build.gradle.kts"
+          - "shared/src/commonMain/sqldelight/com/hazardhawk/database/*.sq"
+        - steps:
+          - "Update SQLDelight plugin to version 2.0.1"
+          - "Fix schema file property name mismatches"
+          - "Run './gradlew :shared:generateSqlDelightInterface'"
+      priority: 2
+      
+  high:
+    - id: MISSING_MATERIAL_ICONS
+      description: "Many Material3 icons referenced don't exist in standard icon set"
+      impact: "UI components fail to compile"
+      affected_files:
+        - "androidApp/src/main/java/com/hazardhawk/camera/CameraControlsOverlay.kt"
+        - "androidApp/src/main/java/com/hazardhawk/camera/GridOverlay.kt"
+      replacements:
+        FlashAuto: "Icons.Default.FlashOn"
+        Hdr: "Icons.Default.CameraEnhance"
+        GridOn: "Icons.Default.Grid3x3"
+        Architecture: "Icons.Default.Build"
+        Cameraswitch: "Icons.Default.SwitchCamera"
+        PhotoLibrary: "Icons.Default.Photo"
+        Timer: "Icons.Default.Schedule"
+        CameraAlt: "Icons.Default.PhotoCamera"
+      solution:
+        - action: "Replace all non-existent icons with available alternatives"
+        - dependency: |
+          implementation("androidx.compose.material:material-icons-extended:$compose_version")
+      priority: 3
+      
+    - id: MISSING_MODELS
+      description: "Photo, SafetyAnalysis, Tag models not available"
+      impact: "Database operations and UI fail"
+      solution:
+        - action: "Enable shared module to access generated models"
+        - alternative: "Create temporary model classes in androidApp"
+        - file: "androidApp/src/main/java/com/hazardhawk/models/Models.kt"
+      priority: 4
+      
+  medium:
+    - id: APACHE_POI_DEPENDENCY
+      description: "Apache POI library not included for Excel export"
+      impact: "Excel export functionality unavailable"
+      solution:
+        - action: "Add Apache POI Android fork dependency"
+        - code: |
+          dependencies {
+              implementation("org.apache.poi:poi-android:5.2.3")
+              implementation("org.apache.poi:poi-ooxml-android:5.2.3")
+          }
+        - alternative: "Use lighter CSV export initially"
+      priority: 5
+      
+    - id: MISSING_UTILITY_CLASSES
+      description: "BatteryState, PowerMode, PerformanceManager utilities missing"
+      impact: "Camera performance features unavailable"
+      solution:
+        - action: "Create utility classes"
+        - files:
+          - "androidApp/src/main/java/com/hazardhawk/performance/BatteryManager.kt"
+          - "androidApp/src/main/java/com/hazardhawk/performance/PerformanceManager.kt"
+      priority: 6
+      
+  low:
+    - id: SYNTAX_ERRORS
+      description: "Various syntax errors in export and database classes"
+      impact: "Compilation failures"
+      affected:
+        - "ExportManager.kt - Line 609-610: String formatting issues"
+        - "PhotoDatabase.kt - Line 412: Duration calculation error"
+      solution:
+        - action: "Fix syntax errors manually"
+      priority: 7
+
+dependencies:
+  required:
+    - group: "androidx.compose.material"
+      artifact: "material-icons-extended"
+      version: "$compose_version"
+      reason: "Extended icon set for UI components"
+      
+    - group: "androidx.compose.foundation"
+      artifact: "foundation"
+      version: "$compose_version"
+      reason: "CircleShape and background modifiers"
+      
+  optional:
+    - group: "org.apache.poi"
+      artifact: "poi-android"
+      version: "5.2.3"
+      reason: "Excel export functionality"
+      
+    - group: "com.google.mlkit"
+      artifact: "image-labeling"
+      version: "17.0.7"
+      reason: "On-device AI analysis"
+
+build_configuration:
+  gradle_properties:
+    - key: "android.useAndroidX"
+      value: "true"
+    - key: "android.enableJetifier"
+      value: "true"
+      
+  android_app_gradle:
+    compileSdk: 34
+    minSdk: 24
+    targetSdk: 34
+    compose_compiler: "1.5.4"
+    kotlin_version: "1.9.20"
+    
+  shared_module_gradle:
+    sqldelight_version: "2.0.1"
+    ktor_version: "2.3.7"
+    coroutines_version: "1.7.3"
+
+implementation_steps:
+  - step: 1
+    title: "Re-enable Shared Module"
+    commands:
+      - "Uncomment implementation(project(':shared')) in androidApp/build.gradle.kts"
+      - "./gradlew :shared:build"
+    expected_result: "Shared module builds successfully"
+    
+  - step: 2
+    title: "Fix SQLDelight Schema"
+    commands:
+      - "Update SQLDelight configuration in shared/build.gradle.kts"
+      - "./gradlew :shared:generateSqlDelightInterface"
+    expected_result: "HazardHawkDatabase class generated"
+    
+  - step: 3
+    title: "Add Missing Dependencies"
+    commands:
+      - "Add material-icons-extended to androidApp/build.gradle.kts"
+      - "./gradlew :androidApp:dependencies"
+    expected_result: "All dependencies resolved"
+    
+  - step: 4
+    title: "Fix Icon Imports"
+    actions:
+      - "Replace all non-existent Material3 icons"
+      - "Update import statements"
+    expected_result: "UI components compile"
+    
+  - step: 5
+    title: "Create Missing Utilities"
+    actions:
+      - "Create BatteryManager.kt with BatteryState enum"
+      - "Create PerformanceManager.kt with PowerMode enum"
+      - "Implement wake lock functions"
+    expected_result: "Camera features compile"
+    
+  - step: 6
+    title: "Fix Syntax Errors"
+    actions:
+      - "Fix ExportManager.kt string formatting"
+      - "Fix PhotoDatabase.kt duration calculations"
+    expected_result: "No syntax errors"
+    
+  - step: 7
+    title: "Build and Test"
+    commands:
+      - "./gradlew clean"
+      - "./gradlew :androidApp:assembleDebug"
+    expected_result: "APK builds successfully"
+
+testing:
+  unit_tests:
+    - "./gradlew :shared:test"
+    - "./gradlew :androidApp:test"
+    
+  ui_tests:
+    - "./gradlew :androidApp:connectedAndroidTest"
+    
+  manual_tests:
+    - "Camera capture functionality"
+    - "Photo gallery display"
+    - "Database operations"
+    - "Export functionality"
+
+rollback_plan:
+  - description: "If shared module causes critical issues"
+    steps:
+      - "Comment out shared module dependency"
+      - "Use local model copies in androidApp"
+      - "Implement minimal database with Room"
+      
+success_criteria:
+  - "App builds without errors"
+  - "Camera captures photos"
+  - "Gallery displays photos"
+  - "Basic database operations work"
+  - "UI renders correctly"
+  
+estimated_time: "4-6 hours"
+difficulty: "Medium-High"
+developer_resources:
+  - "1 Android Developer"
+  - "Knowledge of Kotlin Multiplatform"
+  - "SQLDelight experience helpful"

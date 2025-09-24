@@ -1,0 +1,581 @@
+name: AI Comprehensive Testing
+
+on:
+  push:
+    branches: [ main, develop, feature/* ]
+    paths:
+      - 'shared/src/**/ai/**'
+      - 'HazardHawk/shared/src/**/ai/**'
+      - 'HazardHawk/androidApp/src/**/ai/**'
+      - '.github/workflows/ai-*.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'shared/src/**/ai/**'
+      - 'HazardHawk/shared/src/**/ai/**'
+      - 'HazardHawk/androidApp/src/**/ai/**'
+  schedule:
+    # Run comprehensive AI tests nightly at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      test_suite:
+        description: 'Test suite to run'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+        - all
+        - unit
+        - integration
+        - performance
+        - e2e
+      model_validation:
+        description: 'Run model validation tests'
+        required: false
+        default: true
+        type: boolean
+      performance_benchmarks:
+        description: 'Run performance benchmarks'
+        required: false
+        default: true
+        type: boolean
+
+env:
+  JAVA_VERSION: '17'
+  KOTLIN_VERSION: '1.9.22'
+  ANDROID_API_LEVEL: '34'
+  ANDROID_BUILD_TOOLS_VERSION: '34.0.0'
+  CMAKE_VERSION: '3.22.1'
+  ONNX_RUNTIME_VERSION: '1.16.3'
+
+jobs:
+  # Job 1: AI Unit Tests
+  ai-unit-tests:
+    name: AI Unit Tests
+    runs-on: ubuntu-latest
+    if: contains(fromJSON('["all", "unit"]'), github.event.inputs.test_suite) || github.event.inputs.test_suite == '' || github.event_name != 'workflow_dispatch'
+    
+    strategy:
+      matrix:
+        test-group: [gemma, service-facade, error-handling, tag-mapping]
+      fail-fast: false
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+    
+    - name: Setup Gradle
+      uses: gradle/gradle-build-action@v2
+      with:
+        gradle-home-cache-cleanup: true
+    
+    - name: Cache AI Test Models
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.hazardhawk/test-models
+          shared/src/commonTest/resources/models
+        key: ${{ runner.os }}-ai-test-models-${{ hashFiles('**/test-model-versions.txt') }}
+    
+    - name: Download Test Models
+      run: |
+        mkdir -p ~/.hazardhawk/test-models
+        # Download lightweight test ONNX models
+        curl -o ~/.hazardhawk/test-models/gemma_vision_mock.onnx \
+          https://github.com/onnx/models/raw/main/text/machine_comprehension/t5/model/t5-decoder-with-lm-head-12.onnx
+        curl -o ~/.hazardhawk/test-models/yolo_hazard_mock.onnx \
+          https://github.com/onnx/models/raw/main/vision/object_detection_segmentation/yolov4/model/yolov4.onnx
+    
+    - name: Run AI Unit Tests - ${{ matrix.test-group }}
+      run: |
+        case "${{ matrix.test-group }}" in
+          gemma)
+            ./gradlew :shared:testDebugUnitTest --tests "*GemmaVisionAnalyzerTest*" \
+              -Ptest.include.performance=false \
+              -Ptest.mock.models=true
+            ;;
+          service-facade)
+            ./gradlew :shared:testDebugUnitTest --tests "*AIServiceFacadeTest*" \
+              --tests "*EnhancedAIServiceFacadeTest*" \
+              -Ptest.include.performance=false
+            ;;
+          error-handling)
+            ./gradlew :shared:testDebugUnitTest --tests "*AIErrorHandlingTest*" \
+              --tests "*AIFallbackTest*" \
+              -Ptest.timeout.extended=true
+            ;;
+          tag-mapping)
+            ./gradlew :shared:testDebugUnitTest --tests "*TagRecommendationEngineTest*" \
+              --tests "*HazardTagMapperTest*" \
+              --tests "*YOLOToTagIntegrationTest*"
+            ;;
+        esac
+    
+    - name: Upload Unit Test Results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: ai-unit-test-results-${{ matrix.test-group }}
+        path: |
+          shared/build/test-results/testDebugUnitTest/
+          shared/build/reports/tests/testDebugUnitTest/
+    
+    - name: Publish Unit Test Report
+      uses: mikepenz/action-junit-report@v3
+      if: always()
+      with:
+        report_paths: shared/build/test-results/testDebugUnitTest/TEST-*.xml
+        check_name: AI Unit Tests - ${{ matrix.test-group }}
+        fail_on_failure: true
+
+  # Job 2: AI Integration Tests  
+  ai-integration-tests:
+    name: AI Integration Tests
+    runs-on: ubuntu-latest
+    needs: ai-unit-tests
+    if: contains(fromJSON('["all", "integration"]'), github.event.inputs.test_suite) || github.event.inputs.test_suite == '' || github.event_name != 'workflow_dispatch'
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+    
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v2
+    
+    - name: Setup Gradle
+      uses: gradle/gradle-build-action@v2
+    
+    - name: Cache ONNX Runtime
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.onnxruntime
+          ~/.gradle/caches/modules-2/files-2.1/*onnxruntime*
+        key: ${{ runner.os }}-onnx-runtime-${{ env.ONNX_RUNTIME_VERSION }}
+    
+    - name: Setup ONNX Runtime
+      run: |
+        mkdir -p ~/.onnxruntime
+        cd ~/.onnxruntime
+        wget https://github.com/microsoft/onnxruntime/releases/download/v${{ env.ONNX_RUNTIME_VERSION }}/onnxruntime-linux-x64-${{ env.ONNX_RUNTIME_VERSION }}.tgz
+        tar -xzf onnxruntime-linux-x64-${{ env.ONNX_RUNTIME_VERSION }}.tgz
+        echo "ONNX_RUNTIME_PATH=$(pwd)/onnxruntime-linux-x64-${{ env.ONNX_RUNTIME_VERSION }}" >> $GITHUB_ENV
+    
+    - name: Run Multimodal AI Integration Tests
+      run: |
+        ./gradlew :shared:testDebugUnitTest --tests "*MultimodalAIIntegrationTest*" \
+          -Ptest.onnx.runtime.path=$ONNX_RUNTIME_PATH \
+          -Ptest.include.multimodal=true \
+          -Ptest.timeout.extended=true
+    
+    - name: Run Cross-Platform AI Tests
+      run: |
+        ./gradlew :shared:testDebugUnitTest --tests "*CrossPlatformAITest*" \
+          -Ptest.platforms=android,jvm \
+          -Ptest.include.serialization=true
+    
+    - name: Run AI Analysis Integration Tests
+      run: |
+        ./gradlew :shared:testDebugUnitTest --tests "*AIAnalysisIntegrationTest*" \
+          -Ptest.include.real.analysis=false \
+          -Ptest.mock.cloud.services=true
+    
+    - name: Upload Integration Test Results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: ai-integration-test-results
+        path: |
+          shared/build/test-results/testDebugUnitTest/
+          shared/build/reports/tests/testDebugUnitTest/
+
+  # Job 3: AI Performance Benchmarks
+  ai-performance-benchmarks:
+    name: AI Performance Benchmarks
+    runs-on: ubuntu-latest
+    if: github.event.inputs.performance_benchmarks == 'true' || (github.event.inputs.performance_benchmarks != 'false' && contains(fromJSON('["all", "performance"]'), github.event.inputs.test_suite)) || (github.event_name != 'workflow_dispatch')
+    
+    strategy:
+      matrix:
+        benchmark-type: [speed, memory, scalability, battery]
+      fail-fast: false
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+    
+    - name: Setup Gradle
+      uses: gradle/gradle-build-action@v2
+    
+    - name: Install Performance Monitoring Tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y htop iotop sysstat valgrind
+    
+    - name: Setup Performance Test Environment
+      run: |
+        # Increase JVM heap for performance tests
+        echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m" >> gradle.properties
+        # Enable performance profiling
+        echo "test.performance.profiling=true" >> gradle.properties
+        echo "test.performance.benchmark.type=${{ matrix.benchmark-type }}" >> gradle.properties
+    
+    - name: Run AI Performance Benchmarks - ${{ matrix.benchmark-type }}
+      run: |
+        case "${{ matrix.benchmark-type }}" in
+          speed)
+            ./gradlew :shared:testDebugUnitTest --tests "*AIPerformanceBenchmarkTest*testSinglePhotoAnalysisPerformance*" \
+              --tests "*AIPerformanceBenchmarkTest*testBatchPhotoAnalysisPerformance*" \
+              -Ptest.performance.speed=true \
+              -Ptest.timeout.performance=300000
+            ;;
+          memory)
+            ./gradlew :shared:testDebugUnitTest --tests "*AIPerformanceBenchmarkTest*testMemoryLeakDetection*" \
+              --tests "*AIPerformanceBenchmarkTest*testHighResolutionImagePerformance*" \
+              -Ptest.performance.memory=true \
+              -Ptest.memory.monitoring=true
+            ;;
+          scalability)
+            ./gradlew :shared:testDebugUnitTest --tests "*AIPerformanceBenchmarkTest*testScalabilityUnderLoad*" \
+              --tests "*AIPerformanceBenchmarkTest*testConcurrentAnalysisPerformance*" \
+              -Ptest.performance.scalability=true \
+              -Ptest.load.testing=true
+            ;;
+          battery)
+            ./gradlew :shared:testDebugUnitTest --tests "*AIPerformanceBenchmarkTest*testBatteryImpactBenchmark*" \
+              --tests "*AIPerformanceBenchmarkTest*testLongRunningStabilityBenchmark*" \
+              -Ptest.performance.battery=true \
+              -Ptest.battery.monitoring=true
+            ;;
+        esac
+    
+    - name: Generate Performance Report
+      if: always()
+      run: |
+        mkdir -p build/reports/performance
+        # Generate performance metrics report
+        ./gradlew generatePerformanceReport \
+          -Pbenchmark.type=${{ matrix.benchmark-type }} \
+          -Poutput.dir=build/reports/performance
+    
+    - name: Upload Performance Results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: ai-performance-results-${{ matrix.benchmark-type }}
+        path: |
+          build/reports/performance/
+          shared/build/test-results/testDebugUnitTest/
+    
+    - name: Comment Performance Results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const path = 'build/reports/performance/benchmark-summary.json';
+          if (fs.existsSync(path)) {
+            const results = JSON.parse(fs.readFileSync(path, 'utf8'));
+            const comment = `## AI Performance Benchmark Results - ${{ matrix.benchmark-type }}
+            
+            ${JSON.stringify(results, null, 2)}
+            
+            📊 Full results available in the artifacts.`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+          }
+
+  # Job 4: Android E2E AI Tests
+  android-e2e-ai-tests:
+    name: Android E2E AI Tests
+    runs-on: macos-latest # Use macOS for hardware acceleration
+    if: contains(fromJSON('["all", "e2e"]'), github.event.inputs.test_suite) || github.event.inputs.test_suite == '' || github.event_name != 'workflow_dispatch'
+    
+    strategy:
+      matrix:
+        api-level: [29, 34]
+        target: [default, google_apis]
+      fail-fast: false
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+    
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v2
+      with:
+        api-level: ${{ matrix.api-level }}
+        target: ${{ matrix.target }}
+        arch: x86_64
+        profile: Nexus 6
+    
+    - name: Setup Gradle
+      uses: gradle/gradle-build-action@v2
+    
+    - name: AVD Cache
+      uses: actions/cache@v3
+      id: avd-cache
+      with:
+        path: |
+          ~/.android/avd/*
+          ~/.android/adb*
+        key: avd-${{ matrix.api-level }}-${{ matrix.target }}
+    
+    - name: Create AVD and generate snapshot for caching
+      if: steps.avd-cache.outputs.cache-hit != 'true'
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: ${{ matrix.api-level }}
+        target: ${{ matrix.target }}
+        arch: x86_64
+        profile: Nexus 6
+        force-avd-creation: false
+        emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+        disable-animations: false
+        script: echo "Generated AVD snapshot for caching."
+    
+    - name: Build Android App for Testing
+      run: |
+        ./gradlew :HazardHawk:androidApp:assembleDebug
+        ./gradlew :HazardHawk:androidApp:assembleDebugAndroidTest
+    
+    - name: Run Android E2E AI Tests
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: ${{ matrix.api-level }}
+        target: ${{ matrix.target }}
+        arch: x86_64
+        profile: Nexus 6
+        force-avd-creation: false
+        emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+        disable-animations: true
+        script: |
+          # Grant necessary permissions
+          adb shell pm grant com.hazardhawk android.permission.CAMERA
+          adb shell pm grant com.hazardhawk android.permission.ACCESS_FINE_LOCATION
+          adb shell pm grant com.hazardhawk android.permission.WRITE_EXTERNAL_STORAGE
+          
+          # Run E2E tests
+          ./gradlew :HazardHawk:androidApp:connectedDebugAndroidTest \
+            --tests "*CameraToAIWorkflowE2ETest*" \
+            -Pandroid.testInstrumentationRunnerArguments.class=com.hazardhawk.e2e.CameraToAIWorkflowE2ETest \
+            -Pandroid.testInstrumentationRunnerArguments.notAnnotation=androidx.test.filters.FlakyTest
+    
+    - name: Upload E2E Test Results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: android-e2e-test-results-api${{ matrix.api-level }}-${{ matrix.target }}
+        path: |
+          HazardHawk/androidApp/build/reports/androidTests/connected/
+          HazardHawk/androidApp/build/outputs/androidTest-results/connected/
+    
+    - name: Upload E2E Test Screenshots
+      uses: actions/upload-artifact@v3
+      if: failure()
+      with:
+        name: e2e-test-screenshots-api${{ matrix.api-level }}-${{ matrix.target }}
+        path: |
+          HazardHawk/androidApp/build/reports/androidTests/connected/screenshots/
+
+  # Job 5: AI Model Validation
+  ai-model-validation:
+    name: AI Model Validation
+    runs-on: ubuntu-latest
+    if: github.event.inputs.model_validation == 'true' || (github.event.inputs.model_validation != 'false' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'))
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+    
+    - name: Setup Python for Model Validation
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install Model Validation Tools
+      run: |
+        pip install onnx onnxruntime numpy pillow pytest
+        pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+    
+    - name: Setup Gradle
+      uses: gradle/gradle-build-action@v2
+    
+    - name: Download Production Models (if available)
+      env:
+        MODEL_DOWNLOAD_TOKEN: ${{ secrets.MODEL_DOWNLOAD_TOKEN }}
+      run: |
+        if [ -n "$MODEL_DOWNLOAD_TOKEN" ]; then
+          mkdir -p models/production
+          # Download actual production models for validation
+          curl -H "Authorization: Bearer $MODEL_DOWNLOAD_TOKEN" \
+            -o models/production/gemma_vision.onnx \
+            "${{ secrets.MODEL_DOWNLOAD_URL }}/gemma_vision.onnx"
+          curl -H "Authorization: Bearer $MODEL_DOWNLOAD_TOKEN" \
+            -o models/production/yolo_hazard.onnx \
+            "${{ secrets.MODEL_DOWNLOAD_URL }}/yolo_hazard.onnx"
+        else
+          echo "Model download token not available, using mock models"
+          mkdir -p models/production
+          # Use mock models for validation
+          cp ~/.hazardhawk/test-models/* models/production/
+        fi
+    
+    - name: Run Model Validation Tests
+      run: |
+        ./gradlew :shared:testDebugUnitTest --tests "*ModelValidationTest*" \
+          -Ptest.models.path=models/production \
+          -Ptest.validation.strict=true \
+          -Ptest.include.performance=true
+    
+    - name: Run Python Model Validation
+      run: |
+        cd models/production
+        python -c "
+        import onnx
+        import onnxruntime as ort
+        import numpy as np
+        
+        # Validate Gemma model
+        if os.path.exists('gemma_vision.onnx'):
+            model = onnx.load('gemma_vision.onnx')
+            onnx.checker.check_model(model)
+            session = ort.InferenceSession('gemma_vision.onnx')
+            print('Gemma model validation: PASSED')
+        
+        # Validate YOLO model
+        if os.path.exists('yolo_hazard.onnx'):
+            model = onnx.load('yolo_hazard.onnx')
+            onnx.checker.check_model(model)
+            session = ort.InferenceSession('yolo_hazard.onnx')
+            print('YOLO model validation: PASSED')
+        "
+    
+    - name: Upload Model Validation Results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: model-validation-results
+        path: |
+          shared/build/test-results/testDebugUnitTest/
+          models/validation-reports/
+
+  # Job 6: Test Results Summary
+  test-results-summary:
+    name: Test Results Summary
+    runs-on: ubuntu-latest
+    needs: [ai-unit-tests, ai-integration-tests, ai-performance-benchmarks, android-e2e-ai-tests]
+    if: always()
+    
+    steps:
+    - name: Download All Test Artifacts
+      uses: actions/download-artifact@v3
+      with:
+        path: test-results
+    
+    - name: Generate Comprehensive Test Report
+      run: |
+        mkdir -p reports/summary
+        
+        # Count test results across all jobs
+        find test-results -name "TEST-*.xml" -exec grep -l "testcase" {} \; | wc -l > reports/summary/total_test_files.txt
+        find test-results -name "TEST-*.xml" -exec grep -o "testcase" {} \; | wc -l > reports/summary/total_tests.txt
+        find test-results -name "TEST-*.xml" -exec grep -o 'failure\|error' {} \; | wc -l > reports/summary/total_failures.txt
+        
+        # Generate summary report
+        cat > reports/summary/test-summary.md << EOF
+        # AI Testing Summary
+        
+        ## Test Execution Results
+        
+        - **Total Test Files**: $(cat reports/summary/total_test_files.txt)
+        - **Total Tests**: $(cat reports/summary/total_tests.txt)
+        - **Total Failures**: $(cat reports/summary/total_failures.txt)
+        
+        ## Job Status
+        
+        - **Unit Tests**: ${{ needs.ai-unit-tests.result }}
+        - **Integration Tests**: ${{ needs.ai-integration-tests.result }}
+        - **Performance Benchmarks**: ${{ needs.ai-performance-benchmarks.result }}
+        - **E2E Tests**: ${{ needs.android-e2e-ai-tests.result }}
+        
+        ## Performance Highlights
+        
+        Performance benchmark results are available in the artifacts.
+        
+        ## Coverage Information
+        
+        Detailed coverage reports are generated for each test category.
+        
+        EOF
+    
+    - name: Upload Test Summary
+      uses: actions/upload-artifact@v3
+      with:
+        name: comprehensive-test-summary
+        path: reports/summary/
+    
+    - name: Comment Test Summary on PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          if (fs.existsSync('reports/summary/test-summary.md')) {
+            const summary = fs.readFileSync('reports/summary/test-summary.md', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });
+          }
+    
+    - name: Set Job Status
+      run: |
+        if [ "${{ needs.ai-unit-tests.result }}" != "success" ] || \
+           [ "${{ needs.ai-integration-tests.result }}" != "success" ] || \
+           [ "${{ needs.ai-performance-benchmarks.result }}" != "success" ] || \
+           [ "${{ needs.android-e2e-ai-tests.result }}" != "success" ]; then
+          echo "Some AI tests failed. Check the individual job results."
+          exit 1
+        fi
+        echo "All AI tests passed successfully!"

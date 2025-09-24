@@ -1,0 +1,160 @@
+{
+  "id": "test-analysis-001",
+  "timestamp": 1699123200000,
+  "analysisType": "LOCAL_GEMMA_MULTIMODAL",
+  "workType": "GENERAL_CONSTRUCTION",
+  "hazards": [
+    {
+      "id": "hazard-001",
+      "type": "FALL_PROTECTION",
+      "severity": "CRITICAL",
+      "description": "Worker at height without fall protection system",
+      "oshaCode": "1926.501(b)(1)",
+      "boundingBox": {
+        "left": 0.2,
+        "top": 0.1,
+        "width": 0.3,
+        "height": 0.4
+      },
+      "confidence": 0.89,
+      "recommendations": [
+        "Install proper fall protection system immediately",
+        "Ensure worker is wearing proper fall arrest harness",
+        "Provide safety training on fall protection"
+      ],
+      "immediateAction": "STOP WORK - Install fall protection before continuing"
+    },
+    {
+      "id": "hazard-002", 
+      "type": "PPE_VIOLATION",
+      "severity": "HIGH",
+      "description": "Hard hat not worn by worker",
+      "oshaCode": "1926.95(a)",
+      "boundingBox": {
+        "left": 0.15,
+        "top": 0.05,
+        "width": 0.2,
+        "height": 0.25
+      },
+      "confidence": 0.94,
+      "recommendations": [
+        "Require hard hat use in all construction areas",
+        "Conduct PPE inspection before work begins"
+      ],
+      "immediateAction": "Worker must don hard hat before continuing work"
+    },
+    {
+      "id": "hazard-003",
+      "type": "ELECTRICAL_HAZARD",
+      "severity": "MEDIUM",
+      "description": "Exposed electrical wiring in work area",
+      "oshaCode": "1926.416(a)(1)",
+      "boundingBox": {
+        "left": 0.6,
+        "top": 0.7,
+        "width": 0.2,
+        "height": 0.15
+      },
+      "confidence": 0.76,
+      "recommendations": [
+        "Cover or secure exposed wiring",
+        "Verify electrical systems are de-energized",
+        "Follow lockout/tagout procedures"
+      ]
+    }
+  ],
+  "ppeStatus": {
+    "hardHat": {
+      "status": "MISSING",
+      "confidence": 0.94,
+      "boundingBox": null,
+      "required": true
+    },
+    "safetyVest": {
+      "status": "PRESENT",
+      "confidence": 0.87,
+      "boundingBox": {
+        "left": 0.1,
+        "top": 0.25,
+        "width": 0.4,
+        "height": 0.35
+      },
+      "required": true
+    },
+    "safetyBoots": {
+      "status": "PRESENT",
+      "confidence": 0.82,
+      "boundingBox": {
+        "left": 0.15,
+        "top": 0.8,
+        "width": 0.3,
+        "height": 0.2
+      },
+      "required": true
+    },
+    "safetyGlasses": {
+      "status": "UNKNOWN",
+      "confidence": 0.45,
+      "boundingBox": null,
+      "required": false
+    },
+    "fallProtection": {
+      "status": "MISSING",
+      "confidence": 0.92,
+      "boundingBox": null,
+      "required": true
+    },
+    "respirator": {
+      "status": "UNKNOWN",
+      "confidence": 0.2,
+      "boundingBox": null,
+      "required": false
+    },
+    "overallCompliance": 0.4
+  },
+  "recommendations": [
+    "Immediately implement fall protection measures for workers at height",
+    "Ensure all workers wear required hard hats",
+    "Address exposed electrical wiring before continuing work",
+    "Conduct comprehensive safety training for all personnel",
+    "Establish proper PPE inspection procedures"
+  ],
+  "overallRiskLevel": "HIGH",
+  "confidence": 0.87,
+  "processingTimeMs": 2340,
+  "oshaViolations": [
+    {
+      "code": "1926.501(b)(1)",
+      "title": "Fall Protection - Unprotected Sides and Edges",
+      "description": "Each employee on a walking/working surface with an unprotected side or edge which is 6 feet or more above a lower level shall be protected from falling",
+      "severity": "CRITICAL",
+      "fineRange": "$7,000 - $70,000",
+      "correctiveAction": "Install guardrail systems, safety net systems, or personal fall arrest systems"
+    },
+    {
+      "code": "1926.95(a)",
+      "title": "Personal Protective Equipment - Head Protection",
+      "description": "Employees working in areas where there is a possible danger of head injury from impact shall be protected by protective helmets",
+      "severity": "HIGH", 
+      "fineRange": "$2,500 - $25,000",
+      "correctiveAction": "Provide and require use of ANSI-approved hard hats"
+    }
+  ],
+  "metadata": {
+    "imageWidth": 1920,
+    "imageHeight": 1080,
+    "location": {
+      "latitude": 40.7128,
+      "longitude": -74.0060,
+      "accuracy": 5.0,
+      "address": "Construction Site, New York, NY"
+    },
+    "weather": {
+      "temperature": 22.5,
+      "humidity": 65.0,
+      "windSpeed": 12.0,
+      "conditions": "Partly cloudy"
+    },
+    "timeOfDay": "Morning (09:45 AM)"
+  }
+}

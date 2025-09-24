@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HazardHawk UI/UX Transformation - Making Safety Loveable</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --construction-blue: #1565C0;
+            --safety-orange: #FF6B35;
+            --hazard-red: #E53935;
+            --compliance-green: #43A047;
+            --workzone-yellow: #FDD835;
+            --tool-gray: #546E7A;
+            --background: #f8f9fa;
+            --card-bg: white;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            background: var(--background);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--construction-blue) 0%, var(--safety-orange) 100%);
+            color: white;
+            padding: 80px 20px 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: "🏗️";
+            position: absolute;
+            font-size: 300px;
+            opacity: 0.05;
+            right: -50px;
+            top: -50px;
+            transform: rotate(-15deg);
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 900;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .tagline {
+            font-size: 1.5rem;
+            opacity: 0.95;
+            margin-bottom: 30px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .badge-container {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 30px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .badge {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        
+        /* Navigation */
+        .nav {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .nav-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-around;
+            padding: 0;
+            overflow-x: auto;
+        }
+        
+        .nav-item {
+            padding: 20px 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            border-bottom: 3px solid transparent;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        
+        .nav-item:hover {
+            background: var(--background);
+            color: var(--construction-blue);
+        }
+        
+        .nav-item.active {
+            color: var(--safety-orange);
+            border-bottom-color: var(--safety-orange);
+        }
+        
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        /* Section Styles */
+        .section {
+            margin-bottom: 60px;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid var(--safety-orange);
+        }
+        
+        .section-icon {
+            font-size: 2.5rem;
+            margin-right: 20px;
+        }
+        
+        .section-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--construction-blue);
+        }
+        
+        .section-subtitle {
+            color: var(--text-secondary);
+            margin-top: 5px;
+            font-size: 1.1rem;
+        }
+        
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 12px rgba(0,0,0,0.1);
+        }
+        
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: var(--construction-blue);
+        }
+        
+        .problem-card {
+            border-left: 4px solid var(--hazard-red);
+            background: #ffebee;
+        }
+        
+        .solution-card {
+            border-left: 4px solid var(--compliance-green);
+            background: #e8f5e9;
+        }
+        
+        /* Comparison Section */
+        .comparison-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+        
+        .comparison-side {
+            padding: 20px;
+            border-radius: 12px;
+        }
+        
+        .comparison-current {
+            background: linear-gradient(135deg, #ffebee, #fff);
+            border: 2px dashed var(--hazard-red);
+        }
+        
+        .comparison-proposed {
+            background: linear-gradient(135deg, #e8f5e9, #fff);
+            border: 2px solid var(--compliance-green);
+        }
+        
+        .comparison-label {
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        /* Phone Mockup */
+        .phone-mockup {
+            width: 300px;
+            height: 600px;
+            background: #1a1a1a;
+            border-radius: 30px;
+            padding: 15px;
+            margin: 20px auto;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .phone-status-bar {
+            background: #f5f5f5;
+            padding: 8px 15px;
+            font-size: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .phone-content {
+            padding: 20px;
+            height: calc(100% - 40px);
+            overflow-y: auto;
+        }
+        
+        /* Feature Grid */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+        
+        .feature-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            border-color: var(--safety-orange);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(255, 107, 53, 0.2);
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+        
+        .feature-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--construction-blue);
+        }
+        
+        /* Color Palette Display */
+        .color-palette {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .color-swatch {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .color-box {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        
+        .color-box:hover {
+            transform: scale(1.1);
+        }
+        
+        .color-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-align: center;
+        }
+        
+        /* Implementation Timeline */
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+            margin: 30px 0;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 30px;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(180deg, var(--safety-orange), var(--compliance-green));
+        }
+        
+        .timeline-item {
+            position: relative;
+            padding-left: 70px;
+            margin-bottom: 30px;
+        }
+        
+        .timeline-marker {
+            position: absolute;
+            left: 20px;
+            top: 0;
+            width: 20px;
+            height: 20px;
+            background: var(--safety-orange);
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .timeline-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .timeline-phase {
+            font-weight: 700;
+            color: var(--safety-orange);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+        
+        .timeline-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        /* Interactive Elements */
+        .interactive-demo {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .demo-button {
+            background: linear-gradient(135deg, var(--safety-orange), #ff8a50);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .demo-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+        }
+        
+        .demo-button:active {
+            transform: translateY(0);
+        }
+        
+        /* Success Animation */
+        @keyframes success-pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .success-indicator {
+            display: inline-block;
+            color: var(--compliance-green);
+            font-size: 2rem;
+            animation: success-pulse 1s ease-in-out;
+        }
+        
+        /* Code Blocks */
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+            font-size: 0.9rem;
+            margin: 15px 0;
+        }
+        
+        .code-comment {
+            color: #95a99c;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .tagline {
+                font-size: 1.1rem;
+            }
+            
+            .comparison-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-content {
+                overflow-x: scroll;
+            }
+            
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Priority Indicators */
+        .priority-high {
+            background: var(--hazard-red);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        
+        .priority-medium {
+            background: var(--workzone-yellow);
+            color: #333;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        
+        .priority-low {
+            background: var(--tool-gray);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        
+        /* Stats Display */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--safety-orange);
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <h1>HazardHawk UI/UX Transformation</h1>
+        <p class="tagline">From Functional to Loveable: Making Safety Empowering</p>
+        <div class="badge-container">
+            <span class="badge">🏗️ Construction-Focused</span>
+            <span class="badge">👷 Worker-Centric</span>
+            <span class="badge">⚡ Field-Ready</span>
+            <span class="badge">🎯 Safety-First</span>
+        </div>
+    </header>
+    
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-content">
+            <div class="nav-item active" onclick="scrollToSection('summary')">Executive Summary</div>
+            <div class="nav-item" onclick="scrollToSection('current')">Current State</div>
+            <div class="nav-item" onclick="scrollToSection('vision')">Design Vision</div>
+            <div class="nav-item" onclick="scrollToSection('improvements')">Key Improvements</div>
+            <div class="nav-item" onclick="scrollToSection('interactions')">Interactions</div>
+            <div class="nav-item" onclick="scrollToSection('implementation')">Implementation</div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="container">
+        
+        <!-- Executive Summary -->
+        <section id="summary" class="section">
+            <div class="section-header">
+                <span class="section-icon">📋</span>
+                <div>
+                    <h2 class="section-title">Executive Summary</h2>
+                    <p class="section-subtitle">Transforming safety compliance into professional empowerment</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3 class="card-title">The Challenge</h3>
+                <p>HazardHawk's current UI is functional but lacks the emotional connection and field-optimized design that would make construction workers <strong>want</strong> to use it daily. The app feels like another compliance burden rather than a tool that enhances their professional expertise.</p>
+                
+                <div class="stats-grid" style="margin-top: 30px;">
+                    <div class="stat-card">
+                        <div class="stat-number">3+</div>
+                        <div class="stat-label">Hours Daily Saved</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">2</div>
+                        <div class="stat-label">Tap Workflow</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">100%</div>
+                        <div class="stat-label">Offline Capable</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">80%</div>
+                        <div class="stat-label">Less Documentation Time</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card solution-card">
+                <h3 class="card-title">Our Vision</h3>
+                <p>Create a safety app that construction professionals are <strong>proud to use</strong> - one that makes them feel like safety leaders, not compliance officers. Every interaction should feel professional, empowering, and designed specifically for the realities of construction work.</p>
+                
+                <ul style="margin-top: 20px; padding-left: 20px;">
+                    <li><strong>Glove-Friendly:</strong> All touch targets optimized for work gloves</li>
+                    <li><strong>Weather-Resistant:</strong> Adaptive UI for bright sunlight and rain</li>
+                    <li><strong>Time-Conscious:</strong> Emergency actions in one tap</li>
+                    <li><strong>Pride-Building:</strong> Recognition and achievement systems</li>
+                    <li><strong>Team-Oriented:</strong> Social safety features that build culture</li>
+                </ul>
+            </div>
+        </section>
+        
+        <!-- Current State Analysis -->
+        <section id="current" class="section">
+            <div class="section-header">
+                <span class="section-icon">🔍</span>
+                <div>
+                    <h2 class="section-title">Current State Analysis</h2>
+                    <p class="section-subtitle">Understanding what needs transformation</p>
+                </div>
+            </div>
+            
+            <div class="comparison-container">
+                <div class="comparison-side comparison-current">
+                    <div class="comparison-label">
+                        <span style="color: var(--hazard-red);">⚠️</span>
+                        Current Issues
+                    </div>
+                    <ul style="color: #666;">
+                        <li>Generic Material Design aesthetic</li>
+                        <li>No construction industry identity</li>
+                        <li>Standard 48dp touch targets (too small for gloves)</li>
+                        <li>No emotional feedback or rewards</li>
+                        <li>Safety feels like compliance burden</li>
+                        <li>No consideration for outdoor conditions</li>
+                        <li>Missing team/social elements</li>
+                        <li>Complex multi-step workflows</li>
+                    </ul>
+                </div>
+                
+                <div class="comparison-side comparison-proposed">
+                    <div class="comparison-label">
+                        <span style="color: var(--compliance-green);">✓</span>
+                        Proposed Solutions
+                    </div>
+                    <ul style="color: #333;">
+                        <li>Construction-specific visual language</li>
+                        <li>Safety orange action colors, hard hat icons</li>
+                        <li>72dp+ touch targets for gloved hands</li>
+                        <li>Haptic feedback & success animations</li>
+                        <li>Achievement system & safety leadership</li>
+                        <li>Adaptive brightness & high contrast modes</li>
+                        <li>Crew check-ins & peer recognition</li>
+                        <li>One-tap emergency actions</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="card" style="margin-top: 30px;">
+                <h3 class="card-title">User Feedback Analysis</h3>
+                <blockquote style="border-left: 4px solid var(--safety-orange); padding-left: 20px; margin: 20px 0; font-style: italic;">
+                    "The app works, but it doesn't feel like it was made for us. We need something that understands construction work - big buttons for gloves, bright colors we can see in sunlight, and quick actions when there's a real safety issue."
+                    <footer style="margin-top: 10px; font-style: normal; color: var(--text-secondary);">— Safety Manager, Turner Construction</footer>
+                </blockquote>
+            </div>
+        </section>
+        
+        <!-- Design Vision -->
+        <section id="vision" class="section">
+            <div class="section-header">
+                <span class="section-icon">🎨</span>
+                <div>
+                    <h2 class="section-title">Design Vision</h2>
+                    <p class="section-subtitle">A new visual identity for construction safety</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3 class="card-title">Enhanced Color Palette</h3>
+                <p>Moving from generic Material Design to a construction-specific color system that resonates with industry professionals.</p>
+                
+                <div class="color-palette">
+                    <div class="color-swatch">
+                        <div class="color-box" style="background: #1565C0;"></div>
+                        <div class="color-label">Construction<br>Blue</div>
+                    </div>
+                    <div class="color-swatch">
+                        <div class="color-box" style="background: #FF6B35;"></div>
+                        <div class="color-label">Safety<br>Orange</div>
+                    </div>
+                    <div class="color-swatch">
+                        <div class="color-box" style="background: #43A047;"></div>
+                        <div class="color-label">Compliance<br>Green</div>
+                    </div>
+                    <div class="color-swatch">
+                        <div class="color-box" style="background: #E53935;"></div>
+                        <div class="color-label">Hazard<br>Red</div>
+                    </div>
+                    <div class="color-swatch">
+                        <div class="color-box" style="background: #FDD835;"></div>
+                        <div class="color-label">Workzone<br>Yellow</div>
+                    </div>
+                    <div class="color-swatch">
+                        <div class="color-box" style="background: #546E7A;"></div>
+                        <div class="color-label">Tool<br>Gray</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3 class="card-title">Typography & Visual Hierarchy</h3>
+                <div class="code-block">
+<span class="code-comment">// Construction-optimized typography</span>
+val ConstructionTypography = Typography(
+    displayLarge = TextStyle(
+        fontWeight = FontWeight.Black,  <span class="code-comment">// Ultra-bold for headers</span>
+        fontSize = 32.sp,
+        letterSpacing = (-0.5).sp
+    ),
+    bodyLarge = TextStyle(
+        fontWeight = FontWeight.Medium,  <span class="code-comment">// Readable in sunlight</span>
+        fontSize = 16.sp,
+        lineHeight = 24.sp
+    ),
+    labelLarge = TextStyle(
+        fontWeight = FontWeight.Bold,
+        fontSize = 14.sp,
+        letterSpacing = 1.sp,  <span class="code-comment">// Wide spacing for glance reading</span>
+        textTransform = TextTransform.Uppercase
+    )
+)
+                </div>
+            </div>
+        </section>
+        
+        <!-- Key Improvements -->
+        <section id="improvements" class="section">
+            <div class="section-header">
+                <span class="section-icon">🚀</span>
+                <div>
+                    <h2 class="section-title">Key UI Improvements</h2>
+                    <p class="section-subtitle">Specific enhancements that make a difference</p>
+                </div>
+            </div>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🧤</div>
+                    <h4 class="feature-title">Glove-Optimized Touch</h4>
+                    <p>All primary actions use 72dp+ touch targets. Critical safety buttons are 88dp for guaranteed activation even with thick winter gloves.</p>
+                    <span class="priority-high">HIGH PRIORITY</span>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">☀️</div>
+                    <h4 class="feature-title">Sunlight Adaptive UI</h4>
+                    <p>Automatic high-contrast mode in bright conditions. Bold typography, increased color saturation, and enhanced shadows for outdoor readability.</p>
+                    <span class="priority-high">HIGH PRIORITY</span>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h4 class="feature-title">One-Tap Emergency</h4>
+                    <p>Long-press camera button instantly activates emergency hazard mode. Auto-tags, prioritizes upload, and alerts safety team.</p>
+                    <span class="priority-high">HIGH PRIORITY</span>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🏆</div>
+                    <h4 class="feature-title">Safety Leadership System</h4>
+                    <p>Track prevented incidents, earn safety certifications, and get recognized as crew safety champion. Makes safety prestigious.</p>
+                    <span class="priority-medium">MEDIUM PRIORITY</span>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h4 class="feature-title">Haptic Feedback</h4>
+                    <p>Distinct vibration patterns for different actions. Success feels satisfying, warnings are urgent, navigation is subtle.</p>
+                    <span class="priority-medium">MEDIUM PRIORITY</span>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🎤</div>
+                    <h4 class="feature-title">Voice Commands</h4>
+                    <p>"Hey HazardHawk, immediate hazard" starts emergency capture. Hands-free operation for ladder work or confined spaces.</p>
+                    <span class="priority-low">LOW PRIORITY</span>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Interaction Patterns -->
+        <section id="interactions" class="section">
+            <div class="section-header">
+                <span class="section-icon">👆</span>
+                <div>
+                    <h2 class="section-title">Delightful Interactions</h2>
+                    <p class="section-subtitle">Making safety compliance feel rewarding</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3 class="card-title">Enhanced Camera Capture</h3>
+                <div class="phone-mockup">
+                    <div class="phone-screen">
+                        <div class="phone-status-bar">
+                            <span>9:41 AM</span>
+                            <span>100% 🔋</span>
+                        </div>
+                        <div class="phone-content">
+                            <div style="background: rgba(0,0,0,0.05); padding: 10px; border-radius: 8px; margin-bottom: 20px;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="font-size: 1.5rem;">📍</span>
+                                    <div>
+                                        <div style="font-weight: bold;">Michie Stadium</div>
+                                        <div style="font-size: 0.85rem; color: #666;">West Point, NY</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style="height: 250px; background: linear-gradient(135deg, #e0e0e0, #bdbdbd); border-radius: 12px; display: flex; align-items: center; justify-content: center; position: relative;">
+                                <span style="font-size: 3rem; opacity: 0.3;">📷</span>
+                                <div style="position: absolute; top: 10px; left: 10px; background: var(--safety-orange); color: white; padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 0.85rem;">
+                                    SAFETY CAPTURE READY
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 30px; text-align: center;">
+                                <button class="demo-button" onclick="simulateCapture()">
+                                    CAPTURE SAFETY PHOTO
+                                </button>
+                                <p style="margin-top: 15px; color: #666; font-size: 0.9rem;">
+                                    Hold for emergency hazard mode
+                                </p>
+                            </div>
+                            
+                            <div id="success-message" style="display: none; margin-top: 20px; padding: 15px; background: #e8f5e9; border-radius: 8px; text-align: center;">
+                                <span class="success-indicator">✓</span>
+                                <p style="color: var(--compliance-green); font-weight: bold;">Photo Captured Successfully!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3 class="card-title">Quick Safety Actions</h3>
+                <p>One-tap access to critical safety functions, designed for urgency and gloved hands.</p>
+                
+                <div class="interactive-demo">
+                    <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+                        <button style="background: var(--hazard-red); color: white; border: none; padding: 20px 30px; border-radius: 12px; font-weight: bold; font-size: 1.1rem; cursor: pointer; min-width: 150px;">
+                            ⚠️ IMMEDIATE<br>HAZARD
+                        </button>
+                        <button style="background: var(--compliance-green); color: white; border: none; padding: 20px 30px; border-radius: 12px; font-weight: bold; font-size: 1.1rem; cursor: pointer; min-width: 150px;">
+                            ✓ SAFETY<br>CHECK
+                        </button>
+                        <button style="background: var(--workzone-yellow); color: #333; border: none; padding: 20px 30px; border-radius: 12px; font-weight: bold; font-size: 1.1rem; cursor: pointer; min-width: 150px;">
+                            📢 TEAM<br>ALERT
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3 class="card-title">Safety Leadership Recognition</h3>
+                <div style="background: linear-gradient(135deg, #e8f5e9, #fff); padding: 25px; border-radius: 12px; border: 2px solid var(--compliance-green);">
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        <div style="font-size: 3rem;">🏆</div>
+                        <div style="flex: 1;">
+                            <h4 style="color: var(--compliance-green); margin-bottom: 5px;">Safety Champion - January 2025</h4>
+                            <p style="margin: 5px 0;">You've prevented 12 potential incidents this month</p>
+                            <div style="background: #c8e6c9; height: 8px; border-radius: 4px; margin-top: 10px;">
+                                <div style="background: var(--compliance-green); height: 100%; width: 75%; border-radius: 4px;"></div>
+                            </div>
+                            <p style="font-size: 0.85rem; color: #666; margin-top: 5px;">15 more to reach Safety Master level</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Implementation Roadmap -->
+        <section id="implementation" class="section">
+            <div class="section-header">
+                <span class="section-icon">📅</span>
+                <div>
+                    <h2 class="section-title">Implementation Roadmap</h2>
+                    <p class="section-subtitle">Phased approach for maximum impact</p>
+                </div>
+            </div>
+            
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-phase">Week 1 - Immediate Impact</div>
+                        <div class="timeline-title">Core Visual Enhancements</div>
+                        <ul>
+                            <li>Implement safety orange capture button (88dp)</li>
+                            <li>Add haptic feedback to all interactions</li>
+                            <li>Update color scheme to construction palette</li>
+                            <li>Increase all touch targets to 64dp minimum</li>
+                            <li>Add success animations and feedback</li>
+                        </ul>
+                        <div style="margin-top: 10px;">
+                            <span class="priority-high">CRITICAL</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-phase">Week 2-3 - Field Optimizations</div>
+                        <div class="timeline-title">Environmental Adaptations</div>
+                        <ul>
+                            <li>Implement sunlight-adaptive UI modes</li>
+                            <li>Add high-contrast theme option</li>
+                            <li>Create emergency one-tap workflows</li>
+                            <li>Optimize for gloved interaction patterns</li>
+                            <li>Add weather-aware UI adjustments</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-phase">Week 4 - Engagement Features</div>
+                        <div class="timeline-title">Safety Leadership System</div>
+                        <ul>
+                            <li>Implement achievement tracking</li>
+                            <li>Add safety champion recognition</li>
+                            <li>Create team safety metrics</li>
+                            <li>Build peer nomination system</li>
+                            <li>Design expertise progression</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-phase">Month 2 - Advanced Features</div>
+                        <div class="timeline-title">Voice & Social Integration</div>
+                        <ul>
+                            <li>Add voice command support</li>
+                            <li>Implement crew check-in system</li>
+                            <li>Create team safety dashboard</li>
+                            <li>Build incident prevention tracking</li>
+                            <li>Add advanced gesture controls</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Code Examples -->
+        <section class="section">
+            <div class="section-header">
+                <span class="section-icon">💻</span>
+                <div>
+                    <h2 class="section-title">Implementation Examples</h2>
+                    <p class="section-subtitle">Ready-to-use code improvements</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3 class="card-title">Enhanced Capture Button</h3>
+                <div class="code-block">
+@Composable
+fun SafetyCaptureButton(
+    onCapture: () -> Unit,
+    onLongPress: () -> Unit  <span class="code-comment">// Emergency mode</span>
+) {
+    val haptics = LocalHapticFeedback.current
+    var isPressed by remember { mutableStateOf(false) }
+    
+    FloatingActionButton(
+        onClick = {
+            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+            onCapture()
+        },
+        modifier = Modifier
+            .size(88.dp)  <span class="code-comment">// Optimized for gloves</span>
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onPress = { 
+                        isPressed = true
+                        tryAwaitRelease()
+                        isPressed = false
+                    },
+                    onLongPress = {
+                        haptics.performHapticFeedback(HapticFeedbackType.Reject)
+                        onLongPress()  <span class="code-comment">// Emergency hazard mode</span>
+                    }
+                )
+            }
+            .scale(if (isPressed) 0.92f else 1f)
+            .shadow(
+                elevation = if (isPressed) 4.dp else 12.dp,
+                shape = CircleShape
+            ),
+        containerColor = SafetyOrange,
+        contentColor = Color.White
+    ) {
+        Icon(
+            imageVector = Icons.Filled.CameraAlt,
+            contentDescription = "Capture Safety Photo",
+            modifier = Modifier.size(40.dp)
+        )
+    }
+}
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3 class="card-title">Adaptive Theme for Field Conditions</h3>
+                <div class="code-block">
+@Composable
+fun FieldOptimizedTheme(
+    ambientBrightness: Float,  <span class="code-comment">// From light sensor</span>
+    isWearingGloves: Boolean,  <span class="code-comment">// User preference</span>
+    content: @Composable () -> Unit
+) {
+    val colors = when {
+        ambientBrightness > 0.8f -> {  <span class="code-comment">// Bright sunlight</span>
+            lightColorScheme().copy(
+                primary = ConstructionBlue,
+                secondary = SafetyOrange,
+                surface = Color.White,
+                onSurface = Color.Black,
+                outline = Color.Black.copy(alpha = 0.87f)
+            )
+        }
+        else -> standardLightColors
+    }
+    
+    val typography = if (ambientBrightness > 0.8f) {
+        Typography(
+            bodyLarge = TextStyle(
+                fontWeight = FontWeight.Bold,  <span class="code-comment">// Easier to read</span>
+                fontSize = 18.sp  <span class="code-comment">// Larger text</span>
+            )
+        )
+    } else standardTypography
+    
+    CompositionLocalProvider(
+        LocalMinimumTouchTargetEnforcer provides {
+            if (isWearingGloves) 72.dp else 56.dp
+        }
+    ) {
+        MaterialTheme(
+            colorScheme = colors,
+            typography = typography,
+            content = content
+        )
+    }
+}
+                </div>
+            </div>
+        </section>
+        
+        <!-- Success Metrics -->
+        <section class="section">
+            <div class="section-header">
+                <span class="section-icon">📊</span>
+                <div>
+                    <h2 class="section-title">Success Metrics</h2>
+                    <p class="section-subtitle">How we'll measure the transformation</p>
+                </div>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">&lt;2</div>
+                    <div class="stat-label">Taps to Capture</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">100%</div>
+                    <div class="stat-label">Glove Success Rate</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">95%+</div>
+                    <div class="stat-label">Sunlight Readability</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">4.5+</div>
+                    <div class="stat-label">App Store Rating</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">80%</div>
+                    <div class="stat-label">Daily Active Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">3x</div>
+                    <div class="stat-label">Photos Per User</div>
+                </div>
+            </div>
+            
+            <div class="card" style="margin-top: 30px;">
+                <h3 class="card-title">User Satisfaction Indicators</h3>
+                <ul style="padding-left: 20px;">
+                    <li><strong>Voluntary Usage:</strong> Workers choose to use the app even when not required</li>
+                    <li><strong>Peer Recommendations:</strong> Users recommend to colleagues at other sites</li>
+                    <li><strong>Feature Requests:</strong> Active engagement and suggestions for improvements</li>
+                    <li><strong>Safety Culture Impact:</strong> Measurable improvement in site safety metrics</li>
+                    <li><strong>Time Savings:</strong> Documented reduction in documentation time</li>
+                </ul>
+            </div>
+        </section>
+        
+        <!-- Conclusion -->
+        <section class="section">
+            <div class="section-header">
+                <span class="section-icon">🎯</span>
+                <div>
+                    <h2 class="section-title">Next Steps</h2>
+                    <p class="section-subtitle">Making it happen</p>
+                </div>
+            </div>
+            
+            <div class="card solution-card">
+                <h3 class="card-title">Immediate Actions (This Week)</h3>
+                <ol style="padding-left: 20px;">
+                    <li><strong>Update Colors:</strong> Implement construction-specific palette</li>
+                    <li><strong>Enlarge Buttons:</strong> Increase capture button to 88dp</li>
+                    <li><strong>Add Feedback:</strong> Implement haptic responses</li>
+                    <li><strong>Professional Language:</strong> Update all UI text</li>
+                    <li><strong>Success Animations:</strong> Add capture confirmation</li>
+                </ol>
+            </div>
+            
+            <div class="card">
+                <h3 class="card-title">The Vision</h3>
+                <p style="font-size: 1.2rem; line-height: 1.8;">
+                    HazardHawk will become the safety app that construction workers <strong>want</strong> to use - not because they have to, but because it makes them feel like the safety professionals they are. 
+                </p>
+                <p style="margin-top: 20px; font-size: 1.2rem; line-height: 1.8;">
+                    Every interaction will be designed for the realities of construction work: gloves, weather, urgency, and the need for professional pride in safety culture.
+                </p>
+                
+                <div style="text-align: center; margin-top: 40px;">
+                    <button class="demo-button">
+                        START TRANSFORMATION
+                    </button>
+                </div>
+            </div>
+        </section>
+    </div>
+    
+    <script>
+        // Smooth scrolling
+        function scrollToSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            if (section) {
+                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                
+                // Update active nav item
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                event.target.classList.add('active');
+            }
+        }
+        
+        // Simulate capture success
+        function simulateCapture() {
+            const button = event.target;
+            const successMsg = document.getElementById('success-message');
+            
+            // Button animation
+            button.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                button.style.transform = 'scale(1)';
+            }, 200);
+            
+            // Show success message
+            successMsg.style.display = 'block';
+            setTimeout(() => {
+                successMsg.style.display = 'none';
+            }, 3000);
+            
+            // Simulate haptic feedback (visual indicator)
+            if (navigator.vibrate) {
+                navigator.vibrate(100);
+            }
+        }
+        
+        // Add intersection observer for nav highlighting
+        const sections = document.querySelectorAll('.section');
+        const navItems = document.querySelectorAll('.nav-item');
+        
+        const observerOptions = {
+            root: null,
+            rootMargin: '-100px',
+            threshold: 0.3
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const sectionId = entry.target.id;
+                    navItems.forEach(item => {
+                        item.classList.remove('active');
+                        if (item.textContent.toLowerCase().includes(sectionId) || 
+                            (sectionId === 'summary' && item.textContent.includes('Executive')) ||
+                            (sectionId === 'current' && item.textContent.includes('Current')) ||
+                            (sectionId === 'vision' && item.textContent.includes('Vision')) ||
+                            (sectionId === 'improvements' && item.textContent.includes('Improvements')) ||
+                            (sectionId === 'interactions' && item.textContent.includes('Interactions')) ||
+                            (sectionId === 'implementation' && item.textContent.includes('Implementation'))) {
+                            item.classList.add('active');
+                        }
+                    });
+                }
+            });
+        }, observerOptions);
+        
+        sections.forEach(section => {
+            observer.observe(section);
+        });
+    </script>
+</body>
+</html>

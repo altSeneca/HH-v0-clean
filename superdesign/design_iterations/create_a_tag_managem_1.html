@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tag Management Dialog - Variation 1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom safety orange accent */
+        .safety-orange { color: #FF6B35; }
+        .safety-orange-bg { background-color: #FF6B35; }
+        .safety-orange-border { border-color: #FF6B35; }
+        
+        /* Ensure minimum touch targets */
+        .touch-target { min-height: 44px; min-width: 44px; }
+        
+        /* Tag colors */
+        .tag-red { background-color: #EF4444; }
+        .tag-yellow { background-color: #F59E0B; }
+        .tag-blue { background-color: #3B82F6; }
+        .tag-green { background-color: #10B981; }
+        .tag-purple { background-color: #8B5CF6; }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+    <!-- Modal Overlay -->
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        
+        <!-- Modal Dialog -->
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+            
+            <!-- Header -->
+            <div class="safety-orange-bg text-white p-6 flex items-center justify-between">
+                <h2 class="text-2xl font-bold flex items-center">
+                    <svg class="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"/>
+                        <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"/>
+                    </svg>
+                    Manage Tags
+                </h2>
+                <button class="touch-target hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Search Bar -->
+            <div class="p-6 pb-4 border-b border-gray-200">
+                <div class="relative">
+                    <input type="text" 
+                           placeholder="Search tags..." 
+                           class="w-full touch-target px-12 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:safety-orange-border text-lg">
+                    <svg class="absolute left-4 top-3.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </div>
+            </div>
+            
+            <!-- Tag List -->
+            <div class="overflow-y-auto max-h-80 p-6 pt-4 pb-4">
+                
+                <!-- Tag Item 1 -->
+                <label class="flex items-center p-4 mb-3 bg-gray-50 rounded-lg border-2 border-gray-200 hover:border-gray-300 cursor-pointer transition-colors">
+                    <input type="checkbox" class="w-5 h-5 safety-orange text-orange-500 rounded focus:ring-orange-500 focus:ring-2">
+                    <div class="ml-4 flex-grow flex items-center justify-between">
+                        <div class="flex items-center">
+                            <span class="w-4 h-4 rounded-full tag-red mr-3"></span>
+                            <span class="text-lg font-medium text-gray-900">Fall Hazard</span>
+                        </div>
+                        <span class="text-sm text-gray-500">Used 47 times</span>
+                    </div>
+                </label>
+                
+                <!-- Tag Item 2 -->
+                <label class="flex items-center p-4 mb-3 bg-gray-50 rounded-lg border-2 border-gray-200 hover:border-gray-300 cursor-pointer transition-colors">
+                    <input type="checkbox" class="w-5 h-5 safety-orange text-orange-500 rounded focus:ring-orange-500 focus:ring-2">
+                    <div class="ml-4 flex-grow flex items-center justify-between">
+                        <div class="flex items-center">
+                            <span class="w-4 h-4 rounded-full tag-yellow mr-3"></span>
+                            <span class="text-lg font-medium text-gray-900">PPE Required</span>
+                        </div>
+                        <span class="text-sm text-gray-500">Used 89 times</span>
+                    </div>
+                </label>
+                
+                <!-- Tag Item 3 -->
+                <label class="flex items-center p-4 mb-3 bg-gray-50 rounded-lg border-2 border-gray-200 hover:border-gray-300 cursor-pointer transition-colors">
+                    <input type="checkbox" class="w-5 h-5 safety-orange text-orange-500 rounded focus:ring-orange-500 focus:ring-2">
+                    <div class="ml-4 flex-grow flex items-center justify-between">
+                        <div class="flex items-center">
+                            <span class="w-4 h-4 rounded-full tag-blue mr-3"></span>
+                            <span class="text-lg font-medium text-gray-900">Electrical</span>
+                        </div>
+                        <span class="text-sm text-gray-500">Used 23 times</span>
+                    </div>
+                </label>
+                
+                <!-- Tag Item 4 -->
+                <label class="flex items-center p-4 mb-3 bg-gray-50 rounded-lg border-2 border-gray-200 hover:border-gray-300 cursor-pointer transition-colors">
+                    <input type="checkbox" class="w-5 h-5 safety-orange text-orange-500 rounded focus:ring-orange-500 focus:ring-2">
+                    <div class="ml-4 flex-grow flex items-center justify-between">
+                        <div class="flex items-center">
+                            <span class="w-4 h-4 rounded-full tag-green mr-3"></span>
+                            <span class="text-lg font-medium text-gray-900">Heavy Equipment</span>
+                        </div>
+                        <span class="text-sm text-gray-500">Used 56 times</span>
+                    </div>
+                </label>
+                
+                <!-- Tag Item 5 -->
+                <label class="flex items-center p-4 mb-3 bg-gray-50 rounded-lg border-2 border-gray-200 hover:border-gray-300 cursor-pointer transition-colors">
+                    <input type="checkbox" class="w-5 h-5 safety-orange text-orange-500 rounded focus:ring-orange-500 focus:ring-2">
+                    <div class="ml-4 flex-grow flex items-center justify-between">
+                        <div class="flex items-center">
+                            <span class="w-4 h-4 rounded-full tag-purple mr-3"></span>
+                            <span class="text-lg font-medium text-gray-900">Confined Space</span>
+                        </div>
+                        <span class="text-sm text-gray-500">Used 12 times</span>
+                    </div>
+                </label>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="px-6 py-3 bg-gray-50 border-t border-b border-gray-200 flex gap-3">
+                <button class="safety-orange-bg text-white px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity touch-target">
+                    + Add New Tag
+                </button>
+                <button class="bg-gray-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-700 transition-colors touch-target">
+                    Edit Selected
+                </button>
+                <button class="bg-red-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-red-700 transition-colors touch-target">
+                    Delete Selected
+                </button>
+            </div>
+            
+            <!-- Create New Tag Section -->
+            <div class="p-6 bg-orange-50 border-t border-orange-200">
+                <h3 class="text-lg font-semibold mb-4 safety-orange">Create New Tag</h3>
+                <div class="flex gap-3 items-center">
+                    <input type="text" 
+                           placeholder="Enter tag name..." 
+                           class="flex-grow touch-target px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:safety-orange-border text-lg">
+                    
+                    <!-- Color Picker -->
+                    <div class="flex gap-2">
+                        <button class="w-10 h-10 rounded-lg tag-red border-2 border-gray-300 hover:border-gray-400"></button>
+                        <button class="w-10 h-10 rounded-lg tag-yellow border-2 border-gray-300 hover:border-gray-400"></button>
+                        <button class="w-10 h-10 rounded-lg tag-blue border-2 border-gray-300 hover:border-gray-400"></button>
+                        <button class="w-10 h-10 rounded-lg tag-green border-2 border-gray-300 hover:border-gray-400"></button>
+                        <button class="w-10 h-10 rounded-lg tag-purple border-2 border-gray-300 hover:border-gray-400"></button>
+                    </div>
+                    
+                    <button class="safety-orange-bg text-white px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity touch-target">
+                        Save Tag
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="p-6 bg-gray-100 flex justify-end gap-4">
+                <button class="px-8 py-3 border-2 border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-200 transition-colors touch-target">
+                    Cancel
+                </button>
+                <button class="safety-orange-bg text-white px-8 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity touch-target">
+                    Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

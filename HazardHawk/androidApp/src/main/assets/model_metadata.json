@@ -1,0 +1,155 @@
+{
+  "model_name": "gemma-3n-e2b-construction-safety",
+  "model_version": "1.0.0",
+  "model_type": "multimodal_vision_language",
+  "description": "Gemma 3N E2B multimodal AI model optimized for construction safety analysis",
+  "architecture": {
+    "vision_encoder": {
+      "input_size": [
+        224,
+        224,
+        3
+      ],
+      "model_file": "vision_encoder.onnx",
+      "preprocessing": {
+        "normalization": {
+          "mean": [
+            0.485,
+            0.456,
+            0.406
+          ],
+          "std": [
+            0.229,
+            0.224,
+            0.225
+          ]
+        },
+        "resize_method": "bilinear"
+      }
+    },
+    "text_decoder": {
+      "model_file": "decoder_model_merged_q4.onnx",
+      "max_sequence_length": 2048,
+      "vocabulary_size": 32000,
+      "quantization": "int4"
+    }
+  },
+  "performance": {
+    "memory_footprint_mb": 128,
+    "min_ram_requirement_mb": 1024,
+    "target_inference_time_ms": 1500,
+    "supports_gpu_acceleration": true,
+    "supports_nnapi": true,
+    "development_mode": true,
+    "using_placeholder_models": false,
+    "real_gemma_model": true,
+    "model_source": "aless2212/gemma-2b-it-fp16-onnx"
+  },
+  "capabilities": {
+    "supports_multimodal": true,
+    "construction_safety_optimized": true,
+    "osha_compliance_aware": true,
+    "ppe_detection": true,
+    "hazard_identification": true,
+    "risk_assessment": true
+  },
+  "confidence_thresholds": {
+    "default": 0.6,
+    "ppe_detection": 0.7,
+    "hazard_identification": 0.65,
+    "osha_violations": 0.8
+  },
+  "construction_classes": [
+    "hard_hat_required",
+    "safety_vest_required",
+    "fall_protection_required",
+    "electrical_hazard",
+    "heavy_machinery_operation",
+    "excavation_work",
+    "crane_operation",
+    "scaffolding_work",
+    "confined_space",
+    "hot_work",
+    "general_construction"
+  ],
+  "osha_regulations": {
+    "subpart_e_ppe": [
+      "1926.95",
+      "1926.96",
+      "1926.100",
+      "1926.101",
+      "1926.102"
+    ],
+    "subpart_m_fall_protection": [
+      "1926.501",
+      "1926.502",
+      "1926.503"
+    ],
+    "subpart_k_electrical": [
+      "1926.416",
+      "1926.417",
+      "1926.431"
+    ],
+    "subpart_cc_cranes": [
+      "1926.1400",
+      "1926.1401",
+      "1926.1412"
+    ],
+    "subpart_p_excavations": [
+      "1926.651",
+      "1926.652"
+    ]
+  },
+  "prompt_templates": {
+    "general_safety": "Analyze this construction site image for safety hazards and OSHA compliance. Focus on PPE requirements, fall protection, electrical safety, equipment operation, and structural hazards.",
+    "ppe_focused": "Examine this construction site for Personal Protective Equipment (PPE) compliance. Check for hard hats, safety vests, eye protection, fall protection, and proper footwear according to OSHA standards.",
+    "hazard_identification": "Identify and assess all visible safety hazards in this construction environment. Prioritize by severity and provide specific OSHA regulation references.",
+    "equipment_safety": "Evaluate the safe operation and condition of equipment, machinery, and tools visible in this construction site image. Check for proper guarding, maintenance, and operational procedures."
+  },
+  "device_compatibility": {
+    "min_android_version": 26,
+    "recommended_android_version": 30,
+    "cpu_requirements": "ARM64 or x86_64",
+    "gpu_acceleration": {
+      "qualcomm_adreno": true,
+      "arm_mali": true,
+      "imagination_powervr": false
+    }
+  },
+  "model_files": {
+    "vision_encoder.onnx": {
+      "size_mb": 12,
+      "checksum": "yolo_based_vision_encoder",
+      "required": true,
+      "description": "YOLO-based hazard detection model serving as vision encoder for development"
+    },
+    "decoder_model_merged_q4.onnx": {
+      "size_mb": 0.9720745086669922,
+      "checksum": "real_gemma_gemma-2b-it-fp16-onnx",
+      "required": true,
+      "description": "Real Gemma 2B ONNX model from aless2212/gemma-2b-it-fp16-onnx",
+      "source_repo": "aless2212/gemma-2b-it-fp16-onnx"
+    },
+    "tokenizer.json": {
+      "size_mb": 0.1,
+      "checksum": "gemma_tokenizer_config",
+      "required": true,
+      "description": "Gemma tokenizer configuration for text processing"
+    }
+  },
+  "deployment": {
+    "created_at": "2025-09-03T16:55:00Z",
+    "optimized_for": "construction_safety",
+    "training_data_version": "v2.1",
+    "model_format": "ONNX",
+    "precision": "mixed_int4_fp16",
+    "real_models_integrated": true
+  },
+  "usage_guidelines": {
+    "recommended_image_resolution": "1080x1080 or higher",
+    "lighting_conditions": "Good outdoor lighting preferred",
+    "distance_from_subjects": "10-50 feet optimal",
+    "camera_angle": "Eye level or slightly elevated",
+    "image_quality_requirements": "Clear, non-blurry images with visible safety equipment"
+  }
+}

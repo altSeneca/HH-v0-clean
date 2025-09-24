@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HazardHawk Gemini Vision API Build Issues - Comprehensive Analysis & Fix Plan</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .header .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .toc {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .toc h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+        
+        .toc ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .toc li {
+            margin: 8px 0;
+        }
+        
+        .toc a {
+            color: #667eea;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+        
+        .toc a:hover {
+            background: #667eea;
+            color: white;
+            transform: translateX(5px);
+        }
+        
+        .section {
+            background: white;
+            margin-bottom: 25px;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 2em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .section h3 {
+            color: #764ba2;
+            margin: 25px 0 15px 0;
+            font-size: 1.4em;
+        }
+        
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+        }
+        
+        .error-list {
+            background: #fff5f5;
+            border-left: 4px solid #e53e3e;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .warning-list {
+            background: #fffaf0;
+            border-left: 4px solid #d69e2e;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .success-list {
+            background: #f0fff4;
+            border-left: 4px solid #38a169;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .info-box {
+            background: #ebf8ff;
+            border-left: 4px solid #3182ce;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .priority-high {
+            border-left: 4px solid #e53e3e;
+            background: #fff5f5;
+        }
+        
+        .priority-medium {
+            border-left: 4px solid #d69e2e;
+            background: #fffaf0;
+        }
+        
+        .priority-low {
+            border-left: 4px solid #38a169;
+            background: #f0fff4;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        .implementation-timeline {
+            display: grid;
+            grid-template-columns: 1fr 3fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .timeline-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .checklist {
+            list-style: none;
+        }
+        
+        .checklist li {
+            margin: 8px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+        
+        .checklist li::before {
+            content: "☐";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-size: 1.2em;
+        }
+        
+        .checklist li.completed::before {
+            content: "✅";
+        }
+        
+        .file-reference {
+            font-family: 'Monaco', 'Consolas', monospace;
+            background: #f1f3f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 HazardHawk Build Issues Analysis</h1>
+            <div class="subtitle">Comprehensive Fix Plan for Gemini Vision API Integration</div>
+            <div style="margin-top: 20px; font-size: 1em; opacity: 0.8;">
+                Generated: September 4, 2025 at 12:50 PM<br>
+                Project: HH-v0 | Branch: feature/enhanced-photo-gallery-v2<br>
+                Philosophy: Simple, Loveable, Complete
+            </div>
+        </div>
+
+        <div class="toc">
+            <h2>📋 Table of Contents</h2>
+            <ul>
+                <li><a href="#executive-summary">🎯 Executive Summary</a></li>
+                <li><a href="#current-state">📊 Current State Analysis</a></li>
+                <li><a href="#root-cause-analysis">🔍 Root Cause Analysis</a></li>
+                <li><a href="#gemini-integration-research">🧠 Gemini Integration Research</a></li>
+                <li><a href="#systematic-fix-plan">🛠️ Systematic Fix Plan</a></li>
+                <li><a href="#implementation-roadmap">🗺️ Implementation Roadmap</a></li>
+                <li><a href="#risk-mitigation">⚠️ Risk Mitigation</a></li>
+                <li><a href="#testing-strategy">🧪 Testing Strategy</a></li>
+                <li><a href="#success-criteria">✅ Success Criteria</a></li>
+            </ul>
+        </div>
+
+        <div id="executive-summary" class="section">
+            <h2>🎯 Executive Summary</h2>
+            
+            <div class="info-box">
+                <h3>Current Status: Build Failures Across All Variants</h3>
+                <p>The HazardHawk project is experiencing comprehensive build failures following the recent Gemini Vision API implementation plan. Analysis reveals systematic issues with missing dependencies, unresolved references, and architectural misalignment.</p>
+            </div>
+
+            <h3>Key Findings</h3>
+            <ul>
+                <li><strong>Root Cause:</strong> Missing <span class="file-reference">GemmaAIServiceFacade</span> implementation despite references throughout the codebase</li>
+                <li><strong>Dependency Issues:</strong> Version mismatches between shared module (Kotlin 1.9.20) and androidApp (Kotlin 1.9.22)</li>
+                <li><strong>Missing Imports:</strong> UI components missing critical Compose imports (BorderStroke, clickable)</li>
+                <li><strong>AI Module Conflicts:</strong> Complex AI architecture with excluded modules causing reference errors</li>
+            </ul>
+
+            <h3>Strategic Approach</h3>
+            <div class="success-list">
+                <p><strong>Simple:</strong> Create minimal GemmaAIServiceFacade implementation using existing patterns</p>
+                <p><strong>Loveable:</strong> Maintain all existing functionality while fixing build issues</p>
+                <p><strong>Complete:</strong> Systematic resolution ensuring production readiness</p>
+            </div>
+
+            <h3>Expected Timeline</h3>
+            <table>
+                <tr><th>Phase</th><th>Duration</th><th>Deliverable</th></tr>
+                <tr><td>Immediate Fixes</td><td>30-60 minutes</td><td>Buildable application</td></tr>
+                <tr><td>Dependency Cleanup</td><td>30 minutes</td><td>Aligned versions</td></tr>
+                <tr><td>AI Architecture Restore</td><td>2-4 hours</td><td>Full functionality</td></tr>
+                <tr><td>Testing & Validation</td><td>1 hour</td><td>Production ready</td></tr>
+            </table>
+        </div>
+
+        <div id="current-state" class="section">
+            <h2>📊 Current State Analysis</h2>
+
+            <h3>Build Error Categories</h3>
+            
+            <div class="error-list priority-high">
+                <h4>🚨 Critical Errors (Blocking all builds)</h4>
+                <ul>
+                    <li><strong>Unresolved reference: GemmaAIServiceFacade</strong>
+                        <ul>
+                            <li>CameraGalleryActivity.kt:37</li>
+                            <li>CameraScreen.kt:39, 111</li>
+                            <li>Referenced throughout but implementation missing</li>
+                        </ul>
+                    </li>
+                    <li><strong>Missing AI Module References</strong>
+                        <ul>
+                            <li>PerformanceOptimizedAnalysisEngine</li>
+                            <li>OptimizationStatus, BenchmarkValidation</li>
+                            <li>PhotoMetadata, AnalysisUrgency</li>
+                            <li>ResourceManager, PerformanceMonitor</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="warning-list priority-medium">
+                <h4>⚠️ Dependency Issues</h4>
+                <ul>
+                    <li><strong>Kotlin Version Mismatch:</strong>
+                        <ul>
+                            <li>Shared module: 1.9.20</li>
+                            <li>Android app: 1.9.22</li>
+                        </ul>
+                    </li>
+                    <li><strong>ONNX Runtime Alignment:</strong>
+                        <ul>
+                            <li>Both modules now use 1.17.1 (aligned)</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="info-box">
+                <h4>✅ Working Components</h4>
+                <ul>
+                    <li>Shared Kotlin Multiplatform module compiles successfully</li>
+                    <li>Core app functionality (camera, database, UI) intact</li>
+                    <li>CameraX integration working</li>
+                    <li>Jetpack Compose UI components functional</li>
+                    <li>ProGuard configuration optimized</li>
+                </ul>
+            </div>
+
+            <h3>Architecture Assessment</h3>
+            
+            <div class="code-block">
+Current AI Service Architecture:
+├── AIServiceFacade (Interface) ✅ EXISTS
+├── DefaultAIServiceFacade (Simple Implementation) ✅ EXISTS  
+├── GemmaAIServiceFacade (Expected Implementation) ❌ MISSING
+├── YOLOHazardDetector (Fallback) ✅ EXISTS
+└── HazardTagMapper (Tag Processing) ✅ EXISTS
+
+Build Configuration:
+├── shared/build.gradle.kts ✅ COMPILES (with exclusions)
+├── androidApp/build.gradle.kts ❌ FAILS (missing references)
+└── Gemini Integration ⚠️ PLANNED BUT INCOMPLETE
+            </div>
+
+            <h3>Gemini Integration Status</h3>
+            <table>
+                <tr><th>Component</th><th>Status</th><th>Notes</th></tr>
+                <tr><td>Firebase AI Logic SDK</td><td>✅ Added to shared module</td><td>Version 16.0.2</td></tr>
+                <tr><td>Generative AI Client</td><td>✅ Added to shared module</td><td>Version 0.9.0</td></tr>
+                <tr><td>GeminiVisionAnalyzer</td><td>❌ Missing</td><td>Planned but not implemented</td></tr>
+                <tr><td>Security Manager</td><td>❌ Missing</td><td>For API key management</td></tr>
+                <tr><td>Hybrid AI Service</td><td>❌ Missing</td><td>Cloud + Local integration</td></tr>
+            </table>
+        </div>
+
+        <div id="root-cause-analysis" class="section">
+            <h2>🔍 Root Cause Analysis</h2>
+
+            <h3>Primary Issues</h3>
+
+            <div class="error-list priority-high">
+                <h4>1. Missing GemmaAIServiceFacade Implementation</h4>
+                <p><strong>Impact:</strong> Complete build failure across all variants</p>
+                <p><strong>Root Cause:</strong> The comprehensive implementation plan created references to GemmaAIServiceFacade throughout the codebase but never implemented the actual class.</p>
+                
+                <div class="code-block">
+// Expected but missing in: HazardHawk/androidApp/src/main/java/com/hazardhawk/ai/
+class GemmaAIServiceFacade(
+    private val gemmaAnalyzer: GemmaVisionAnalyzer,
+    private val yoloDetector: YOLOHazardDetector,
+    private val tagMapper: HazardTagMapper
+) : AIServiceFacade {
+    // Implementation needed
+}
+                </div>
+            </div>
+
+            <div class="warning-list priority-medium">
+                <h4>2. Excluded AI Modules Creating Reference Gaps</h4>
+                <p><strong>Impact:</strong> Unresolved references in OptimizedAnalysisIntegration.kt and related files</p>
+                <p><strong>Root Cause:</strong> Build exclusions in shared module removed classes still referenced in androidApp module.</p>
+                
+                <div class="code-block">
+// Excluded in shared/build.gradle.kts but referenced in androidApp:
+kotlin.exclude("**/PerformanceOptimizedAnalysisEngine.kt")
+kotlin.exclude("**/ProductionAIService.kt")
+kotlin.exclude("**/PhotoCacheManager.kt")
+kotlin.exclude("**/ResourceManager.kt")
+kotlin.exclude("**/PerformanceMonitor.kt")
+                </div>
+            </div>
+
+            <div class="info-box priority-low">
+                <h4>3. Incomplete Gemini Integration Framework</h4>
+                <p><strong>Impact:</strong> No cloud AI processing capability</p>
+                <p><strong>Root Cause:</strong> Implementation plan added dependencies but didn't create the actual integration classes.</p>
+            </div>
+
+            <h3>Cascade Effect Analysis</h3>
+            
+            <div class="code-block">
+Failure Cascade:
+1. GemmaAIServiceFacade missing
+   ↓
+2. CameraScreen.kt cannot instantiate AI service
+   ↓
+3. Camera functionality breaks
+   ↓
+4. OptimizedAnalysisIntegration.kt has unresolved references
+   ↓
+5. All build variants fail compilation
+   ↓
+6. Application cannot be built or tested
+            </div>
+
+            <h3>Dependency Resolution Issues</h3>
+            <table>
+                <tr><th>Issue</th><th>Current State</th><th>Required Fix</th></tr>
+                <tr><td>Kotlin Plugin Version</td><td>Shared: 1.9.20<br>Android: 1.9.22</td><td>Align to 1.9.22</td></tr>
+                <tr><td>ONNX Runtime</td><td>Both: 1.17.1</td><td>✅ Already aligned</td></tr>
+                <tr><td>Compose Imports</td><td>Missing in several files</td><td>Add missing imports</td></tr>
+                <tr><td>Firebase AI Logic</td><td>Added to shared only</td><td>Verify androidApp access</td></tr>
+            </table>
+        </div>
+
+        <div id="gemini-integration-research" class="section">
+            <h2>🧠 Gemini Integration Research</h2>
+
+            <h3>Current State of Gemini AI SDK (2025)</h3>
+            
+            <div class="success-list">
+                <h4>Firebase AI Logic (Recommended Approach)</h4>
+                <p>Firebase AI Logic and its client SDKs were renamed from "Vertex AI in Firebase" in May 2025. This unified SDK supports:</p>
+                <ul>
+                    <li>Swift for Apple platforms</li>
+                    <li>Kotlin & Java for Android</li>
+                    <li>JavaScript for web</li>
+                    <li>Dart for Flutter</li>
+                    <li>Unity support</li>
+                </ul>
+            </div>
+
+            <div class="info-box">
+                <h4>Kotlin Multiplatform Support</h4>
+                <p>Two main integration paths for KMP:</p>
+                <ol>
+                    <li><strong>Official Firebase AI Logic SDK</strong> - Primary recommendation</li>
+                    <li><strong>Community KMP SDK</strong> - github.com/PatilShreyas/generative-ai-kmp</li>
+                </ol>
+            </div>
+
+            <h3>Integration Architecture for HazardHawk</h3>
+            
+            <div class="code-block">
+Recommended Hybrid Architecture:
+
+┌─────────────────────────────────────┐
+│           UI Layer                  │
+│  ┌─────────────────────────────────┐│
+│  │     CameraScreen.kt             ││
+│  │     CameraGalleryActivity.kt    ││
+│  └─────────────────────────────────┘│
+└─────────────────────────────────────┘
+                    │
+┌─────────────────────────────────────┐
+│        Service Layer                │
+│  ┌─────────────────────────────────┐│
+│  │   HybridAIServiceFacade         ││
+│  │   ├── GeminiVisionAnalyzer      ││
+│  │   ├── GemmaVisionAnalyzer (KMP) ││
+│  │   └── YOLOHazardDetector        ││
+│  └─────────────────────────────────┘│
+└─────────────────────────────────────┘
+                    │
+┌─────────────────────────────────────┐
+│       Infrastructure               │
+│  ┌─────────────────────────────────┐│
+│  │   Firebase AI Logic SDK         ││
+│  │   ONNX Runtime (Local)          ││
+│  │   Security Manager              ││
+│  └─────────────────────────────────┘│
+└─────────────────────────────────────┘
+            </div>
+
+            <h3>Security & Performance Considerations</h3>
+            
+            <div class="warning-list">
+                <h4>Critical Security Requirements</h4>
+                <ul>
+                    <li><strong>API Key Management:</strong> Android Keystore encryption</li>
+                    <li><strong>Certificate Pinning:</strong> Prevent MITM attacks</li>
+                    <li><strong>Input Validation:</strong> Prevent prompt injection</li>
+                    <li><strong>Data Privacy:</strong> OSHA compliance for construction data</li>
+                </ul>
+            </div>
+
+            <h3>Performance Optimization Strategies</h3>
+            <table>
+                <tr><th>Strategy</th><th>Benefit</th><th>Implementation</th></tr>
+                <tr><td>Smart Routing</td><td>Cost reduction</td><td>Local → Cloud based on complexity</td></tr>
+                <tr><td>Intelligent Caching</td><td>Speed + Cost</td><td>LRU cache for similar images</td></tr>
+                <tr><td>Batch Processing</td><td>50% cost reduction</td><td>Queue multiple images</td></tr>
+                <tr><td>Image Preprocessing</td><td>Accuracy + Speed</td><td>Optimize size/quality for AI</td></tr>
+            </table>
+        </div>
+
+        <div id="systematic-fix-plan" class="section">
+            <h2>🛠️ Systematic Fix Plan</h2>
+
+            <h3>Phase 1: Immediate Build Fixes (Priority 1 - 30-60 minutes)</h3>
+            
+            <div class="error-list priority-high">
+                <h4>Step 1.1: Create Missing GemmaAIServiceFacade</h4>
+                <p><strong>File:</strong> <span class="file-reference">HazardHawk/androidApp/src/main/java/com/hazardhawk/ai/GemmaAIServiceFacade.kt</span></p>
+                <div class="code-block">
+class GemmaAIServiceFacade(
+    private val gemmaAnalyzer: GemmaVisionAnalyzer? = null,
+    private val yoloDetector: YOLOHazardDetector? = null,
+    private val tagMapper: HazardTagMapper? = null
+) : AIServiceFacade {
+    
+    override suspend fun analyzePhotoWithTags(
+        data: ByteArray, 
+        width: Int, 
+        height: Int, 
+        workType: WorkType
+    ): PhotoAnalysisWithTags {
+        // Use existing DefaultAIServiceFacade as fallback
+        return DefaultAIServiceFacade(
+            detector = yoloDetector ?: YOLOHazardDetector(),
+            tagMapper = tagMapper ?: HazardTagMapper()
+        ).analyzePhotoWithTags(data, width, height, workType)
+    }
+    
+    override suspend fun initialize(): Result&lt;Unit&gt; = Result.success(Unit)
+    override suspend fun getModelStatus(): ModelStatus = ModelStatus(true, "Gemma", null)
+    override suspend fun release() {}
+}
+                </div>
+            </div>
+
+            <div class="warning-list priority-medium">
+                <h4>Step 1.2: Fix Kotlin Version Alignment</h4>
+                <p><strong>File:</strong> <span class="file-reference">HazardHawk/shared/build.gradle.kts</span></p>
+                <div class="code-block">
+// Change line 5 from:
+kotlin("plugin.serialization") version "1.9.20"
+
+// To:
+kotlin("plugin.serialization") version "1.9.22"
+                </div>
+            </div>
+
+            <div class="info-box priority-medium">
+                <h4>Step 1.3: Add Missing Compose Imports</h4>
+                <p>Add to files with BorderStroke/clickable errors:</p>
+                <div class="code-block">
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable  
+import androidx.compose.animation.core.scale
+import kotlinx.coroutines.launch
+                </div>
+            </div>
+
+            <h3>Phase 2: Stub Missing AI Modules (Priority 2 - 30 minutes)</h3>
+            
+            <div class="warning-list">
+                <h4>Create Stub Implementations</h4>
+                <p>For files still referencing excluded modules, create minimal stub implementations:</p>
+                
+                <div class="code-block">
+// OptimizedAnalysisIntegration.kt - Replace problematic references
+val aiService: AIServiceFacade? = null  // Replace complex initialization
+
+// Alternative: Create stub classes
+data class PhotoMetadata(val width: Int, val height: Int)
+enum class AnalysisUrgency { LOW, MEDIUM, HIGH }
+class ResourceManager { companion object { fun getInstance() = ResourceManager() } }
+                </div>
+            </div>
+
+            <h3>Phase 3: Dependency Cleanup (Priority 3 - 30 minutes)</h3>
+
+            <div class="success-list">
+                <h4>Remove Duplicate Dependencies</h4>
+                <p>Clean up androidApp/build.gradle.kts by removing duplicates from shared module:</p>
+                <ul>
+                    <li>Remove duplicate kotlinx-serialization-json</li>
+                    <li>Remove duplicate kotlinx-datetime</li>
+                    <li>Remove duplicate koin dependencies (if managed in shared)</li>
+                </ul>
+            </div>
+
+            <h3>Phase 4: Gemini Integration Framework (Priority 4 - 2-4 hours)</h3>
+
+            <div class="info-box">
+                <h4>Long-term AI Architecture</h4>
+                <p>Once build is working, implement proper Gemini integration:</p>
+                
+                <ol>
+                    <li><strong>GeminiVisionAnalyzer:</strong> Cloud AI analysis</li>
+                    <li><strong>SecurityManager:</strong> API key management</li>
+                    <li><strong>HybridAIServiceFacade:</strong> Smart routing logic</li>
+                    <li><strong>Configuration UI:</strong> Toggle cloud/local processing</li>
+                </ol>
+            </div>
+
+            <h3>Implementation Checklist</h3>
+            
+            <ul class="checklist">
+                <li>Create GemmaAIServiceFacade.kt with basic implementation</li>
+                <li>Align Kotlin version to 1.9.22 in shared module</li>
+                <li>Add missing Compose imports to UI files</li>
+                <li>Create stub implementations for missing AI modules</li>
+                <li>Test build success across all variants</li>
+                <li>Remove duplicate dependencies</li>
+                <li>Verify app launches and camera functions</li>
+                <li>Plan Gemini integration implementation</li>
+            </ul>
+        </div>
+
+        <div id="implementation-roadmap" class="section">
+            <h2>🗺️ Implementation Roadmap</h2>
+
+            <div class="implementation-timeline">
+                <div class="timeline-item priority-high">
+                    <h4>⚡ Immediate (Next 1 Hour)</h4>
+                    <ul>
+                        <li>Create GemmaAIServiceFacade stub</li>
+                        <li>Fix Kotlin version mismatch</li>
+                        <li>Add missing imports</li>
+                        <li>Verify build success</li>
+                    </ul>
+                </div>
+                
+                <div class="timeline-item priority-medium">
+                    <h4>📋 Short Term (Next 4 Hours)</h4>
+                    <ul>
+                        <li>Clean up dependency duplicates</li>
+                        <li>Create proper AI module stubs</li>
+                        <li>Test all functionality</li>
+                        <li>Plan Gemini integration</li>
+                    </ul>
+                </div>
+                
+                <div class="timeline-item priority-low">
+                    <h4>🚀 Long Term (Next Week)</h4>
+                    <ul>
+                        <li>Implement full Gemini integration</li>
+                        <li>Add security framework</li>
+                        <li>Create configuration UI</li>
+                        <li>Performance optimization</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Detailed Implementation Steps</h3>
+            
+            <table>
+                <tr><th>Step</th><th>Duration</th><th>Dependencies</th><th>Risk Level</th></tr>
+                <tr><td>Create GemmaAIServiceFacade</td><td>15 min</td><td>None</td><td>Low</td></tr>
+                <tr><td>Fix version alignment</td><td>5 min</td><td>None</td><td>Low</td></tr>
+                <tr><td>Add missing imports</td><td>15 min</td><td>None</td><td>Low</td></tr>
+                <tr><td>Test build success</td><td>10 min</td><td>Previous steps</td><td>Medium</td></tr>
+                <tr><td>Create AI module stubs</td><td>30 min</td><td>Build success</td><td>Medium</td></tr>
+                <tr><td>Clean dependencies</td><td>20 min</td><td>Build success</td><td>Low</td></tr>
+                <tr><td>Full Gemini integration</td><td>4-6 hours</td><td>All previous</td><td>High</td></tr>
+            </table>
+        </div>
+
+        <div id="risk-mitigation" class="section">
+            <h2>⚠️ Risk Mitigation</h2>
+
+            <h3>Identified Risks & Mitigation Strategies</h3>
+
+            <div class="error-list">
+                <h4>High Risk: Build Still Fails After Fixes</h4>
+                <p><strong>Probability:</strong> Medium | <strong>Impact:</strong> High</p>
+                <p><strong>Mitigation:</strong></p>
+                <ul>
+                    <li>Test each fix incrementally</li>
+                    <li>Maintain working branch for rollback</li>
+                    <li>Use feature flags for new components</li>
+                    <li>Have fallback to DefaultAIServiceFacade</li>
+                </ul>
+            </div>
+
+            <div class="warning-list">
+                <h4>Medium Risk: Performance Degradation</h4>
+                <p><strong>Probability:</strong> Low | <strong>Impact:</strong> Medium</p>
+                <p><strong>Mitigation:</strong></p>
+                <ul>
+                    <li>Use existing performance monitoring</li>
+                    <li>Implement lazy loading for AI components</li>
+                    <li>Memory profiling after changes</li>
+                    <li>Benchmark critical paths</li>
+                </ul>
+            </div>
+
+            <div class="info-box">
+                <h4>Low Risk: Integration Complexity</h4>
+                <p><strong>Probability:</strong> High | <strong>Impact:</strong> Low</p>
+                <p><strong>Mitigation:</strong></p>
+                <ul>
+                    <li>Phase implementation over multiple iterations</li>
+                    <li>Use existing architecture patterns</li>
+                    <li>Comprehensive testing at each stage</li>
+                    <li>Clear rollback procedures documented</li>
+                </ul>
+            </div>
+
+            <h3>Rollback Strategy</h3>
+            
+            <div class="code-block">
+Rollback Levels:
+1. Feature Flag Disable (30 seconds)
+   - Disable Gemini integration via BuildConfig
+   
+2. Code Rollback (5 minutes) 
+   - Revert to working commit
+   
+3. Architectural Rollback (1 hour)
+   - Remove all Gemini integration
+   - Use only local AI processing
+            </div>
+        </div>
+
+        <div id="testing-strategy" class="section">
+            <h2>🧪 Testing Strategy</h2>
+
+            <h3>Testing Pyramid for Build Fixes</h3>
+            
+            <div class="success-list">
+                <h4>Level 1: Build Verification (70%)</h4>
+                <ul>
+                    <li>Gradle build success across all variants</li>
+                    <li>Compilation without errors or critical warnings</li>
+                    <li>APK generation successful</li>
+                    <li>Installation on test devices</li>
+                </ul>
+            </div>
+
+            <div class="warning-list">
+                <h4>Level 2: Integration Testing (20%)</h4>
+                <ul>
+                    <li>AI service initialization</li>
+                    <li>Camera integration functionality</li>
+                    <li>Photo analysis pipeline</li>
+                    <li>UI responsiveness</li>
+                </ul>
+            </div>
+
+            <div class="info-box">
+                <h4>Level 3: End-to-End Testing (10%)</h4>
+                <ul>
+                    <li>Complete photo capture and analysis workflow</li>
+                    <li>Gallery functionality</li>
+                    <li>Report generation</li>
+                    <li>Performance under load</li>
+                </ul>
+            </div>
+
+            <h3>Test Execution Plan</h3>
+            
+            <table>
+                <tr><th>Test Phase</th><th>Commands</th><th>Success Criteria</th></tr>
+                <tr><td>Build Test</td><td><code>./gradlew build</code></td><td>Zero compilation errors</td></tr>
+                <tr><td>Assembly Test</td><td><code>./gradlew assembleDebug</code></td><td>APK generated successfully</td></tr>
+                <tr><td>Install Test</td><td><code>./gradlew installDebug</code></td><td>App installs on device</td></tr>
+                <tr><td>Launch Test</td><td>Manual app launch</td><td>App starts without crashes</td></tr>
+                <tr><td>Camera Test</td><td>Manual camera use</td><td>Photo capture works</td></tr>
+                <tr><td>AI Test</td><td>Manual photo analysis</td><td>Analysis completes</td></tr>
+            </table>
+
+            <h3>Automated Testing Commands</h3>
+            
+            <div class="code-block">
+# Quick validation sequence (5-10 minutes)
+./gradlew clean
+./gradlew :shared:build
+./gradlew :androidApp:assembleDevelopmentStandardDebug  
+./gradlew :androidApp:installDevelopmentStandardDebug
+
+# Full test suite (30-45 minutes)
+./gradlew test
+./gradlew :androidApp:testDevelopmentStandardDebugUnitTest
+./gradlew :androidApp:connectedDevelopmentStandardDebugAndroidTest
+
+# Performance validation
+./gradlew :androidApp:benchmarkDevelopmentStandardRelease
+            </div>
+        </div>
+
+        <div id="success-criteria" class="section">
+            <h2>✅ Success Criteria</h2>
+
+            <h3>Build Success Metrics</h3>
+            
+            <div class="success-list">
+                <h4>Primary Success Criteria (Must Have)</h4>
+                <ul class="checklist">
+                    <li>All Gradle build variants compile without errors</li>
+                    <li>APK generation successful for all environments</li>
+                    <li>Application installs and launches on test devices</li>
+                    <li>Camera functionality fully operational</li>
+                    <li>Photo analysis pipeline working (local AI)</li>
+                    <li>Gallery and UI components responsive</li>
+                </ul>
+            </div>
+
+            <div class="info-box">
+                <h4>Secondary Success Criteria (Nice to Have)</h4>
+                <ul class="checklist">
+                    <li>No compilation warnings for new code</li>
+                    <li>Performance metrics maintained or improved</li>
+                    <li>Memory usage within acceptable bounds</li>
+                    <li>Test coverage maintained above 80%</li>
+                    <li>Documentation updated for new components</li>
+                </ul>
+            </div>
+
+            <h3>Quality Gates</h3>
+            
+            <table>
+                <tr><th>Gate</th><th>Metric</th><th>Threshold</th><th>Status</th></tr>
+                <tr><td>Build Success</td><td>Compilation errors</td><td>0</td><td>🎯 Target</td></tr>
+                <tr><td>Performance</td><td>App launch time</td><td>&lt;3 seconds</td><td>🎯 Target</td></tr>
+                <tr><td>Memory</td><td>Peak usage</td><td>&lt;512MB baseline</td><td>🎯 Target</td></tr>
+                <tr><td>Functionality</td><td>Core features</td><td>100% working</td><td>🎯 Target</td></tr>
+                <tr><td>Stability</td><td>Crash rate</td><td>0% in testing</td><td>🎯 Target</td></tr>
+            </table>
+
+            <h3>Acceptance Criteria</h3>
+            
+            <div class="checklist">
+                <li class="completed">Comprehensive research completed</li>
+                <li class="completed">Root cause analysis documented</li>
+                <li class="completed">Systematic fix plan created</li>
+                <li>GemmaAIServiceFacade implementation created</li>
+                <li>Kotlin version alignment completed</li>
+                <li>Missing imports resolved</li>
+                <li>All build variants successful</li>
+                <li>Camera and photo analysis verified working</li>
+                <li>Performance validation passed</li>
+                <li>Documentation updated</li>
+            </div>
+
+            <div class="success-list">
+                <h4>Definition of Done</h4>
+                <p>The build issue resolution is considered complete when:</p>
+                <ol>
+                    <li>All identified build errors are resolved</li>
+                    <li>Application builds and installs successfully</li>
+                    <li>Core functionality (camera, AI analysis) is verified working</li>
+                    <li>No regressions in existing features</li>
+                    <li>Code follows project architecture patterns</li>
+                    <li>Basic tests pass successfully</li>
+                    <li>Ready for next phase of Gemini integration</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="section" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+            <h2 style="color: white; border-bottom: 3px solid white;">🎯 Next Steps</h2>
+            
+            <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; margin: 20px 0;">
+                <h3>Immediate Actions</h3>
+                <ol>
+                    <li>Execute Phase 1 fixes (GemmaAIServiceFacade, version alignment, imports)</li>
+                    <li>Test build success across all variants</li>
+                    <li>Verify application functionality</li>
+                    <li>Document any remaining issues</li>
+                </ol>
+            </div>
+
+            <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">
+                <h3>Long-term Strategy</h3>
+                <p>Once build issues are resolved, proceed with the comprehensive Gemini Vision API integration following the original implementation plan, ensuring security-first approach and maintaining the construction worker-focused user experience.</p>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 40px; padding: 20px; background: rgba(255,255,255,0.8); border-radius: 10px;">
+            <p><strong>Document Generated:</strong> September 4, 2025 at 12:50 PM</p>
+            <p><strong>Research Duration:</strong> 45 minutes | <strong>Total Analysis Depth:</strong> Comprehensive</p>
+            <p><strong>Next Update:</strong> After implementation completion</p>
+        </div>
+    </div>
+</body>
+</html>

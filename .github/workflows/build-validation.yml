@@ -1,0 +1,423 @@
+name: Build Validation & Regression Prevention
+
+on:
+  push:
+    branches: [ main, develop, 'feature/*' ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM
+  workflow_dispatch:
+
+env:
+  JAVA_VERSION: '17'
+  GRADLE_OPTS: '-Xmx6g -XX:+UseG1GC -XX:+UseStringDeduplication'
+
+jobs:
+  quick-validation:
+    name: Quick Build Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup JDK
+      uses: actions/setup-java@v3
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'adopt'
+        
+    - name: Setup Gradle cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+          
+    - name: Grant execute permission
+      run: |
+        cd HazardHawk
+        chmod +x gradlew
+        
+    - name: Pre-commit Build Check
+      run: |
+        cd HazardHawk
+        echo "🔍 Quick compilation check..."
+        ./gradlew compileDebugKotlin --no-daemon --stacktrace
+        
+    - name: Dependency Conflict Detection
+      run: |
+        cd HazardHawk
+        echo "📊 Checking for dependency conflicts..."
+        ./gradlew :shared:dependencies | tee shared_deps.log
+        ./gradlew :androidApp:dependencies | tee android_deps.log
+        
+        # Check for known problematic patterns
+        if grep -q "FAILED" shared_deps.log android_deps.log; then
+          echo "❌ Dependency resolution failures detected"
+          exit 1
+        fi
+        
+    - name: KMP Target Validation
+      run: |
+        cd HazardHawk
+        echo "🎯 Validating KMP targets..."
+        ./gradlew :shared:compileKotlinAndroid :shared:compileKotlinIosX64 --parallel
+        
+    - name: Upload quick validation results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: quick-validation-logs
+        path: |
+          HazardHawk/shared_deps.log
+          HazardHawk/android_deps.log
+
+  comprehensive-build-matrix:
+    name: Comprehensive Build Matrix
+    needs: quick-validation
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        java-version: [17, 21]
+        configuration: [debug, release]
+        
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup JDK ${{ matrix.java-version }}
+      uses: actions/setup-java@v3
+      with:
+        java-version: ${{ matrix.java-version }}
+        distribution: 'adopt'
+        
+    - name: Setup Gradle cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-${{ matrix.java-version }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ matrix.java-version }}-gradle-
+          
+    - name: Build Performance Benchmark
+      run: |
+        cd HazardHawk
+        chmod +x gradlew
+        
+        echo "⏱️ Benchmarking build performance..."
+        echo "OS: ${{ matrix.os }}, Java: ${{ matrix.java-version }}, Config: ${{ matrix.configuration }}"
+        
+        # Measure shared module build time
+        start_time=$(date +%s%3N)
+        ./gradlew :shared:build --build-cache --parallel
+        shared_time=$(($(date +%s%3N) - start_time))
+        
+        # Measure full Android build time
+        start_time=$(date +%s%3N)
+        ./gradlew :androidApp:assemble${{ matrix.configuration }} --build-cache --parallel
+        android_time=$(($(date +%s%3N) - start_time))
+        
+        echo "shared.build.time.ms=$shared_time" >> build_benchmark.properties
+        echo "android.${{ matrix.configuration }}.build.time.ms=$android_time" >> build_benchmark.properties
+        
+        # Validate against performance requirements
+        if [ $shared_time -gt 45000 ]; then
+          echo "❌ Shared build time regression: ${shared_time}ms > 45000ms"
+          exit 1
+        fi
+        
+        if [ $android_time -gt 180000 ]; then
+          echo "❌ Android build time regression: ${android_time}ms > 180000ms"
+          exit 1
+        fi
+        
+        echo "✅ Build performance within acceptable limits"
+        
+    - name: Upload performance benchmarks
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-benchmarks-${{ matrix.os }}-java${{ matrix.java-version }}-${{ matrix.configuration }}
+        path: HazardHawk/build_benchmark.properties
+
+  regression-testing:
+    name: Regression Prevention Tests
+    needs: quick-validation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup JDK
+      uses: actions/setup-java@v3
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'adopt'
+        
+    - name: Setup Gradle cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+          
+    - name: Run Regression Prevention Tests
+      run: |
+        cd HazardHawk
+        chmod +x gradlew
+        
+        echo "🛡️ Running regression prevention test suite..."
+        ./gradlew :androidApp:testDebugUnitTest --tests="*.regression.*" --stacktrace
+        
+    - name: Run Dependency Conflict Tests
+      run: |
+        cd HazardHawk
+        echo "📊 Running dependency conflict detection..."
+        ./gradlew :shared:testDebugUnitTest --tests="*.dependencies.*" --stacktrace
+        
+    - name: Run Module Integration Tests
+      run: |
+        cd HazardHawk
+        echo "🔗 Running module integration tests..."
+        ./gradlew :shared:testDebugUnitTest --tests="*.integration.*" --stacktrace
+        
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: regression-test-results
+        path: |
+          HazardHawk/shared/build/test-results/
+          HazardHawk/androidApp/build/test-results/
+
+  apk-generation-test:
+    name: APK Generation Validation
+    needs: [quick-validation, regression-testing]
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup JDK
+      uses: actions/setup-java@v3
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'adopt'
+        
+    - name: Setup Gradle cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+          
+    - name: Build All APK Variants
+      run: |
+        cd HazardHawk
+        chmod +x gradlew
+        
+        echo "📱 Building all APK variants..."
+        
+        # Build all flavor combinations
+        ./gradlew assembleDebug --stacktrace
+        ./gradlew assembleRelease --stacktrace
+        
+        # Verify APK files were generated
+        find androidApp/build/outputs/apk/ -name "*.apk" | while read apk; do
+          echo "✅ Generated APK: $(basename "$apk")"
+          
+          # Basic APK validation
+          if [ ! -s "$apk" ]; then
+            echo "❌ APK file is empty: $apk"
+            exit 1
+          fi
+          
+          # Check APK size is reasonable (not too small/large)
+          size=$(stat -f%z "$apk" 2>/dev/null || stat -c%s "$apk" 2>/dev/null)
+          if [ "$size" -lt 1048576 ]; then  # Less than 1MB
+            echo "❌ APK suspiciously small: $apk ($size bytes)"
+            exit 1
+          fi
+          
+          if [ "$size" -gt 104857600 ]; then  # Greater than 100MB
+            echo "❌ APK too large: $apk ($size bytes)"
+            exit 1
+          fi
+          
+          echo "✅ APK size validation passed: $apk ($size bytes)"
+        done
+        
+    - name: Upload APK artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: validated-apks
+        path: HazardHawk/androidApp/build/outputs/apk/**/*.apk
+
+  memory-usage-validation:
+    name: Build Memory Usage Validation
+    needs: quick-validation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup JDK
+      uses: actions/setup-java@v3
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'adopt'
+        
+    - name: Monitor Build Memory Usage
+      run: |
+        cd HazardHawk
+        chmod +x gradlew
+        
+        echo "🧠 Monitoring build memory usage..."
+        
+        # Build with GC logging enabled
+        ./gradlew clean
+        ./gradlew :shared:build \
+          -Dorg.gradle.jvmargs="-Xmx6g -XX:+UseG1GC -XX:+PrintGCDetails -XX:+PrintGCTimeStamps" \
+          > gc.log 2>&1
+        
+        # Analyze GC logs for memory pressure
+        if grep -q "OutOfMemoryError" gc.log; then
+          echo "❌ Build ran out of memory"
+          exit 1
+        fi
+        
+        # Check for excessive GC pressure (simplified check)
+        gc_time=$(grep -o "GC.*[0-9]*\.[0-9]*secs" gc.log | wc -l)
+        if [ "$gc_time" -gt 100 ]; then
+          echo "⚠️ High GC pressure detected: $gc_time GC events"
+        else
+          echo "✅ Memory usage within acceptable limits"
+        fi
+        
+    - name: Upload memory analysis
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: memory-analysis
+        path: HazardHawk/gc.log
+
+  build-health-report:
+    name: Build Health Report
+    runs-on: ubuntu-latest
+    needs: [comprehensive-build-matrix, regression-testing, apk-generation-test, memory-usage-validation]
+    if: always()
+    
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+      
+    - name: Generate Build Health Report
+      run: |
+        echo "# HazardHawk Build Health Report" > build_health_report.md
+        echo "Generated on: $(date)" >> build_health_report.md
+        echo "" >> build_health_report.md
+        
+        echo "## Build Matrix Results" >> build_health_report.md
+        
+        # Check for successful builds across matrix
+        if [ -d "build-benchmarks-ubuntu-latest-java17-debug" ]; then
+          echo "- ✅ Ubuntu + Java 17 + Debug: SUCCESS" >> build_health_report.md
+        else
+          echo "- ❌ Ubuntu + Java 17 + Debug: FAILED" >> build_health_report.md
+        fi
+        
+        if [ -d "build-benchmarks-macos-latest-java17-debug" ]; then
+          echo "- ✅ macOS + Java 17 + Debug: SUCCESS" >> build_health_report.md
+        else
+          echo "- ❌ macOS + Java 17 + Debug: FAILED" >> build_health_report.md
+        fi
+        
+        echo "" >> build_health_report.md
+        echo "## Performance Benchmarks" >> build_health_report.md
+        
+        # Aggregate performance data
+        find . -name "build_benchmark.properties" | while read benchmark; do
+          echo "### $(basename $(dirname "$benchmark"))" >> build_health_report.md
+          cat "$benchmark" >> build_health_report.md
+          echo "" >> build_health_report.md
+        done
+        
+        echo "" >> build_health_report.md
+        echo "## Test Results Summary" >> build_health_report.md
+        
+        if [ -d "regression-test-results" ]; then
+          echo "- ✅ Regression Prevention Tests: PASSED" >> build_health_report.md
+        else
+          echo "- ❌ Regression Prevention Tests: FAILED" >> build_health_report.md
+        fi
+        
+        if [ -d "validated-apks" ]; then
+          apk_count=$(find validated-apks -name "*.apk" | wc -l)
+          echo "- ✅ APK Generation: SUCCESS ($apk_count APKs generated)" >> build_health_report.md
+        else
+          echo "- ❌ APK Generation: FAILED" >> build_health_report.md
+        fi
+        
+        echo "" >> build_health_report.md
+        echo "## Recommendations" >> build_health_report.md
+        
+        # Generate actionable recommendations
+        if [ ! -d "validated-apks" ]; then
+          echo "- 🚨 **Critical**: APK generation failing - check compilation errors" >> build_health_report.md
+        fi
+        
+        if [ ! -d "regression-test-results" ]; then
+          echo "- ⚠️ **Warning**: Regression tests failing - check for build pattern violations" >> build_health_report.md
+        fi
+        
+        # Check for performance regressions
+        max_time=0
+        find . -name "build_benchmark.properties" -exec grep "shared.build.time.ms" {} \; | while read line; do
+          time=$(echo "$line" | cut -d'=' -f2)
+          if [ "$time" -gt 45000 ]; then
+            echo "- ⚠️ **Performance**: Shared build time regression detected: ${time}ms > 45000ms" >> build_health_report.md
+          fi
+        done
+        
+        cat build_health_report.md
+        
+    - name: Upload Build Health Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-health-report
+        path: build_health_report.md
+        
+    - name: Comment PR with Health Report
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const report = fs.readFileSync('build_health_report.md', 'utf8');
+          
+          await github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: `## 🔍 Build Validation Results\n\n${report}`
+          });

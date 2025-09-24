@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HazardHawk Tag Catalog Update - Comprehensive Research</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f8f9fa;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            color: white;
+            padding: 40px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+        
+        .header .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+        
+        .metadata {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .metadata-item {
+            text-align: center;
+        }
+        
+        .metadata-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+        
+        .metadata-value {
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+        
+        .toc {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .toc h2 {
+            color: #ff6b35;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+        
+        .toc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .toc-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+            border-left: 4px solid #ff6b35;
+        }
+        
+        .toc-section h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+        
+        .toc-section ul {
+            list-style: none;
+        }
+        
+        .toc-section li {
+            padding: 5px 0;
+        }
+        
+        .toc-section a {
+            color: #666;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .toc-section a:hover {
+            color: #ff6b35;
+        }
+        
+        .section {
+            background: white;
+            border-radius: 8px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .section h2 {
+            color: #ff6b35;
+            font-size: 2em;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #ff6b35;
+            padding-bottom: 10px;
+        }
+        
+        .section h3 {
+            color: #333;
+            font-size: 1.5em;
+            margin: 30px 0 15px 0;
+        }
+        
+        .section h4 {
+            color: #555;
+            font-size: 1.2em;
+            margin: 20px 0 10px 0;
+        }
+        
+        .highlight-box {
+            background: #fff3e0;
+            border: 1px solid #ffcc02;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .warning-box {
+            background: #ffebee;
+            border: 1px solid #f44336;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .success-box {
+            background: #e8f5e8;
+            border: 1px solid #4caf50;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .code-block {
+            background: #f4f4f4;
+            border-left: 4px solid #ff6b35;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+        
+        .risk-matrix {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .risk-item {
+            border-radius: 6px;
+            padding: 20px;
+            color: white;
+        }
+        
+        .risk-high { background: #d32f2f; }
+        .risk-medium { background: #f57c00; }
+        .risk-low { background: #388e3c; }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .feature-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid #ff6b35;
+        }
+        
+        .feature-card h4 {
+            color: #ff6b35;
+            margin-bottom: 10px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4caf50, #8bc34a);
+            border-radius: 10px;
+            transition: width 0.3s;
+        }
+        
+        .tag {
+            display: inline-block;
+            background: #ff6b35;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            margin: 2px;
+        }
+        
+        .complexity-meter {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        
+        .complexity-dots {
+            display: flex;
+            margin-left: 10px;
+        }
+        
+        .complexity-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 4px;
+            background: #e0e0e0;
+        }
+        
+        .complexity-dot.active {
+            background: #ff6b35;
+        }
+        
+        .timeline {
+            position: relative;
+            margin: 30px 0;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 30px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #ff6b35;
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin: 30px 0;
+            padding-left: 80px;
+        }
+        
+        .timeline-marker {
+            position: absolute;
+            left: 22px;
+            top: 0;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #ff6b35;
+            border: 4px solid white;
+            box-shadow: 0 0 0 2px #ff6b35;
+        }
+        
+        .timeline-content {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏗️ HazardHawk Tag Catalog Update</h1>
+            <div class="subtitle">Comprehensive Research & Implementation Analysis</div>
+            
+            <div class="metadata">
+                <div class="metadata-item">
+                    <div class="metadata-label">Research Date</div>
+                    <div class="metadata-value">September 8, 2025</div>
+                </div>
+                <div class="metadata-item">
+                    <div class="metadata-label">Project Phase</div>
+                    <div class="metadata-value">Architecture & Research</div>
+                </div>
+                <div class="metadata-item">
+                    <div class="metadata-label">Complexity Score</div>
+                    <div class="metadata-value">6/10 (Moderate)</div>
+                </div>
+                <div class="metadata-item">
+                    <div class="metadata-label">Implementation Time</div>
+                    <div class="metadata-value">16 weeks</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="toc">
+            <h2>📋 Interactive Table of Contents</h2>
+            <div class="toc-grid">
+                <div class="toc-section">
+                    <h3>🎯 Executive Summary</h3>
+                    <ul>
+                        <li><a href="#executive-summary">Key Findings</a></li>
+                        <li><a href="#recommendations">Strategic Recommendations</a></li>
+                        <li><a href="#complexity-assessment">Complexity Assessment</a></li>
+                    </ul>
+                </div>
+                <div class="toc-section">
+                    <h3>🏗️ Architecture Analysis</h3>
+                    <ul>
+                        <li><a href="#current-architecture">Current Architecture</a></li>
+                        <li><a href="#reusable-components">Reusable Components</a></li>
+                        <li><a href="#integration-points">Integration Points</a></li>
+                    </ul>
+                </div>
+                <div class="toc-section">
+                    <h3>📚 Documentation & APIs</h3>
+                    <ul>
+                        <li><a href="#api-specifications">API Specifications</a></li>
+                        <li><a href="#performance-optimization">Performance Guidelines</a></li>
+                        <li><a href="#osha-compliance">OSHA Compliance</a></li>
+                    </ul>
+                </div>
+                <div class="toc-section">
+                    <h3>🎨 User Experience</h3>
+                    <ul>
+                        <li><a href="#ux-requirements">UX Requirements</a></li>
+                        <li><a href="#accessibility">Accessibility Features</a></li>
+                        <li><a href="#delightful-interactions">Delightful Touches</a></li>
+                    </ul>
+                </div>
+                <div class="toc-section">
+                    <h3>🧪 Testing Strategy</h3>
+                    <ul>
+                        <li><a href="#test-architecture">Test Architecture</a></li>
+                        <li><a href="#edge-cases">Edge Cases & Scenarios</a></li>
+                        <li><a href="#quality-gates">Quality Gates</a></li>
+                    </ul>
+                </div>
+                <div class="toc-section">
+                    <h3>🔒 Security & Compliance</h3>
+                    <ul>
+                        <li><a href="#security-vulnerabilities">Security Assessment</a></li>
+                        <li><a href="#compliance-requirements">Compliance Requirements</a></li>
+                        <li><a href="#risk-mitigation">Risk Mitigation</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div id="executive-summary" class="section">
+            <h2>🎯 Executive Summary</h2>
+            
+            <div class="highlight-box">
+                <h3>🔍 Key Research Findings</h3>
+                <p>The HazardHawk codebase is exceptionally well-architected for adding tag-catalog-update functionality. All necessary infrastructure exists with production-ready UI components, comprehensive data models, and established patterns that minimize implementation complexity.</p>
+            </div>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>✅ Existing Strengths</h4>
+                    <ul>
+                        <li>Production-ready UI components</li>
+                        <li>OSHA-compliant data models</li>
+                        <li>SQLDelight database schema</li>
+                        <li>Construction-optimized UX</li>
+                        <li>Clean architecture patterns</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4>🔧 Implementation Needs</h4>
+                    <ul>
+                        <li>Repository implementation</li>
+                        <li>Update event handling</li>
+                        <li>Edit mode UI extensions</li>
+                        <li>Bulk operation support</li>
+                        <li>Security validation</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4>🚀 Strategic Advantages</h4>
+                    <ul>
+                        <li>Low technical risk</li>
+                        <li>Proven patterns to follow</li>
+                        <li>Existing test infrastructure</li>
+                        <li>OSHA compliance built-in</li>
+                        <li>Mobile-first design</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div id="complexity-assessment" class="highlight-box">
+                <h3>🎯 Complexity Assessment</h3>
+                <div class="complexity-meter">
+                    <strong>Overall Complexity: 6/10</strong>
+                    <div class="complexity-dots">
+                        <div class="complexity-dot active"></div>
+                        <div class="complexity-dot active"></div>
+                        <div class="complexity-dot active"></div>
+                        <div class="complexity-dot active"></div>
+                        <div class="complexity-dot active"></div>
+                        <div class="complexity-dot active"></div>
+                        <div class="complexity-dot"></div>
+                        <div class="complexity-dot"></div>
+                        <div class="complexity-dot"></div>
+                        <div class="complexity-dot"></div>
+                    </div>
+                </div>
+                <p><strong>Moderate complexity</strong> - Well-established patterns exist. Primary effort focuses on repository implementation and UI integration rather than architectural design.</p>
+            </div>
+        </div>
+
+        <div id="current-architecture" class="section">
+            <h2>🏗️ Architecture Analysis</h2>
+            
+            <h3>Current Tag/Catalog Architecture</h3>
+            
+            <div class="success-box">
+                <h4>🎯 Core Data Models (Production Ready)</h4>
+                <p>Two complementary tag models exist:</p>
+                <ul>
+                    <li><strong>Domain Entity</strong>: <code>/shared/src/commonMain/kotlin/com/hazardhawk/domain/entities/Tag.kt</code> - Clean, simple structure</li>
+                    <li><strong>Feature Model</strong>: <code>/shared/src/commonMain/kotlin/com/hazardhawk/models/TagModels.kt</code> - Rich OSHA-compliant structure with 14 safety categories</li>
+                </ul>
+            </div>
+
+            <div class="code-block">
+                <h4>Tag Data Model Structure</h4>
+                <pre>
+data class Tag(
+    val id: String,
+    val name: String,
+    val category: TagCategory,
+    val description: String?,
+    val oshaCode: String?,
+    val usageCount: Int = 0,
+    val isCustom: Boolean = false,
+    val createdAt: Instant,
+    val updatedAt: Instant?
+)
+
+enum class TagCategory {
+    PPE_VIOLATIONS,
+    FALL_PROTECTION,
+    ELECTRICAL_SAFETY,
+    HAZMAT_EXPOSURE,
+    EQUIPMENT_ISSUES,
+    // ... 9 more OSHA categories
+}
+                </pre>
+            </div>
+
+            <div id="reusable-components" class="feature-grid">
+                <div class="feature-card">
+                    <h4>🎨 UI Components (Ready)</h4>
+                    <ul>
+                        <li><strong>TagSelectionComponent</strong> - Full hierarchical browsing</li>
+                        <li><strong>TagManagementComponents</strong> - Complete UI suite</li>
+                        <li><strong>TagManagementViewModel</strong> - Event-driven state</li>
+                        <li>Construction-optimized design</li>
+                        <li>Accessibility compliant</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4>💾 Database Layer (Ready)</h4>
+                    <ul>
+                        <li>SQLDelight schema with indexes</li>
+                        <li>CRUD operations defined</li>
+                        <li>Usage tracking support</li>
+                        <li>OSHA reference integration</li>
+                        <li>Performance optimized</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4>🔄 Repository Pattern (Needs Implementation)</h4>
+                    <ul>
+                        <li>Interface defined</li>
+                        <li>Implementation stubbed</li>
+                        <li>Clean separation of concerns</li>
+                        <li>Ready for update methods</li>
+                        <li>Follows established patterns</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div id="integration-points" class="highlight-box">
+                <h3>🔗 Recommended Integration Points</h3>
+                
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <h4>Phase 1: Repository Implementation</h4>
+                            <p>Implement <code>TagRepositoryImpl</code> using existing SQLDelight queries</p>
+                            <div class="code-block">
+suspend fun updateTag(tag: Tag): Result&lt;Tag&gt;
+suspend fun updateTagUsage(tagId: String): Result&lt;Unit&gt;
+suspend fun updateCustomTag(tagId: String, updates: TagUpdates): Result&lt;Tag&gt;
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <h4>Phase 2: ViewModel Integration</h4>
+                            <p>Extend existing <code>TagManagementEvent</code> sealed class</p>
+                            <div class="code-block">
+data class UpdateTag(val tagId: String, val updates: TagUpdates) : TagManagementEvent()
+data class UpdateTagCategory(val tagId: String, val newCategory: TagCategory) : TagManagementEvent()
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <h4>Phase 3: UI Component Extension</h4>
+                            <p>Add edit capabilities to existing <code>TagSelectionComponent</code></p>
+                            <ul>
+                                <li>Edit mode toggle</li>
+                                <li>In-place editing</li>
+                                <li>Bulk operations</li>
+                                <li>Category migration</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="api-specifications" class="section">
+            <h2>📚 API Specifications & Performance</h2>
+            
+            <h3>REST API Design Patterns</h3>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>🔄 Tag CRUD Operations</h4>
+                    <div class="code-block">
+PUT /api/v1/tags/{id}
+PATCH /api/v1/tags/{id}
+PUT /api/v1/tags/bulk
+GET /api/v1/tags/search?q={query}
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <h4>📊 Bulk Operations</h4>
+                    <div class="code-block">
+POST /api/v1/tags/bulk-update
+{
+  "tags": [...],
+  "operation": "category_change",
+  "target_category": "PPE_VIOLATIONS"
+}
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <h4>🔍 Search & Filtering</h4>
+                    <div class="code-block">
+GET /api/v1/tags?
+  category=PPE_VIOLATIONS&
+  usage_min=5&
+  osha_compliant=true&
+  limit=50&offset=0
+                    </div>
+                </div>
+            </div>
+
+            <div id="performance-optimization" class="highlight-box">
+                <h3>⚡ Performance Optimization Strategy</h3>
+                
+                <h4>Database Optimization</h4>
+                <div class="code-block">
+-- Composite indexes for common queries
+CREATE INDEX idx_tags_category_usage ON tags(category, usage_count DESC);
+CREATE INDEX idx_tags_search ON tags USING gin(to_tsvector('english', name || ' ' || description));
+CREATE INDEX idx_tags_osha ON tags(osha_code) WHERE osha_code IS NOT NULL;
+                </div>
+                
+                <h4>Memory Management (Large Tag Sets)</h4>
+                <ul>
+                    <li><strong>Pagination</strong>: 50 tags per page with infinite scroll</li>
+                    <li><strong>Lazy Loading</strong>: Load tag descriptions on demand</li>
+                    <li><strong>Caching</strong>: LRU cache for 200 most used tags</li>
+                    <li><strong>Search Optimization</strong>: Debounced search with 300ms delay</li>
+                </ul>
+            </div>
+
+            <div id="osha-compliance" class="warning-box">
+                <h3>🏗️ OSHA Compliance Requirements (2025 Updates)</h3>
+                
+                <h4>Electronic Recordkeeping (29 CFR 1904.35)</h4>
+                <ul>
+                    <li>All tag updates must be electronically submitted</li>
+                    <li>5-year retention requirement for safety documentation</li>
+                    <li>Audit trail for all modifications required</li>
+                    <li>Digital signature verification for compliance</li>
+                </ul>
+                
+                <h4>Construction Safety Standards (29 CFR 1926)</h4>
+                <ul>
+                    <li>Mandatory hazard categorization using standardized tags</li>
+                    <li>Real-time hazard tracking with geolocation</li>
+                    <li>Immediate notification for critical safety violations</li>
+                    <li>PPE compliance verification through tagging</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="ux-requirements" class="section">
+            <h2>🎨 User Experience Design</h2>
+            
+            <div class="success-box">
+                <h3>🎯 Construction Worker-Optimized Design</h3>
+                <p>The existing UI components are already optimized for construction environments with glove-friendly interactions, high contrast modes, and field-appropriate workflows.</p>
+            </div>
+
+            <h3>Core UX Requirements</h3>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>👷‍♂️ Field-Optimized Interactions</h4>
+                    <ul>
+                        <li>60dp+ touch targets for gloved hands</li>
+                        <li>High contrast modes for bright sunlight</li>
+                        <li>Haptic feedback for confirmation actions</li>
+                        <li>Voice commands for hands-free operation</li>
+                        <li>Emergency mode for critical safety issues</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4>🚀 Streamlined Workflows</h4>
+                    <ul>
+                        <li>Single-tap critical tag confirmation</li>
+                        <li>AI-suggested tags from photo analysis</li>
+                        <li>Gesture-based bulk operations</li>
+                        <li>Progressive disclosure (3-tier presentation)</li>
+                        <li>Context-aware tag recommendations</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4>🧠 Smart Context Awareness</h4>
+                    <ul>
+                        <li>Location-based tag suggestions</li>
+                        <li>Time-of-day contextual tags</li>
+                        <li>Project-specific tag filtering</li>
+                        <li>Usage pattern learning</li>
+                        <li>Weather-based recommendations</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div id="accessibility" class="highlight-box">
+                <h3>♿ Accessibility Features</h3>
+                
+                <h4>Voice & Audio Support</h4>
+                <ul>
+                    <li><strong>Voice Commands</strong>: "Tag PPE", "Add Hard Hat", "Mark as Critical"</li>
+                    <li><strong>Audio Feedback</strong>: Spoken confirmation of tag selections</li>
+                    <li><strong>Spatial Audio</strong>: 3D positioning for screen reader navigation</li>
+                </ul>
+                
+                <h4>Visual & Motor Accessibility</h4>
+                <ul>
+                    <li><strong>High Contrast</strong>: 4.5:1 minimum contrast ratio</li>
+                    <li><strong>Large Text</strong>: Scalable up to 200% without horizontal scrolling</li>
+                    <li><strong>Color Independence</strong>: Icons and shapes complement color coding</li>
+                    <li><strong>Motor Assistance</strong>: Adjustable touch timing and pressure sensitivity</li>
+                </ul>
+            </div>
+
+            <div id="delightful-interactions" class="success-box">
+                <h3>✨ Delightful Touches</h3>
+                
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>🏆 Achievement System</h4>
+                        <p>Gamification for safety compliance with streaks, badges, and team leaderboards to encourage thorough hazard identification.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>🤖 Contextual Intelligence</h4>
+                        <p>Weather, time, and location-based tag suggestions with learning algorithms that adapt to user patterns.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>🎨 Visual Tag Hierarchy</h4>
+                        <p>Color-coded priority systems with animated transitions and visual feedback for tag operations.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="test-architecture" class="section">
+            <h2>🧪 Testing Strategy</h2>
+            
+            <div class="highlight-box">
+                <h3>📊 Comprehensive Test Coverage Strategy</h3>
+                <p>The existing test infrastructure provides a solid foundation with integration tests, test factories, and SQLDelight testing utilities already in place.</p>
+            </div>
+
+            <h3>Test Architecture Overview</h3>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>🏗️ Test Infrastructure</h4>
+                    <ul>
+                        <li><code>TagManagementIntegrationTest.kt</code></li>
+                        <li><code>EnhancedTagSyncIntegrationTest.kt</code></li>
+                        <li><code>TestDataFactory.kt</code> - Comprehensive test data</li>
+                        <li>SQLDelight test utilities</li>
+                        <li>Mockk for mocking dependencies</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4>🎯 Testing Pyramid</h4>
+                    <ul>
+                        <li><strong>Unit Tests (70%)</strong>: Repository, use cases, validation</li>
+                        <li><strong>Integration Tests (20%)</strong>: Database, sync, API</li>
+                        <li><strong>End-to-End Tests (10%)</strong>: Complete workflows</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4>📱 Platform-Specific Testing</h4>
+                    <ul>
+                        <li><strong>Android</strong>: Espresso, Compose Testing</li>
+                        <li><strong>Shared</strong>: Kotlin Multiplatform tests</li>
+                        <li><strong>Performance</strong>: Load testing for 1000+ tags</li>
+                        <li><strong>Accessibility</strong>: Screen reader, voice commands</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div id="edge-cases" class="warning-box">
+                <h3>⚠️ Critical Edge Cases & Scenarios</h3>
+                
+                <h4>Network & Connectivity</h4>
+                <ul>
+                    <li><strong>Offline Operations</strong>: Tag updates queued when offline</li>
+                    <li><strong>Sync Conflicts</strong>: Multiple users editing same tag</li>
+                    <li><strong>Partial Sync</strong>: Network interruption during bulk updates</li>
+                    <li><strong>Slow Networks</strong>: Progress indicators and timeouts</li>
+                </ul>
+                
+                <h4>Data Integrity & Performance</h4>
+                <ul>
+                    <li><strong>Large Datasets</strong>: 10,000+ tags performance testing</li>
+                    <li><strong>Memory Pressure</strong>: Low memory device handling</li>
+                    <li><strong>Database Corruption</strong>: Recovery and validation</li>
+                    <li><strong>Invalid Data</strong>: Malformed tag content handling</li>
+                </ul>
+            </div>
+
+            <div id="quality-gates" class="code-block">
+                <h3>✅ Quality Gates & Coverage Targets</h3>
+                <pre>
+# Coverage Requirements
+- Unit Test Coverage: ≥90%
+- Integration Test Coverage: ≥80%
+- Critical Path Coverage: 100%
+- Performance Tests: All bulk operations
+- Security Tests: All input validation
+
+# Quality Metrics
+- Code Quality: SonarQube Grade A
+- Performance: &lt;100ms tag search response
+- Memory: &lt;50MB for 1000 tags
+- Accessibility: WCAG 2.1 AA compliance
+                </pre>
+            </div>
+        </div>
+
+        <div id="security-vulnerabilities" class="section">
+            <h2>🔒 Security & Compliance Assessment</h2>
+            
+            <div class="warning-box">
+                <h3>🚨 Critical Security Vulnerabilities Identified</h3>
+                <p>The research identified several high-priority security vulnerabilities that must be addressed during implementation:</p>
+            </div>
+
+            <div class="risk-matrix">
+                <div class="risk-item risk-high">
+                    <h4>🔴 HIGH RISK - Unauthorized Access</h4>
+                    <p><strong>CVSS Score: 8.1</strong></p>
+                    <p>Missing role-based access control allows unauthorized tag management operations.</p>
+                </div>
+                <div class="risk-item risk-high">
+                    <h4>🔴 HIGH RISK - Injection Attacks</h4>
+                    <p><strong>CVSS Score: 7.8</strong></p>
+                    <p>No input validation enables XSS, SQL injection, and code injection through tag content.</p>
+                </div>
+                <div class="risk-item risk-medium">
+                    <h4>🟡 MEDIUM RISK - Data Leakage</h4>
+                    <p><strong>CVSS Score: 5.4</strong></p>
+                    <p>Tag metadata exposes user behavior patterns and potentially sensitive information.</p>
+                </div>
+            </div>
+
+            <div id="compliance-requirements" class="highlight-box">
+                <h3>📋 Compliance Requirements Implementation</h3>
+                
+                <h4>🏗️ OSHA Compliance (29 CFR 1904.35)</h4>
+                <ul>
+                    <li><strong>Electronic Submission</strong>: All tag updates must be electronically submitted</li>
+                    <li><strong>5-Year Retention</strong>: Automated archive system for safety documentation</li>
+                    <li><strong>Audit Trails</strong>: Complete modification history with digital signatures</li>
+                    <li><strong>Real-time Reporting</strong>: Immediate notification for critical safety violations</li>
+                </ul>
+                
+                <h4>🔐 Privacy Regulations (GDPR/CCPA)</h4>
+                <ul>
+                    <li><strong>Consent Management</strong>: User consent for data collection and processing</li>
+                    <li><strong>Data Rights</strong>: Access, portability, and deletion capabilities</li>
+                    <li><strong>Data Minimization</strong>: Collect only necessary tag metadata</li>
+                    <li><strong>Breach Notification</strong>: 72-hour notification system</li>
+                </ul>
+            </div>
+
+            <div id="risk-mitigation" class="success-box">
+                <h3>🛡️ Security Controls Implementation</h3>
+                
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>🔍 Input Validation Framework</h4>
+                        <ul>
+                            <li>XSS prevention with content sanitization</li>
+                            <li>SQL injection protection through parameterized queries</li>
+                            <li>File upload validation and scanning</li>
+                            <li>Rate limiting for API endpoints</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card">
+                        <h4>👥 Role-Based Access Control</h4>
+                        <ul>
+                            <li><strong>Field Access</strong>: Read-only tag viewing</li>
+                            <li><strong>Safety Lead</strong>: Tag creation and editing</li>
+                            <li><strong>Project Admin</strong>: Bulk operations and management</li>
+                            <li>API-level authorization enforcement</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card">
+                        <h4>📊 Audit & Monitoring</h4>
+                        <ul>
+                            <li>Comprehensive logging for all tag operations</li>
+                            <li>Real-time security monitoring</li>
+                            <li>Automated threat detection</li>
+                            <li>Compliance reporting dashboard</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="recommendations" class="section">
+            <h2>🚀 Strategic Recommendations</h2>
+            
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <h4>Phase 1: Foundation (Weeks 1-4)</h4>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <ul>
+                            <li>Implement <code>TagRepositoryImpl</code> using existing SQLDelight queries</li>
+                            <li>Add update events to <code>TagManagementViewModel</code></li>
+                            <li>Extend <code>TagSelectionComponent</code> with edit mode</li>
+                            <li>Basic security validation implementation</li>
+                        </ul>
+                        <div class="tag">LOW RISK</div>
+                        <div class="tag">HIGH VALUE</div>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <h4>Phase 2: Enhanced Features (Weeks 5-8)</h4>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <ul>
+                            <li>Bulk update operations and UI</li>
+                            <li>Category migration tools</li>
+                            <li>Advanced search and filtering</li>
+                            <li>Performance optimization for large datasets</li>
+                        </ul>
+                        <div class="tag">MEDIUM RISK</div>
+                        <div class="tag">HIGH VALUE</div>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <h4>Phase 3: Advanced Capabilities (Weeks 9-12)</h4>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <ul>
+                            <li>Offline sync for tag updates</li>
+                            <li>Collaborative editing features</li>
+                            <li>AI-powered tag suggestions</li>
+                            <li>Advanced OSHA compliance validation</li>
+                        </ul>
+                        <div class="tag">MEDIUM RISK</div>
+                        <div class="tag">MEDIUM VALUE</div>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <h4>Phase 4: Production Readiness (Weeks 13-16)</h4>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <ul>
+                            <li>Comprehensive security implementation</li>
+                            <li>OSHA compliance certification</li>
+                            <li>Performance testing and optimization</li>
+                            <li>Production deployment and monitoring</li>
+                        </ul>
+                        <div class="tag">HIGH RISK</div>
+                        <div class="tag">CRITICAL</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="success-box">
+                <h3>🏆 Success Criteria</h3>
+                
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>📊 Technical Metrics</h4>
+                        <ul>
+                            <li>Tag search response time &lt; 100ms</li>
+                            <li>Bulk operations handle 1000+ tags</li>
+                            <li>Memory usage &lt; 50MB for large datasets</li>
+                            <li>95% uptime for tag synchronization</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card">
+                        <h4>👥 User Experience</h4>
+                        <ul>
+                            <li>Single-tap tag updates in field conditions</li>
+                            <li>Voice command accuracy &gt; 95%</li>
+                            <li>WCAG 2.1 AA accessibility compliance</li>
+                            <li>User satisfaction score &gt; 4.5/5</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card">
+                        <h4>🛡️ Security & Compliance</h4>
+                        <ul>
+                            <li>Zero critical security vulnerabilities</li>
+                            <li>100% OSHA compliance verification</li>
+                            <li>GDPR/CCPA privacy compliance</li>
+                            <li>Complete audit trail coverage</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📎 Appendix - Raw Research Data</h2>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>🏗️ Architecture Files Analyzed</h4>
+                    <ul>
+                        <li><code>/shared/src/commonMain/kotlin/com/hazardhawk/domain/entities/Tag.kt</code></li>
+                        <li><code>/shared/src/commonMain/kotlin/com/hazardhawk/models/TagModels.kt</code></li>
+                        <li><code>/shared/src/commonMain/sqldelight/com/hazardhawk/database/Tags.sq</code></li>
+                        <li><code>/androidApp/src/main/java/com/hazardhawk/ui/components/TagManagementComponents.kt</code></li>
+                        <li><code>/androidApp/src/main/java/com/hazardhawk/ui/viewmodel/TagManagementViewModel.kt</code></li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4>🧪 Test Infrastructure Files</h4>
+                    <ul>
+                        <li><code>/shared_backup_20250905_072714/src/commonTest/kotlin/com/hazardhawk/integration/TagManagementIntegrationTest.kt</code></li>
+                        <li><code>/shared_backup_20250905_072714/src/commonTest/kotlin/com/hazardhawk/integration/EnhancedTagSyncIntegrationTest.kt</code></li>
+                        <li><code>/shared_backup_20250905_072714/src/commonTest/kotlin/com/hazardhawk/test/TestDataFactory.kt</code></li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4>🔒 Security Assessment Documents</h4>
+                    <ul>
+                        <li><code>TAG_CATALOG_SECURITY_COMPLIANCE_ASSESSMENT.md</code></li>
+                        <li>OSHA compliance requirements analysis</li>
+                        <li>GDPR/CCPA privacy assessment</li>
+                        <li>Vulnerability assessment with CVSS scores</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="highlight-box">
+                <h3>📚 External Documentation References</h3>
+                <ul>
+                    <li><strong>Material Design 3</strong>: Chip components and tag UI patterns</li>
+                    <li><strong>Jetpack Compose</strong>: Modern Android UI development</li>
+                    <li><strong>Kotlin Multiplatform</strong>: Cross-platform architecture patterns</li>
+                    <li><strong>SQLDelight</strong>: Type-safe database operations</li>
+                    <li><strong>OSHA Standards</strong>: 29 CFR 1904.35, 29 CFR 1926 construction safety</li>
+                    <li><strong>WCAG 2.1</strong>: Accessibility guidelines and compliance</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section" style="text-align: center; background: linear-gradient(135deg, #ff6b35, #f7931e); color: white;">
+            <h2>🎯 Implementation Ready</h2>
+            <p style="font-size: 1.2em; margin: 20px 0;">The HazardHawk codebase is exceptionally well-prepared for tag-catalog-update implementation. With existing production-ready components, comprehensive data models, and established patterns, this feature can be delivered efficiently while maintaining the highest standards of construction safety and OSHA compliance.</p>
+            
+            <div style="margin: 30px 0;">
+                <div style="display: inline-block; background: rgba(255,255,255,0.2); padding: 15px 30px; border-radius: 25px; margin: 10px;">
+                    <strong>Complexity: 6/10</strong>
+                </div>
+                <div style="display: inline-block; background: rgba(255,255,255,0.2); padding: 15px 30px; border-radius: 25px; margin: 10px;">
+                    <strong>Timeline: 16 Weeks</strong>
+                </div>
+                <div style="display: inline-block; background: rgba(255,255,255,0.2); padding: 15px 30px; border-radius: 25px; margin: 10px;">
+                    <strong>Risk: LOW-MEDIUM</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add smooth scrolling for anchor links
+        document.addEventListener('DOMContentLoaded', function() {
+            const links = document.querySelectorAll('a[href^="#"]');
+            
+            links.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+                    
+                    if (targetElement) {
+                        targetElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+        });
+        
+        // Add progress bar animations (demo purposes)
+        document.addEventListener('DOMContentLoaded', function() {
+            const progressBars = document.querySelectorAll('.progress-fill');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const progressBar = entry.target;
+                        // Demo animation - in real implementation, this would show actual progress
+                        setTimeout(() => {
+                            progressBar.style.width = '0%';
+                        }, 500);
+                    }
+                });
+            });
+            
+            progressBars.forEach(bar => {
+                observer.observe(bar);
+            });
+        });
+    </script>
+</body>
+</html>

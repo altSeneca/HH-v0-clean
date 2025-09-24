@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HazardHawk Android Build Fix Recommendations</title>
+    <style>
+        :root {
+            --safety-orange: #FF6B35;
+            --high-vis-yellow: #FFDD00;
+            --work-zone-blue: #2B6CB0;
+            --caution-red: #E53E3E;
+            --success-green: #48BB78;
+            --warning-amber: #ED8936;
+            --bg-dark: #1A202C;
+            --bg-light: #2D3748;
+            --text-primary: #E2E8F0;
+            --text-secondary: #A0AEC0;
+            --border-color: #4A5568;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-light) 100%);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: rgba(255, 107, 53, 0.1);
+            border: 2px solid var(--safety-orange);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: repeating-linear-gradient(
+                90deg,
+                var(--safety-orange) 0,
+                var(--safety-orange) 10px,
+                var(--high-vis-yellow) 10px,
+                var(--high-vis-yellow) 20px
+            );
+        }
+
+        h1 {
+            color: var(--safety-orange);
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        h1::before {
+            content: '⚠️';
+            font-size: 2rem;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .status-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .status-item.critical {
+            border-color: var(--caution-red);
+            background: rgba(229, 62, 62, 0.1);
+        }
+
+        .status-item.warning {
+            border-color: var(--warning-amber);
+            background: rgba(237, 137, 54, 0.1);
+        }
+
+        .status-item.success {
+            border-color: var(--success-green);
+            background: rgba(72, 187, 120, 0.1);
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+
+        h2 {
+            color: var(--high-vis-yellow);
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h3 {
+            color: var(--work-zone-blue);
+            font-size: 1.3rem;
+            margin: 20px 0 15px;
+        }
+
+        .issue-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .issue-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .issue-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.2);
+            border-color: var(--safety-orange);
+        }
+
+        .issue-card.critical {
+            border-left: 4px solid var(--caution-red);
+        }
+
+        .issue-card.high {
+            border-left: 4px solid var(--warning-amber);
+        }
+
+        .issue-card.medium {
+            border-left: 4px solid var(--high-vis-yellow);
+        }
+
+        .issue-card.low {
+            border-left: 4px solid var(--work-zone-blue);
+        }
+
+        .issue-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .priority-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .priority-critical {
+            background: var(--caution-red);
+            color: white;
+        }
+
+        .priority-high {
+            background: var(--warning-amber);
+            color: white;
+        }
+
+        .priority-medium {
+            background: var(--high-vis-yellow);
+            color: var(--bg-dark);
+        }
+
+        .priority-low {
+            background: var(--work-zone-blue);
+            color: white;
+        }
+
+        .code-block {
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .code-block::before {
+            content: attr(data-lang);
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .file-path {
+            background: rgba(43, 108, 176, 0.2);
+            border: 1px solid var(--work-zone-blue);
+            color: var(--work-zone-blue);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            display: inline-block;
+            margin: 5px 0;
+        }
+
+        .solution-steps {
+            background: rgba(72, 187, 120, 0.05);
+            border: 1px solid var(--success-green);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .solution-steps ol {
+            margin-left: 20px;
+            color: var(--text-primary);
+        }
+
+        .solution-steps li {
+            margin: 10px 0;
+        }
+
+        .timeline {
+            display: flex;
+            justify-content: space-between;
+            margin: 30px 0;
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--border-color);
+            z-index: 0;
+        }
+
+        .timeline-item {
+            background: var(--bg-light);
+            border: 2px solid var(--safety-orange);
+            border-radius: 8px;
+            padding: 10px 15px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            flex: 1;
+            margin: 0 10px;
+        }
+
+        .timeline-item.completed {
+            background: rgba(72, 187, 120, 0.2);
+            border-color: var(--success-green);
+        }
+
+        .timeline-item .step-number {
+            display: block;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--safety-orange);
+            margin-bottom: 5px;
+        }
+
+        .command-line {
+            background: #000;
+            color: #0F0;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+
+        .command-line::before {
+            content: '$ ';
+            color: var(--safety-orange);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th {
+            background: rgba(255, 107, 53, 0.1);
+            color: var(--safety-orange);
+            padding: 12px;
+            text-align: left;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .icon-mapping {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .icon-mapping .old {
+            color: var(--caution-red);
+            text-decoration: line-through;
+        }
+
+        .icon-mapping .arrow {
+            color: var(--text-secondary);
+        }
+
+        .icon-mapping .new {
+            color: var(--success-green);
+            font-weight: bold;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: var(--bg-dark);
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--safety-orange) 0%, var(--high-vis-yellow) 100%);
+            width: 0%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--bg-dark);
+            font-weight: bold;
+            transition: width 1s ease;
+        }
+
+        .warning-box {
+            background: rgba(237, 137, 54, 0.1);
+            border: 2px solid var(--warning-amber);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .warning-box::before {
+            content: '⚠️';
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .success-box {
+            background: rgba(72, 187, 120, 0.1);
+            border: 2px solid var(--success-green);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .success-box::before {
+            content: '✅';
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border-color);
+            margin-top: 50px;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .issue-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .timeline {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .timeline::before {
+                display: none;
+            }
+            
+            .timeline-item {
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>HazardHawk Android Build Fix Recommendations</h1>
+            <p style="color: var(--text-secondary); font-size: 1.1rem;">
+                Comprehensive analysis and solution plan for resolving Android build issues
+            </p>
+            <div class="status-bar">
+                <div class="status-item critical">
+                    <strong>Status:</strong> Build Failed
+                </div>
+                <div class="status-item warning">
+                    <strong>Issues:</strong> 7 Categories
+                </div>
+                <div class="status-item">
+                    <strong>Est. Time:</strong> 4-6 hours
+                </div>
+                <div class="status-item">
+                    <strong>Difficulty:</strong> Medium-High
+                </div>
+            </div>
+        </header>
+
+        <section class="section">
+            <h2>🔍 Executive Summary</h2>
+            <p>
+                The HazardHawk Android application is experiencing compilation failures due to a systematic set of issues 
+                stemming primarily from disabled shared module integration, missing Material Design icons, and 
+                incomplete dependency configuration. This report provides a prioritized action plan to resolve all build issues.
+            </p>
+            
+            <div class="warning-box">
+                <div>
+                    <strong>Critical Finding:</strong> The shared Kotlin Multiplatform module is disabled, causing cascading failures 
+                    throughout the application. This must be addressed first to unlock database models and core business logic.
+                </div>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 15%;">Build Progress: 15%</div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>🚨 Issue Analysis</h2>
+            
+            <div class="issue-grid">
+                <div class="issue-card critical">
+                    <div class="issue-header">
+                        <h3>Shared Module Disabled</h3>
+                        <span class="priority-badge priority-critical">Critical</span>
+                    </div>
+                    <p><strong>Impact:</strong> Database models and repositories unavailable</p>
+                    <span class="file-path">androidApp/build.gradle.kts:46</span>
+                    <div class="code-block" data-lang="kotlin">
+// implementation(project(":shared")) // DISABLED</div>
+                    <p><strong>Solution:</strong> Uncomment and rebuild shared module</p>
+                </div>
+
+                <div class="issue-card critical">
+                    <div class="issue-header">
+                        <h3>SQLDelight Schema Issues</h3>
+                        <span class="priority-badge priority-critical">Critical</span>
+                    </div>
+                    <p><strong>Impact:</strong> HazardHawkDatabase class not generated</p>
+                    <span class="file-path">shared/build.gradle.kts</span>
+                    <ul style="margin-top: 10px; color: var(--text-secondary);">
+                        <li>Property name mismatches in schema files</li>
+                        <li>Generated package path conflicts</li>
+                        <li>Version compatibility issues</li>
+                    </ul>
+                </div>
+
+                <div class="issue-card high">
+                    <div class="issue-header">
+                        <h3>Missing Material Icons</h3>
+                        <span class="priority-badge priority-high">High</span>
+                    </div>
+                    <p><strong>Affected Files:</strong> 2 camera UI components</p>
+                    <table style="margin-top: 10px;">
+                        <tr>
+                            <th>Missing Icon</th>
+                            <th>Replacement</th>
+                        </tr>
+                        <tr>
+                            <td class="icon-mapping">
+                                <span class="old">FlashAuto</span>
+                                <span class="arrow">→</span>
+                                <span class="new">FlashOn</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="icon-mapping">
+                                <span class="old">Hdr</span>
+                                <span class="arrow">→</span>
+                                <span class="new">CameraEnhance</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="icon-mapping">
+                                <span class="old">GridOn</span>
+                                <span class="arrow">→</span>
+                                <span class="new">Grid3x3</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="icon-mapping">
+                                <span class="old">Architecture</span>
+                                <span class="arrow">→</span>
+                                <span class="new">Build</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="icon-mapping">
+                                <span class="old">Cameraswitch</span>
+                                <span class="arrow">→</span>
+                                <span class="new">SwitchCamera</span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="issue-card high">
+                    <div class="issue-header">
+                        <h3>Missing Model Classes</h3>
+                        <span class="priority-badge priority-high">High</span>
+                    </div>
+                    <p><strong>Missing:</strong> Photo, SafetyAnalysis, Tag, etc.</p>
+                    <p style="margin-top: 10px;">Required models:</p>
+                    <ul style="color: var(--text-secondary); margin-left: 20px;">
+                        <li>Photo (id, path, metadata, sync status)</li>
+                        <li>SafetyAnalysis (hazards, OSHA codes, severity)</li>
+                        <li>Tag (name, category, usage count)</li>
+                        <li>Enums: PowerMode, BatteryState, SyncStatus</li>
+                    </ul>
+                </div>
+
+                <div class="issue-card medium">
+                    <div class="issue-header">
+                        <h3>Apache POI Dependency</h3>
+                        <span class="priority-badge priority-medium">Medium</span>
+                    </div>
+                    <p><strong>Impact:</strong> Excel export unavailable</p>
+                    <div class="code-block" data-lang="gradle">
+implementation("org.apache.poi:poi-android:5.2.3")
+implementation("org.apache.poi:poi-ooxml-android:5.2.3")</div>
+                    <p style="margin-top: 10px; color: var(--text-secondary);">
+                        Alternative: Use CSV export initially for lighter footprint
+                    </p>
+                </div>
+
+                <div class="issue-card medium">
+                    <div class="issue-header">
+                        <h3>Utility Classes Missing</h3>
+                        <span class="priority-badge priority-medium">Medium</span>
+                    </div>
+                    <p><strong>Required:</strong> Performance and battery management</p>
+                    <span class="file-path">performance/BatteryManager.kt</span>
+                    <span class="file-path">performance/PerformanceManager.kt</span>
+                    <ul style="margin-top: 10px; color: var(--text-secondary);">
+                        <li>Wake lock management functions</li>
+                        <li>Battery state monitoring</li>
+                        <li>Power mode selection</li>
+                    </ul>
+                </div>
+
+                <div class="issue-card low">
+                    <div class="issue-header">
+                        <h3>Syntax Errors</h3>
+                        <span class="priority-badge priority-low">Low</span>
+                    </div>
+                    <p><strong>Files:</strong> ExportManager.kt, PhotoDatabase.kt</p>
+                    <ul style="margin-top: 10px; color: var(--text-secondary);">
+                        <li>Line 609-610: String formatting issues</li>
+                        <li>Line 412: Duration calculation errors</li>
+                        <li>Missing closing braces</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>🛠️ Implementation Plan</h2>
+            
+            <div class="timeline">
+                <div class="timeline-item">
+                    <span class="step-number">Step 1</span>
+                    <span>Enable Shared Module</span>
+                </div>
+                <div class="timeline-item">
+                    <span class="step-number">Step 2</span>
+                    <span>Fix SQLDelight</span>
+                </div>
+                <div class="timeline-item">
+                    <span class="step-number">Step 3</span>
+                    <span>Add Dependencies</span>
+                </div>
+                <div class="timeline-item">
+                    <span class="step-number">Step 4</span>
+                    <span>Fix Icons</span>
+                </div>
+                <div class="timeline-item">
+                    <span class="step-number">Step 5</span>
+                    <span>Create Utilities</span>
+                </div>
+                <div class="timeline-item">
+                    <span class="step-number">Step 6</span>
+                    <span>Fix Syntax</span>
+                </div>
+                <div class="timeline-item">
+                    <span class="step-number">Step 7</span>
+                    <span>Build & Test</span>
+                </div>
+            </div>
+
+            <h3>Detailed Steps</h3>
+            
+            <div class="solution-steps">
+                <h4>Step 1: Re-enable Shared Module</h4>
+                <ol>
+                    <li>Open <span class="file-path">androidApp/build.gradle.kts</span></li>
+                    <li>Uncomment line 46: <code>implementation(project(":shared"))</code></li>
+                    <li>Run: <div class="command-line">./gradlew :shared:build</div></li>
+                    <li>Verify shared module builds without errors</li>
+                </ol>
+            </div>
+
+            <div class="solution-steps">
+                <h4>Step 2: Fix SQLDelight Configuration</h4>
+                <ol>
+                    <li>Update SQLDelight plugin version to 2.0.1 in <span class="file-path">shared/build.gradle.kts</span></li>
+                    <li>Fix schema file property names to match Kotlin conventions</li>
+                    <li>Run: <div class="command-line">./gradlew :shared:generateSqlDelightInterface</div></li>
+                    <li>Verify HazardHawkDatabase class is generated</li>
+                </ol>
+            </div>
+
+            <div class="solution-steps">
+                <h4>Step 3: Add Missing Dependencies</h4>
+                <div class="code-block" data-lang="gradle">
+dependencies {
+    // Material Icons Extended
+    implementation("androidx.compose.material:material-icons-extended:$compose_version")
+    
+    // Apache POI for Excel (optional)
+    implementation("org.apache.poi:poi-android:5.2.3")
+    implementation("org.apache.poi:poi-ooxml-android:5.2.3")
+}</div>
+            </div>
+
+            <div class="solution-steps">
+                <h4>Step 4: Fix Icon Imports</h4>
+                <p>Replace all non-existent icons in camera UI files:</p>
+                <div class="code-block" data-lang="kotlin">
+// CameraControlsOverlay.kt
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+
+// Replace icons:
+Icons.Default.FlashAuto → Icons.Default.FlashOn
+Icons.Default.Hdr → Icons.Default.CameraEnhance
+Icons.Default.GridOn → Icons.Default.Grid3x3
+Icons.Default.Architecture → Icons.Default.Build
+Icons.Default.Cameraswitch → Icons.Default.SwitchCamera</div>
+            </div>
+
+            <div class="solution-steps">
+                <h4>Step 5: Create Missing Utility Classes</h4>
+                <p>Create <span class="file-path">BatteryManager.kt</span> with:</p>
+                <div class="code-block" data-lang="kotlin">
+enum class BatteryState {
+    CHARGING, DISCHARGING, FULL, UNKNOWN
+}
+
+enum class PowerMode {
+    HIGH_PERFORMANCE, BALANCED, POWER_SAVER
+}
+
+fun acquireCameraWakeLock() { /* Implementation */ }
+fun releaseCameraWakeLock() { /* Implementation */ }</div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>📋 Dependency Configuration</h2>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Dependency</th>
+                        <th>Version</th>
+                        <th>Purpose</th>
+                        <th>Priority</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>androidx.compose.material:material-icons-extended</td>
+                        <td>1.5.4</td>
+                        <td>Extended icon set for UI</td>
+                        <td><span class="priority-badge priority-critical">Required</span></td>
+                    </tr>
+                    <tr>
+                        <td>app.cash.sqldelight:android-driver</td>
+                        <td>2.0.1</td>
+                        <td>Database driver</td>
+                        <td><span class="priority-badge priority-critical">Required</span></td>
+                    </tr>
+                    <tr>
+                        <td>org.apache.poi:poi-android</td>
+                        <td>5.2.3</td>
+                        <td>Excel export</td>
+                        <td><span class="priority-badge priority-medium">Optional</span></td>
+                    </tr>
+                    <tr>
+                        <td>com.google.mlkit:image-labeling</td>
+                        <td>17.0.7</td>
+                        <td>On-device AI analysis</td>
+                        <td><span class="priority-badge priority-low">Future</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="section">
+            <h2>✅ Success Criteria</h2>
+            
+            <div class="success-box">
+                <div>
+                    <h4>Build Success Checklist</h4>
+                    <ul style="margin-top: 10px;">
+                        <li>✓ App builds without compilation errors</li>
+                        <li>✓ Camera successfully captures photos</li>
+                        <li>✓ Gallery displays captured photos</li>
+                        <li>✓ Database operations (save/load) work</li>
+                        <li>✓ UI renders correctly on device</li>
+                        <li>✓ Basic export functionality available</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>🔧 Testing Commands</h2>
+            
+            <div class="code-block" data-lang="bash">
+# Clean build
+./gradlew clean
+
+# Build shared module
+./gradlew :shared:build
+
+# Run shared module tests
+./gradlew :shared:test
+
+# Build Android app
+./gradlew :androidApp:assembleDebug
+
+# Install on device
+./gradlew :androidApp:installDebug
+
+# Run Android tests
+./gradlew :androidApp:test
+
+# Connected device tests
+./gradlew :androidApp:connectedAndroidTest</div>
+        </section>
+
+        <section class="section">
+            <h2>⚠️ Rollback Plan</h2>
+            
+            <div class="warning-box">
+                <div>
+                    <h4>If Shared Module Integration Fails:</h4>
+                    <ol style="margin-top: 10px;">
+                        <li>Comment out shared module dependency</li>
+                        <li>Copy model classes directly to androidApp</li>
+                        <li>Implement minimal Room database as temporary solution</li>
+                        <li>Use local file storage for photos</li>
+                        <li>Disable advanced features temporarily</li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>📊 Risk Assessment</h2>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Risk</th>
+                        <th>Likelihood</th>
+                        <th>Impact</th>
+                        <th>Mitigation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>SQLDelight generation fails</td>
+                        <td style="color: var(--warning-amber);">Medium</td>
+                        <td style="color: var(--caution-red);">High</td>
+                        <td>Use Room database as fallback</td>
+                    </tr>
+                    <tr>
+                        <td>Icon compatibility issues persist</td>
+                        <td style="color: var(--warning-amber);">Medium</td>
+                        <td style="color: var(--warning-amber);">Medium</td>
+                        <td>Create custom icon set or use images</td>
+                    </tr>
+                    <tr>
+                        <td>Apache POI memory issues</td>
+                        <td style="color: var(--success-green);">Low</td>
+                        <td style="color: var(--warning-amber);">Medium</td>
+                        <td>Use CSV export initially</td>
+                    </tr>
+                    <tr>
+                        <td>Performance degradation</td>
+                        <td style="color: var(--success-green);">Low</td>
+                        <td style="color: var(--success-green);">Low</td>
+                        <td>Profile and optimize after build success</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="section">
+            <h2>🎯 Recommendations</h2>
+            
+            <div class="issue-grid">
+                <div class="success-box" style="grid-column: 1 / -1;">
+                    <div>
+                        <h3>Immediate Actions (Today)</h3>
+                        <ol>
+                            <li>Re-enable shared module dependency</li>
+                            <li>Fix SQLDelight configuration</li>
+                            <li>Replace missing icons with available alternatives</li>
+                            <li>Add material-icons-extended dependency</li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <div class="warning-box" style="grid-column: 1 / -1;">
+                    <div>
+                        <h3>Short-term Improvements (This Week)</h3>
+                        <ol>
+                            <li>Implement proper error handling</li>
+                            <li>Add comprehensive logging</li>
+                            <li>Create unit tests for critical paths</li>
+                            <li>Document API integration points</li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <div style="grid-column: 1 / -1; background: rgba(43, 108, 176, 0.1); border: 2px solid var(--work-zone-blue); border-radius: 8px; padding: 15px; display: flex; align-items: center; gap: 15px;">
+                    <span style="font-size: 1.5rem;">🚀</span>
+                    <div>
+                        <h3>Long-term Strategy (This Month)</h3>
+                        <ol>
+                            <li>Migrate to Compose Multiplatform for iOS</li>
+                            <li>Implement cloud sync with AWS</li>
+                            <li>Add ML Kit for on-device analysis</li>
+                            <li>Create comprehensive test suite</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <p><strong>HazardHawk Build Fix Report</strong></p>
+            <p>Generated: August 27, 2025 | Version: 1.0.0</p>
+            <p style="margin-top: 10px; color: var(--text-secondary);">
+                This report provides comprehensive guidance for resolving Android build issues.<br>
+                Estimated completion time: 4-6 hours with an experienced Android developer.
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // Animate progress bar on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const progressFill = document.querySelector('.progress-fill');
+                if (progressFill) {
+                    progressFill.style.width = '85%';
+                    progressFill.textContent = 'Build Progress: 85% (After Fixes)';
+                }
+            }, 1000);
+        });
+
+        // Add interactive hover effects
+        document.querySelectorAll('.issue-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-4px)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0)';
+            });
+        });
+    </script>
+</body>
+</html>

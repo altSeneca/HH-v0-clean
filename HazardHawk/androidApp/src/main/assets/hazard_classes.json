@@ -1,0 +1,17 @@
+{
+  "classes": [
+    "person",
+    "hard_hat",
+    "safety_vest",
+    "no_hard_hat",
+    "no_safety_vest",
+    "machinery",
+    "excavator",
+    "crane",
+    "truck",
+    "fall_hazard",
+    "electrical_hazard",
+    "safety_cone",
+    "barrier"
+  ]
+}

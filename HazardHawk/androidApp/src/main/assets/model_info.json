@@ -1,0 +1,11 @@
+{
+  "name": "HazardHawk Construction Safety Detector",
+  "version": "1.0.0-dummy",
+  "format": "tflite",
+  "input_size": [
+    640,
+    640
+  ],
+  "num_classes": 13,
+  "description": "Placeholder model for testing. Replace with trained construction safety model."
+}

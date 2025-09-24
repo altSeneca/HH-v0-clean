@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <cloud-backup>
+        <!-- Project data persistence -->
+        <include domain="sharedpref" path="hazard_hawk_projects.xml"/>
+        
+        <!-- Camera and metadata settings persistence -->
+        <include domain="sharedpref" path="hazardhawk_metadata_settings.xml"/>
+        
+        <!-- Photo tags and analysis data -->
+        <include domain="sharedpref" path="photo_tags.xml"/>
+        
+        <!-- Exclude sensitive or temporary data -->
+        <exclude domain="sharedpref" path="temp_settings.xml"/>
+        <exclude domain="sharedpref" path="cache_data.xml"/>
+    </cloud-backup>
+    
+    <device-transfer>
+        <!-- Include all backed up data for device transfer -->
+        <include domain="sharedpref" path="hazard_hawk_projects.xml"/>
+        <include domain="sharedpref" path="hazardhawk_metadata_settings.xml"/>
+        <include domain="sharedpref" path="photo_tags.xml"/>
+    </device-transfer>
+</data-extraction-rules>

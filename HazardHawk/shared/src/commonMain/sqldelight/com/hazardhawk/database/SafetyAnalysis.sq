@@ -1,0 +1,119 @@
+CREATE TABLE safety_analysis (
+    id TEXT PRIMARY KEY,
+    photo_id TEXT NOT NULL UNIQUE,
+    analysis_type TEXT NOT NULL CHECK (analysis_type IN ('on_device', 'cloud', 'gemini_vision')),
+    status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed')),
+    hazards_detected TEXT, -- JSON array of detected hazards
+    osha_codes TEXT, -- JSON array of applicable OSHA codes
+    severity TEXT CHECK (severity IN ('low', 'medium', 'high', 'critical')),
+    recommendations TEXT, -- JSON array of recommended actions
+    ai_confidence REAL,
+    processing_time INTEGER, -- Time taken in milliseconds
+    error_message TEXT,
+    analyzed_at INTEGER,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    FOREIGN KEY (photo_id) REFERENCES photos(id) ON DELETE CASCADE
+);
+
+-- Indexes for better query performance
+CREATE INDEX safety_analysis_photo_id_idx ON safety_analysis(photo_id);
+CREATE INDEX safety_analysis_status_idx ON safety_analysis(status);
+CREATE INDEX safety_analysis_severity_idx ON safety_analysis(severity);
+CREATE INDEX safety_analysis_analyzed_at_idx ON safety_analysis(analyzed_at);
+CREATE INDEX safety_analysis_analysis_type_idx ON safety_analysis(analysis_type);
+
+-- Insert safety analysis
+insertSafetyAnalysis:
+INSERT INTO safety_analysis (
+    id, photo_id, analysis_type, status, hazards_detected, osha_codes, 
+    severity, recommendations, ai_confidence, processing_time, 
+    error_message, analyzed_at, created_at, updated_at
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+-- Get analysis by ID
+selectAnalysisById:
+SELECT * FROM safety_analysis WHERE id = ?;
+
+-- Get analysis by photo ID
+selectAnalysisByPhotoId:
+SELECT * FROM safety_analysis WHERE photo_id = ?;
+
+-- Get pending analyses
+selectPendingAnalyses:
+SELECT * FROM safety_analysis 
+WHERE status = 'pending'
+ORDER BY created_at ASC;
+
+-- Get analyses by status
+selectAnalysesByStatus:
+SELECT * FROM safety_analysis 
+WHERE status = ?
+ORDER BY created_at DESC;
+
+-- Get analyses by severity
+selectAnalysesBySeverity:
+SELECT * FROM safety_analysis 
+WHERE severity = ?
+ORDER BY analyzed_at DESC;
+
+-- Update analysis status
+updateAnalysisStatus:
+UPDATE safety_analysis 
+SET status = ?, error_message = ?, updated_at = ?
+WHERE id = ?;
+
+-- Update analysis results
+updateAnalysisResults:
+UPDATE safety_analysis 
+SET status = 'completed', hazards_detected = ?, osha_codes = ?, 
+    severity = ?, recommendations = ?, ai_confidence = ?, 
+    processing_time = ?, analyzed_at = ?, updated_at = ?
+WHERE id = ?;
+
+-- Delete analysis
+deleteAnalysis:
+DELETE FROM safety_analysis WHERE id = ?;
+
+-- Get analysis with photo details
+selectAnalysisWithPhoto:
+SELECT sa.*, p.file_path, p.timestamp, p.project_id, p.compliance_status
+FROM safety_analysis sa
+INNER JOIN photos p ON sa.photo_id = p.id
+WHERE sa.id = ?;
+
+-- Get analyses for project
+selectAnalysesForProject:
+SELECT sa.*, p.file_path, p.timestamp
+FROM safety_analysis sa
+INNER JOIN photos p ON sa.photo_id = p.id
+WHERE p.project_id = ?
+ORDER BY sa.analyzed_at DESC;
+
+-- Get recent analyses
+selectRecentAnalyses:
+SELECT sa.*, p.file_path, p.timestamp, p.project_id
+FROM safety_analysis sa
+INNER JOIN photos p ON sa.photo_id = p.id
+WHERE sa.analyzed_at > ?
+ORDER BY sa.analyzed_at DESC
+LIMIT ?;
+
+-- Count analyses by status
+countAnalysesByStatus:
+SELECT COUNT(*) FROM safety_analysis WHERE status = ?;
+
+-- Count analyses by severity
+countAnalysesBySeverity:
+SELECT COUNT(*) FROM safety_analysis WHERE severity = ?;
+
+-- Get analysis statistics
+selectAnalysisStatistics:
+SELECT 
+    analysis_type,
+    status,
+    COUNT(*) AS analysis_count,
+    AVG(processing_time) AS avg_processing_time,
+    AVG(ai_confidence) AS avg_confidence
+FROM safety_analysis 
+GROUP BY analysis_type, status;

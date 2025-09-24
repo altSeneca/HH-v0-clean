@@ -1,0 +1,210 @@
+-- Unified HazardHawk Database Schema
+-- Consolidates all previous schema versions with proper normalization
+
+-- Core entities with proper relationships
+
+CREATE TABLE projects (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    client_name TEXT,
+    location TEXT,
+    start_date INTEGER,
+    end_date INTEGER,
+    is_active INTEGER DEFAULT 1,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+);
+
+CREATE TABLE users (
+    id TEXT PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    role TEXT NOT NULL CHECK (role IN ('FIELD_ACCESS', 'SAFETY_LEAD', 'PROJECT_ADMIN')),
+    project_id TEXT REFERENCES projects(id),
+    is_active INTEGER DEFAULT 1,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+);
+
+-- Unified tag categories matching core model
+CREATE TABLE tag_categories (
+    code TEXT PRIMARY KEY,
+    display_name TEXT NOT NULL,
+    osha_section TEXT,
+    display_priority INTEGER DEFAULT 100,
+    icon_identifier TEXT
+);
+
+-- Insert standard categories
+INSERT INTO tag_categories VALUES
+('PPE', 'Personal Protective Equipment', '29 CFR 1926.95-106', 1, 'hard_hat'),
+('FALL_PROTECTION', 'Fall Protection', '29 CFR 1926.500-503', 2, 'safety_harness'),
+('ELECTRICAL_SAFETY', 'Electrical Safety', '29 CFR 1926.400-449', 3, 'electrical_hazard'),
+('EQUIPMENT_SAFETY', 'Equipment Safety', '29 CFR 1926.300-307', 4, 'machinery'),
+('HOT_WORK', 'Hot Work', '29 CFR 1926.350-354', 5, 'flame'),
+('CRANE_LIFTING', 'Crane & Lifting', '29 CFR 1926.1400-1442', 6, 'crane'),
+('EXCAVATION', 'Excavation & Trenching', '29 CFR 1926.650-652', 7, 'excavator'),
+('TRAFFIC_SAFETY', 'Traffic Safety', '29 CFR 1926.200-203', 8, 'traffic_cone'),
+('ENVIRONMENTAL', 'Environmental', '29 CFR 1926.50-106', 9, 'weather'),
+('HAZMAT', 'Hazardous Materials', '29 CFR 1926.55-62', 10, 'chemical'),
+('HOUSEKEEPING', 'Housekeeping', '29 CFR 1926.25', 11, 'broom'),
+('GENERAL_SAFETY', 'General Safety', '29 CFR 1926.1-99', 12, 'safety_shield'),
+('TRADE_SPECIFIC', 'Trade Specific', NULL, 13, 'tools'),
+('CUSTOM', 'Custom', NULL, 99, 'custom_tag');
+
+-- Unified tags table
+CREATE TABLE tags (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    category_code TEXT NOT NULL REFERENCES tag_categories(code),
+    description TEXT,
+    osha_references TEXT, -- JSON array
+    compliance_status TEXT NOT NULL DEFAULT 'COMPLIANT' 
+        CHECK (compliance_status IN ('COMPLIANT', 'NEEDS_IMPROVEMENT', 'CRITICAL')),
+    severity TEXT NOT NULL DEFAULT 'LOW'
+        CHECK (severity IN ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')),
+    
+    -- Usage analytics
+    usage_count INTEGER DEFAULT 0,
+    recent_usage_count INTEGER DEFAULT 0,
+    last_used INTEGER,
+    average_confidence_score REAL,
+    project_usage_map TEXT, -- JSON map
+    hourly_usage_pattern TEXT, -- JSON array of 24 integers
+    
+    -- Organization
+    project_id TEXT REFERENCES projects(id),
+    work_types TEXT, -- JSON array
+    
+    -- Metadata
+    is_custom INTEGER DEFAULT 0,
+    is_active INTEGER DEFAULT 1,
+    is_required INTEGER DEFAULT 0,
+    priority INTEGER DEFAULT 100,
+    color TEXT,
+    
+    -- Audit
+    created_by TEXT REFERENCES users(id),
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    
+    UNIQUE(name, project_id) -- Unique within project scope
+);
+
+-- Enhanced photos table with all metadata
+CREATE TABLE photos (
+    id TEXT PRIMARY KEY,
+    file_path TEXT NOT NULL,
+    s3_url TEXT,
+    thumbnail_path TEXT,
+    
+    -- Core metadata
+    timestamp INTEGER NOT NULL,
+    project_id TEXT REFERENCES projects(id),
+    user_id TEXT REFERENCES users(id),
+    work_type TEXT,
+    
+    -- Location data
+    location_lat REAL,
+    location_lng REAL,
+    location_address TEXT,
+    location_accuracy REAL,
+    
+    -- File metadata
+    file_size INTEGER,
+    width INTEGER,
+    height INTEGER,
+    md5_hash TEXT UNIQUE,
+    
+    -- EXIF data
+    exif_data TEXT, -- JSON with all EXIF fields
+    
+    -- Status tracking
+    compliance_status TEXT DEFAULT 'unknown' 
+        CHECK (compliance_status IN ('compliant', 'needs_improvement', 'unknown')),
+    sync_status TEXT DEFAULT 'pending' 
+        CHECK (sync_status IN ('pending', 'syncing', 'synced', 'failed')),
+    
+    -- Audit
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+);
+
+-- Safety analysis table
+CREATE TABLE safety_analyses (
+    id TEXT PRIMARY KEY,
+    photo_id TEXT NOT NULL REFERENCES photos(id) ON DELETE CASCADE,
+    
+    -- Analysis metadata
+    analysis_type TEXT NOT NULL,
+    work_type TEXT,
+    ai_confidence REAL,
+    processing_time_ms INTEGER,
+    
+    -- Risk assessment
+    overall_risk_level TEXT,
+    severity TEXT,
+    
+    -- Analysis results (JSON)
+    hazards TEXT, -- JSON array of hazards
+    ppe_status TEXT, -- JSON PPE detection results
+    osha_violations TEXT, -- JSON array of violations
+    recommendations TEXT, -- JSON array of recommendations
+    metadata TEXT, -- JSON additional metadata
+    
+    -- Audit
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+);
+
+-- Many-to-many relationship for photo-tag associations
+CREATE TABLE photo_tags (
+    id TEXT PRIMARY KEY,
+    photo_id TEXT NOT NULL REFERENCES photos(id) ON DELETE CASCADE,
+    tag_id TEXT NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+    
+    -- Association metadata
+    applied_by TEXT REFERENCES users(id),
+    confidence_score REAL, -- If applied by AI
+    is_ai_suggested INTEGER DEFAULT 0,
+    
+    -- Audit
+    created_at INTEGER NOT NULL,
+    
+    UNIQUE(photo_id, tag_id)
+);
+
+-- Comprehensive indexes for performance
+CREATE INDEX idx_users_project ON users(project_id);
+CREATE INDEX idx_users_role ON users(role);
+CREATE INDEX idx_users_active ON users(is_active);
+
+CREATE INDEX idx_tags_category ON tags(category_code);
+CREATE INDEX idx_tags_project ON tags(project_id);
+CREATE INDEX idx_tags_usage ON tags(usage_count DESC);
+CREATE INDEX idx_tags_last_used ON tags(last_used DESC);
+CREATE INDEX idx_tags_active ON tags(is_active);
+CREATE INDEX idx_tags_custom ON tags(is_custom);
+CREATE INDEX idx_tags_compliance ON tags(compliance_status);
+CREATE INDEX idx_tags_name_search ON tags(name);
+
+CREATE INDEX idx_photos_project ON photos(project_id);
+CREATE INDEX idx_photos_user ON photos(user_id);
+CREATE INDEX idx_photos_timestamp ON photos(timestamp DESC);
+CREATE INDEX idx_photos_sync_status ON photos(sync_status);
+CREATE INDEX idx_photos_compliance ON photos(compliance_status);
+CREATE INDEX idx_photos_md5 ON photos(md5_hash);
+CREATE INDEX idx_photos_location ON photos(location_lat, location_lng);
+CREATE INDEX idx_photos_work_type ON photos(work_type);
+
+CREATE INDEX idx_safety_analyses_photo ON safety_analyses(photo_id);
+CREATE INDEX idx_safety_analyses_risk ON safety_analyses(overall_risk_level);
+CREATE INDEX idx_safety_analyses_type ON safety_analyses(analysis_type);
+CREATE INDEX idx_safety_analyses_timestamp ON safety_analyses(created_at DESC);
+
+CREATE INDEX idx_photo_tags_photo ON photo_tags(photo_id);
+CREATE INDEX idx_photo_tags_tag ON photo_tags(tag_id);
+CREATE INDEX idx_photo_tags_applied_by ON photo_tags(applied_by);
+CREATE INDEX idx_photo_tags_ai_suggested ON photo_tags(is_ai_suggested);
+CREATE INDEX idx_photo_tags_timestamp ON photo_tags(created_at DESC);

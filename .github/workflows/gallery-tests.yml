@@ -1,0 +1,497 @@
+name: Gallery Test Suite
+
+on:
+  push:
+    branches: [ main, develop, 'feature/gallery-*' ]
+    paths:
+      - 'HazardHawk/androidApp/src/main/java/com/hazardhawk/*Gallery*'
+      - 'HazardHawk/androidApp/src/main/java/com/hazardhawk/ui/gallery/**'
+      - 'HazardHawk/androidApp/src/test/java/com/hazardhawk/ui/gallery/**'
+      - 'HazardHawk/androidApp/src/androidTest/java/com/hazardhawk/ui/gallery/**'
+      - 'HazardHawk/androidApp/src/androidTest/java/com/hazardhawk/performance/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'HazardHawk/androidApp/src/main/java/com/hazardhawk/*Gallery*'
+      - 'HazardHawk/androidApp/src/main/java/com/hazardhawk/ui/gallery/**'
+      - 'HazardHawk/androidApp/src/test/java/com/hazardhawk/ui/gallery/**'
+      - 'HazardHawk/androidApp/src/androidTest/java/com/hazardhawk/ui/gallery/**'
+      - 'HazardHawk/androidApp/src/androidTest/java/com/hazardhawk/performance/**'
+  schedule:
+    # Run comprehensive tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of tests to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - 'all'
+          - 'unit'
+          - 'integration'
+          - 'performance'
+          - 'usability'
+      photo_count:
+        description: 'Number of test photos for performance tests'
+        required: false
+        default: '100'
+        type: string
+
+env:
+  JAVA_VERSION: '17'
+  ANDROID_API_LEVEL: '34'
+  ANDROID_BUILD_TOOLS: '34.0.0'
+  GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=2
+
+jobs:
+  unit-tests:
+    name: Gallery Unit Tests
+    runs-on: ubuntu-latest
+    if: github.event.inputs.test_type == 'all' || github.event.inputs.test_type == 'unit' || github.event.inputs.test_type == ''
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+        
+    - name: Cache Gradle packages
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+          
+    - name: Grant execute permission for gradlew
+      run: chmod +x HazardHawk/gradlew
+      
+    - name: Run unit tests
+      run: |
+        cd HazardHawk
+        ./gradlew :androidApp:testDebugUnitTest --tests "com.hazardhawk.ui.gallery.*" --continue
+        
+    - name: Generate unit test coverage
+      run: |
+        cd HazardHawk
+        ./gradlew :androidApp:koverHtmlReportDebug
+        
+    - name: Upload unit test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: unit-test-results
+        path: |
+          HazardHawk/androidApp/build/reports/tests/testDebugUnitTest/
+          HazardHawk/androidApp/build/reports/kover/htmlDebug/
+        retention-days: 30
+        
+    - name: Comment PR with unit test results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const path = 'HazardHawk/androidApp/build/reports/tests/testDebugUnitTest/index.html';
+          if (fs.existsSync(path)) {
+            const testResults = fs.readFileSync(path, 'utf8');
+            // Parse and comment test results (simplified)
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '## Gallery Unit Test Results\n✅ Unit tests completed. Check artifacts for detailed results.'
+            });
+          }
+
+  integration-tests:
+    name: Gallery Integration Tests
+    runs-on: ubuntu-latest
+    if: github.event.inputs.test_type == 'all' || github.event.inputs.test_type == 'integration' || github.event.inputs.test_type == ''
+    
+    strategy:
+      matrix:
+        api-level: [28, 30, 34]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+        
+    - name: Cache Gradle packages
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+          
+    - name: Enable KVM group perms
+      run: |
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udev control --reload-rules
+        sudo udevadm trigger --name-match=kvm
+        
+    - name: Cache AVD
+      uses: actions/cache@v3
+      id: avd-cache
+      with:
+        path: |
+          ~/.android/avd/*
+          ~/.android/adb*
+        key: avd-${{ matrix.api-level }}
+        
+    - name: Create AVD and generate snapshot for caching
+      if: steps.avd-cache.outputs.cache-hit != 'true'
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: ${{ matrix.api-level }}
+        target: google_apis
+        arch: x86_64
+        force-avd-creation: false
+        emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+        disable-animations: false
+        script: echo "Generated AVD snapshot for caching."
+        
+    - name: Grant execute permission for gradlew
+      run: chmod +x HazardHawk/gradlew
+      
+    - name: Run gallery integration tests
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: ${{ matrix.api-level }}
+        target: google_apis
+        arch: x86_64
+        force-avd-creation: false
+        emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+        disable-animations: true
+        script: |
+          cd HazardHawk
+          ./gradlew :androidApp:connectedDebugAndroidTest --tests "com.hazardhawk.ui.gallery.*IntegrationTest" --continue
+          
+    - name: Upload integration test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: integration-test-results-api-${{ matrix.api-level }}
+        path: |
+          HazardHawk/androidApp/build/reports/androidTests/connected/
+          HazardHawk/androidApp/build/outputs/androidTest-results/
+        retention-days: 30
+
+  performance-tests:
+    name: Gallery Performance Tests
+    runs-on: ubuntu-latest
+    if: github.event.inputs.test_type == 'all' || github.event.inputs.test_type == 'performance' || github.event.inputs.test_type == ''
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+        
+    - name: Cache Gradle packages
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+          
+    - name: Enable KVM group perms
+      run: |
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udev control --reload-rules
+        sudo udevadm trigger --name-match=kvm
+        
+    - name: Cache AVD
+      uses: actions/cache@v3
+      id: avd-cache-perf
+      with:
+        path: |
+          ~/.android/avd/*
+          ~/.android/adb*
+        key: avd-perf-34
+        
+    - name: Create Performance AVD
+      if: steps.avd-cache-perf.outputs.cache-hit != 'true'
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: 34
+        target: google_apis
+        arch: x86_64
+        ram-size: 4096M
+        heap-size: 1024M
+        force-avd-creation: false
+        emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+        disable-animations: false
+        script: echo "Generated performance AVD snapshot."
+        
+    - name: Grant execute permission for gradlew
+      run: chmod +x HazardHawk/gradlew
+      
+    - name: Run performance benchmarks
+      uses: reactivecircus/android-emulator-runner@v2
+      env:
+        PERFORMANCE_TEST_PHOTO_COUNT: ${{ github.event.inputs.photo_count || '100' }}
+      with:
+        api-level: 34
+        target: google_apis
+        arch: x86_64
+        ram-size: 4096M
+        heap-size: 1024M
+        force-avd-creation: false
+        emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+        disable-animations: true
+        script: |
+          cd HazardHawk
+          # Run performance tests with extended timeout
+          ./gradlew :androidApp:connectedDebugAndroidTest --tests "com.hazardhawk.performance.*" --continue -Pandroid.testInstrumentationRunnerArguments.timeout_msec=300000
+          
+    - name: Parse performance results
+      if: always()
+      run: |
+        cd HazardHawk
+        # Create performance summary
+        echo "# Gallery Performance Test Results" > performance_summary.md
+        echo "## Test Configuration" >> performance_summary.md
+        echo "- Photo Count: ${{ github.event.inputs.photo_count || '100' }}" >> performance_summary.md
+        echo "- API Level: 34" >> performance_summary.md
+        echo "- RAM: 4096MB" >> performance_summary.md
+        echo "- Date: $(date)" >> performance_summary.md
+        echo "" >> performance_summary.md
+        
+        # Parse test results if available
+        if [ -f "androidApp/build/outputs/androidTest-results/connected/TEST-*.xml" ]; then
+          echo "## Performance Metrics" >> performance_summary.md
+          echo "See detailed results in artifacts." >> performance_summary.md
+        fi
+        
+    - name: Upload performance results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: performance-test-results
+        path: |
+          HazardHawk/androidApp/build/reports/androidTests/connected/
+          HazardHawk/androidApp/build/outputs/androidTest-results/
+          HazardHawk/performance_summary.md
+        retention-days: 30
+        
+    - name: Performance regression check
+      if: github.event_name == 'pull_request'
+      run: |
+        # This would compare against baseline performance metrics
+        echo "Performance regression check would run here"
+        # TODO: Implement baseline comparison logic
+
+  usability-tests:
+    name: Construction Worker Usability Tests
+    runs-on: ubuntu-latest
+    if: github.event.inputs.test_type == 'all' || github.event.inputs.test_type == 'usability' || github.event.inputs.test_type == ''
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+        
+    - name: Cache Gradle packages
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+          
+    - name: Enable KVM group perms
+      run: |
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udev control --reload-rules
+        sudo udevadm trigger --name-match=kvm
+        
+    - name: Cache AVD
+      uses: actions/cache@v3
+      id: avd-cache-usability
+      with:
+        path: |
+          ~/.android/avd/*
+          ~/.android/adb*
+        key: avd-usability-34
+        
+    - name: Create Usability AVD
+      if: steps.avd-cache-usability.outputs.cache-hit != 'true'
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: 34
+        target: google_apis
+        arch: x86_64
+        force-avd-creation: false
+        emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+        disable-animations: false
+        script: echo "Generated usability AVD snapshot."
+        
+    - name: Grant execute permission for gradlew
+      run: chmod +x HazardHawk/gradlew
+      
+    - name: Run usability tests
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: 34
+        target: google_apis
+        arch: x86_64
+        force-avd-creation: false
+        emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+        disable-animations: true
+        script: |
+          cd HazardHawk
+          ./gradlew :androidApp:connectedDebugAndroidTest --tests "*UsabilityTest" --continue
+          ./gradlew :androidApp:connectedDebugAndroidTest --tests "*ComplianceWorkflowTest" --continue
+          
+    - name: Upload usability test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: usability-test-results
+        path: |
+          HazardHawk/androidApp/build/reports/androidTests/connected/
+          HazardHawk/androidApp/build/outputs/androidTest-results/
+        retention-days: 30
+
+  test-summary:
+    name: Test Summary Report
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests, performance-tests, usability-tests]
+    if: always()
+    
+    steps:
+    - name: Download all test artifacts
+      uses: actions/download-artifact@v4
+      
+    - name: Generate comprehensive test report
+      run: |
+        echo "# HazardHawk Gallery Test Suite Results" > test_summary.md
+        echo "" >> test_summary.md
+        echo "## Test Run Information" >> test_summary.md
+        echo "- **Trigger:** ${{ github.event_name }}" >> test_summary.md
+        echo "- **Branch:** ${{ github.ref_name }}" >> test_summary.md
+        echo "- **Commit:** ${{ github.sha }}" >> test_summary.md
+        echo "- **Date:** $(date)" >> test_summary.md
+        echo "" >> test_summary.md
+        
+        echo "## Test Results Overview" >> test_summary.md
+        echo "" >> test_summary.md
+        
+        # Check job results
+        echo "- **Unit Tests:** ${{ needs.unit-tests.result }}" >> test_summary.md
+        echo "- **Integration Tests:** ${{ needs.integration-tests.result }}" >> test_summary.md
+        echo "- **Performance Tests:** ${{ needs.performance-tests.result }}" >> test_summary.md
+        echo "- **Usability Tests:** ${{ needs.usability-tests.result }}" >> test_summary.md
+        echo "" >> test_summary.md
+        
+        echo "## Artifacts" >> test_summary.md
+        echo "All test results and reports are available in the workflow artifacts." >> test_summary.md
+        
+        # Add performance summary if available
+        if [ -f "performance-test-results/performance_summary.md" ]; then
+          echo "" >> test_summary.md
+          cat performance-test-results/performance_summary.md >> test_summary.md
+        fi
+        
+    - name: Upload comprehensive test summary
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-summary-report
+        path: test_summary.md
+        retention-days: 90
+        
+    - name: Comment PR with test summary
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          if (fs.existsSync('test_summary.md')) {
+            const summary = fs.readFileSync('test_summary.md', 'utf8');
+            
+            const body = `## Gallery Test Suite Results\n\n${summary}`;
+            
+            // Find existing comment or create new one
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && comment.body.includes('Gallery Test Suite Results')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }
+          }
+
+  deployment-readiness:
+    name: Deployment Readiness Check
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests, performance-tests, usability-tests]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - name: Check all tests passed
+      run: |
+        if [[ "${{ needs.unit-tests.result }}" != "success" || 
+              "${{ needs.integration-tests.result }}" != "success" || 
+              "${{ needs.performance-tests.result }}" != "success" || 
+              "${{ needs.usability-tests.result }}" != "success" ]]; then
+          echo "Not all tests passed. Deployment readiness: FAILED"
+          exit 1
+        else
+          echo "All gallery tests passed. Deployment readiness: READY"
+        fi
+        
+    - name: Create deployment tag
+      if: success()
+      run: |
+        echo "Gallery tests passed - ready for deployment"
+        # This could create a deployment tag or trigger deployment workflow

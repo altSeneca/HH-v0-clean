@@ -1,0 +1,173 @@
+**Product Requirements Document (PRD)**
+
+**Product Name:** HazardHawk
+**Product Type:** AI-powered Construction Safety SaaS Platform
+**Owner:** Aaron Burroughs
+**Target Users:** Construction Safety Managers, Foremen, Supervisors, Project Managers, and Executives
+**Target Clients:** General Contractors from (5 - 50,000 employees)
+---
+
+### 1. **Objective**
+
+To create a scalable, AI-driven platform for identifying, analyzing, and managing safety hazards on construction sites. HazardHawk will streamline compliance, improve safety culture, and reduce incident rates using automated image and text analysis aligned with OSHA standards. It should be easy for users to snap a photo, add safety tags 
+
+The final product is always a simple, lovable, complete application capable of delighting users with how well thought out the UX and UI are. We are building for construction crews who do not have time to learn a new app, everything must be easy to find and easy to accomplish. 
+
+---
+
+### 2. **Core Features**
+
+#### A. **AI-Powered Safety Analysis**
+
+* **Bulk Photo Upload:** Users select multiple photos via the gallery interface.
+* **S3 Upload:** Photos are uploaded to an AWS S3 bucket.
+* **AI Processing:** S3 links are sent to the AI (e.g., Gemini Vision Pro 2.5), which processes each image and returns a structured JSON containing:
+
+  * Detected hazards
+  * OSHA Code references
+  * Suggested mitigations
+  * Severity ratings
+  * Postive observations
+* **Result Handling:**
+
+  * JSON analysis results are paired with each image
+  * Stored in the user's gallery
+  * Exportable as a printable report (PDF), containing:
+
+    * Each photo
+    * AI analysis
+    * Timestamp, location, and direction metadata
+* **Future Consideration:** Explore opportunities to streamline and automate the bundling of photos + analysis into a single cohesive report without manual steps.
+
+#### B. **Pre-Task Plans (PTPs)**
+
+* **Input Form:** Work scope, crew details, tools, PPE, and environment.
+* **Output Template:** PDF format including:
+
+  * Job steps
+  * Hazards
+  * Controls
+  * Signature section
+* **Compliance:** Aligned with 'All PTPs.docx' format
+
+#### C. **Toolbox Talks Generator**
+
+* **Input:** Topic selection or auto-generate from task type
+* **Output:** OSHA-compliant template with:
+
+  * Topic summary
+  * Discussion points
+  * Worker acknowledgment/signatures
+  * Optional extra signature page
+* **Export:** PDF and print-ready
+
+#### D. **Pre-Shift Meeting Tool**
+
+* **Input:** Type of work + hazard checklist
+* **Output:** Printable and exportable talk with task-specific reminders and safety checks
+
+#### E. **Incident Reports**
+
+* **Form Builder:** Incident type, involved personnel, timeline, actions taken
+* **Output:** Structured PDF with image support and OSHA references
+
+#### F. **Dashboard**
+
+* **Buttons/Tools:**
+
+  * Take Photo (1st Priority)
+  * Toolbox Talks (4th)
+  * Safety Orientations (not a priority)
+  * Pre-Shift Meetings (2nd)
+  * Incident Reporting (3rd)
+* **User Role Management:**
+* **Field Access:** Basic tier with permissions to upload photos, view AI hazard analysis results, and read-only access to safety documentation. Ideal for on-site workers and subcontractors.
+* **Safety Lead:** Mid-tier with access to generate Pre-Task Plans, Toolbox Talks, and Incident Reports. Can edit and distribute safety content. Suitable for Safety Managers and Assistant Superintendents.
+* **Project Admin:** Full feature access including all generation tools, project data export, analytics dashboard, user role assignment, and access control. Intended for Superintendents, Project Managers, and Executive-level stakeholders.
+
+Each tier includes only the features necessary for their job function, aligning costs with value and ensuring streamlined access.
+
+#### G. **Data Management & Access**
+
+* **Cloud Storage:** AWS S3 for images, PDFs
+* **Database:** PostgreSQL (hosted on RDS)
+* **Permissions:** IAM roles for app/backend access, scoped S3 bucket policies
+* **Photo Meta Overlay:** GPS, direction (icon + angle), timestamp, project + company name
+
+---
+
+### 3. **Technical Requirements**
+
+* **Backend Language:** Go
+* **Containerization:** Stateless Docker containers
+* **Database:** PostgreSQL (RDS, not publicly accessible)
+* **Image Storage:** AWS S3
+* **Authentication:** AWS Cognito / IAM
+* **APIs:** OpenAI, Google Gemini Vision/Vertex AI
+* **Hosting:** AWS ECS / Lambda (for serverless tools)
+
+---
+
+### 4. **AI Workflow & Cost Optimization**
+
+* Gemini Vision Pro 2.5 model used
+* Image upload: Bulk via gallery > stored in S3 > processed via links
+* Process:
+
+  * 30 images/day per user
+  * 2 PTPs/day
+  * 1 toolbox talk/week
+  * 1 incident report/month
+* **Estimated Monthly Storage/Retrieval (per project):**
+
+  * \~0.888GB stored
+  * Retrieval and storage costs calculated via AWS S3 pricing
+
+---
+
+### 5. **UI/UX Considerations**
+
+* **Camera Screen Layout:**
+
+  * BoxWithConstraints for viewfinder with visible borders
+  * Metadata and direction icon overlays
+  * Bottom bar: gallery, capture, settings
+  * Top-left permanent hamburger menu for nav
+* **Visual Style:** Minimalist, construction-friendly theme
+
+---
+
+### 6. **Roles & Tiers**
+
+* **Apprentice:** Limited uploads/analysis ($29/month)
+* **Journey Person:** Mid-tier access, some generation tools ($49/month)
+* **Supervisor:** Full access to all features($99/month)
+* **Data Transfer:** Tier-up retains all data; Tier-down gets 30-day export period
+
+---
+
+### 7. **Security & Compliance**
+
+* **Data Isolation per Project**
+* **S3 Access:** Enforced via IAM + Bucket Policies
+* **RDS Access:** VPC security groups restrict to backend and Android app only
+
+---
+
+### 8. **Success Metrics**
+
+* Time to generate safety report
+* Number of hazards identified per week
+* User engagement rate by tier
+* Incident rate reduction by project
+* Customer retention and expansion
+
+---
+
+### 9. **Future Roadmap**
+
+* Integration with project management platforms
+* Live camera hazard detection
+* In-app messaging
+* Supervisor daily logs
+* Inspection checklist generator

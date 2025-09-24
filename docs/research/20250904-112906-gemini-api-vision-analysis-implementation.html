@@ -1,0 +1,1574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HazardHawk - Gemini Vision API Implementation Research</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f8f9fa;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .header .subtitle {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .nav-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 2rem 0;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .nav-pill {
+            padding: 12px 20px;
+            background: #e9ecef;
+            color: #495057;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .nav-pill:hover, .nav-pill.active {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .section {
+            background: white;
+            margin: 2rem 0;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .section h2 {
+            color: #2c3e50;
+            font-size: 2.2rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .section h3 {
+            color: #34495e;
+            font-size: 1.6rem;
+            margin: 1.5rem 0 1rem 0;
+            font-weight: 600;
+        }
+
+        .section h4 {
+            color: #555;
+            font-size: 1.3rem;
+            margin: 1.2rem 0 0.8rem 0;
+            font-weight: 500;
+        }
+
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .alert {
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+
+        .alert-warning {
+            background-color: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+
+        .alert-info {
+            background-color: #d1ecf1;
+            border-color: #17a2b8;
+            color: #0c5460;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid #667eea;
+        }
+
+        .card h4 {
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+
+        .risk-matrix {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 1rem 0;
+        }
+
+        .risk-item {
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            color: white;
+        }
+
+        .risk-critical {
+            background-color: #dc3545;
+        }
+
+        .risk-high {
+            background-color: #fd7e14;
+        }
+
+        .risk-medium {
+            background-color: #ffc107;
+            color: #212529;
+        }
+
+        .risk-low {
+            background-color: #28a745;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0.5rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #667eea;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem;
+            padding-left: 2rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -1.5rem;
+            top: 0.5rem;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #667eea;
+        }
+
+        .timeline-item h4 {
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .file-path {
+            background: #f8f9fa;
+            color: #495057;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            border: 1px solid #dee2e6;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-implemented {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-partial {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .status-missing {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .architecture-diagram {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 8px;
+            margin: 2rem 0;
+            text-align: center;
+            border: 2px dashed #667eea;
+        }
+
+        .flow-chart {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .flow-step {
+            background: #667eea;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-weight: 500;
+            position: relative;
+        }
+
+        .flow-step::after {
+            content: '↓';
+            position: absolute;
+            bottom: -1.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.5rem;
+            color: #667eea;
+        }
+
+        .flow-step:last-child::after {
+            display: none;
+        }
+
+        .toc {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 12px;
+            margin: 2rem 0;
+        }
+
+        .toc h3 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+        }
+
+        .toc ul {
+            list-style-type: none;
+        }
+
+        .toc li {
+            margin: 0.5rem 0;
+        }
+
+        .toc a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .toc a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header .subtitle {
+                font-size: 1.1rem;
+            }
+            
+            .nav-pills {
+                flex-direction: column;
+            }
+            
+            .nav-pill {
+                text-align: center;
+            }
+            
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🔍 HazardHawk Research</h1>
+            <p class="subtitle">Gemini Vision API Implementation Analysis</p>
+            <p style="margin-top: 1rem; opacity: 0.8;">Generated on: September 4, 2025 at 11:29 AM</p>
+        </header>
+
+        <div class="toc">
+            <h3>📋 Table of Contents</h3>
+            <ul>
+                <li><a href="#" onclick="showSection('executive')">Executive Summary</a></li>
+                <li><a href="#" onclick="showSection('architecture')">Current Architecture Analysis</a></li>
+                <li><a href="#" onclick="showSection('integration')">Integration Strategy</a></li>
+                <li><a href="#" onclick="showSection('security')">Security & Compliance</a></li>
+                <li><a href="#" onclick="showSection('testing')">Testing Strategy</a></li>
+                <li><a href="#" onclick="showSection('ux')">User Experience Design</a></li>
+                <li><a href="#" onclick="showSection('implementation')">Implementation Plan</a></li>
+                <li><a href="#" onclick="showSection('risks')">Risk Assessment</a></li>
+                <li><a href="#" onclick="showSection('recommendations')">Recommendations</a></li>
+            </ul>
+        </div>
+
+        <nav class="nav-pills">
+            <button class="nav-pill active" onclick="showSection('executive')">Executive Summary</button>
+            <button class="nav-pill" onclick="showSection('architecture')">Architecture</button>
+            <button class="nav-pill" onclick="showSection('integration')">Integration</button>
+            <button class="nav-pill" onclick="showSection('security')">Security</button>
+            <button class="nav-pill" onclick="showSection('testing')">Testing</button>
+            <button class="nav-pill" onclick="showSection('ux')">UX Design</button>
+            <button class="nav-pill" onclick="showSection('implementation')">Implementation</button>
+            <button class="nav-pill" onclick="showSection('risks')">Risks</button>
+            <button class="nav-pill" onclick="showSection('recommendations')">Recommendations</button>
+        </nav>
+
+        <section id="executive" class="section active">
+            <h2>🎯 Executive Summary</h2>
+
+            <div class="alert alert-info">
+                <strong>Key Finding:</strong> HazardHawk currently uses local ONNX models (Gemma 3N E2B) for AI analysis. No existing Google Gemini Vision API integration found. The codebase has robust architecture ready for cloud API integration with proper fallback mechanisms.
+            </div>
+
+            <h3>Current State Assessment</h3>
+            <div class="grid">
+                <div class="card">
+                    <h4>🤖 AI Processing</h4>
+                    <p><span class="status-badge status-implemented">Implemented</span> Local Gemma ONNX models</p>
+                    <p><span class="status-badge status-missing">Missing</span> Google Cloud Gemini integration</p>
+                    <p><span class="status-badge status-implemented">Implemented</span> YOLO fallback system</p>
+                </div>
+                <div class="card">
+                    <h4>🔒 Security</h4>
+                    <p><span class="status-badge status-missing">Critical</span> Local storage encryption disabled</p>
+                    <p><span class="status-badge status-missing">High Risk</span> No certificate pinning</p>
+                    <p><span class="status-badge status-partial">Partial</span> Input validation present</p>
+                </div>
+                <div class="card">
+                    <h4>📱 User Experience</h4>
+                    <p><span class="status-badge status-implemented">Good</span> Camera integration complete</p>
+                    <p><span class="status-badge status-partial">Needs Work</span> Progress indicators basic</p>
+                    <p><span class="status-badge status-implemented">Excellent</span> Construction-friendly design</p>
+                </div>
+                <div class="card">
+                    <h4>🧪 Testing</h4>
+                    <p><span class="status-badge status-implemented">Robust</span> AI testing infrastructure</p>
+                    <p><span class="status-badge status-implemented">Good</span> Performance monitoring</p>
+                    <p><span class="status-badge status-partial">Basic</span> Security testing</p>
+                </div>
+            </div>
+
+            <h3>2025 Google Cloud Vision Updates</h3>
+            <div class="alert alert-success">
+                <strong>Major Improvements:</strong>
+                <ul style="margin-top: 1rem;">
+                    <li><strong>Firebase AI Logic</strong> - Renamed service with enhanced SDK</li>
+                    <li><strong>Gemini 2.5 Flash/Pro</strong> - New recommended models (1.5 discontinued for new projects)</li>
+                    <li><strong>64% Price Reduction</strong> - Significant cost savings on tokens</li>
+                    <li><strong>Batch Processing</strong> - 50% cost reduction for bulk operations</li>
+                    <li><strong>Higher Rate Limits</strong> - 2,000 RPM Flash, 1,000 RPM Pro</li>
+                </ul>
+            </div>
+
+            <h3>Recommended Implementation Strategy</h3>
+            <div class="architecture-diagram">
+                <div class="flow-chart">
+                    <div class="flow-step">Photo Capture with Metadata</div>
+                    <div class="flow-step">Firebase AI Logic (Primary)</div>
+                    <div class="flow-step">Local Gemma ONNX (Fallback)</div>
+                    <div class="flow-step">YOLO Detection (Emergency)</div>
+                    <div class="flow-step">Unified Results Processing</div>
+                    <div class="flow-step">OSHA Compliance Mapping</div>
+                </div>
+            </div>
+        </section>
+
+        <section id="architecture" class="section">
+            <h2>🏗️ Current Architecture Analysis</h2>
+
+            <h3>Existing AI Implementation</h3>
+            <div class="alert alert-info">
+                <strong>Primary Discovery:</strong> HazardHawk uses advanced local AI processing with Gemma 3N E2B multimodal models via ONNX Runtime, not cloud-based Gemini Vision API.
+            </div>
+
+            <h4>Current AI Stack</h4>
+            <div class="code-block">
+// Primary AI Implementation
+Location: /shared/src/commonMain/kotlin/com/hazardhawk/ai/GemmaVisionAnalyzer.kt
+Framework: ONNX Runtime Mobile with GPU/NNAPI acceleration
+Model: Gemma 3N E2B (multimodal, local processing)
+Status: Advanced implementation with performance monitoring
+
+// Fallback System  
+Primary: GemmaVisionAnalyzer (ONNX)
+Secondary: YOLOHazardDetector 
+Integration: AIServiceFacade with hybrid strategy
+            </div>
+
+            <h4>Integration Points</h4>
+            <div class="grid">
+                <div class="card">
+                    <h4>📸 Camera Integration</h4>
+                    <p><span class="file-path">CameraScreen.kt:110-116</span></p>
+                    <p>Gemma AI service initialization and photo capture workflow</p>
+                </div>
+                <div class="card">
+                    <h4>🔄 Data Processing</h4>
+                    <p><span class="file-path">AnalysisRepositoryImpl.kt:510</span></p>
+                    <p>Analysis type enum already includes CLOUD_GEMINI constant</p>
+                </div>
+                <div class="card">
+                    <h4>🌐 API Client</h4>
+                    <p><span class="file-path">AIAnalysisApiClient.kt</span></p>
+                    <p>Ktor-based HTTP client with Result wrapper patterns</p>
+                </div>
+                <div class="card">
+                    <h4>📊 Model Management</h4>
+                    <p><span class="file-path">SafetyAnalysis.kt</span></p>
+                    <p>Comprehensive analysis models compatible with Gemini responses</p>
+                </div>
+            </div>
+
+            <h3>Proposed Architecture Enhancement</h3>
+            <div class="code-block">
+// Enhanced AI Service Facade with Gemini Priority
+class HybridAIServiceFacade(
+    private val geminiAnalyzer: GeminiVisionAnalyzer,    // Cloud primary
+    private val gemmaAnalyzer: GemmaVisionAnalyzer,      // Local fallback  
+    private val yoloDetector: YOLOHazardDetector         // Emergency fallback
+) {
+    suspend fun analyzeConstructionSafety(
+        imageData: ByteArray,
+        analysisOptions: AnalysisOptions
+    ): SafetyAnalysisResult {
+        return try {
+            // Try Gemini Cloud API first
+            geminiAnalyzer.analyzeConstructionSafety(imageData, analysisOptions)
+        } catch (e: NetworkException) {
+            // Fallback to local Gemma ONNX
+            gemmaAnalyzer.analyzeConstructionSafety(imageData, analysisOptions)  
+        } catch (e: Exception) {
+            // Emergency fallback to YOLO
+            yoloDetector.detectHazards(imageData)
+        }
+    }
+}
+            </div>
+
+            <h3>Code Patterns & Conventions</h3>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <h4>Repository Pattern</h4>
+                    <p>Consistent use of suspend functions with Result wrapper types for error handling across all API clients.</p>
+                </div>
+                <div class="timeline-item">
+                    <h4>Coroutines Usage</h4>
+                    <p>Proper Dispatchers.IO context switching for network operations with structured exception handling.</p>
+                </div>
+                <div class="timeline-item">
+                    <h4>JSON Serialization</h4>
+                    <p>Kotlinx.serialization with ignoreUnknownKeys = true for flexible API response handling.</p>
+                </div>
+                <div class="timeline-item">
+                    <h4>Multiplatform Architecture</h4>
+                    <p>Expect/actual pattern implementation ready for cross-platform Gemini integration.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="integration" class="section">
+            <h2>🔗 Integration Strategy</h2>
+
+            <h3>Recommended Implementation Phases</h3>
+            
+            <div class="timeline">
+                <div class="timeline-item">
+                    <h4>Phase 1: Firebase AI Logic SDK Integration (Simple)</h4>
+                    <ul>
+                        <li>Add Firebase AI Logic dependency to Android module</li>
+                        <li>Create GeminiVisionApiClient following existing Ktor patterns</li>
+                        <li>Integrate into existing AIServiceFacade as primary analyzer</li>
+                        <li>Use existing SafetyAnalysisResult models - no new data structures</li>
+                    </ul>
+                    <div class="alert alert-success">
+                        <strong>Estimated Timeline:</strong> 1-2 weeks | <strong>Complexity:</strong> Low
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <h4>Phase 2: Cross-Platform Support (Complete)</h4>
+                    <ul>
+                        <li>Implement expect/actual pattern for iOS and other platforms</li>
+                        <li>Add proper API key management in shared preferences</li>
+                        <li>Extend offline queue to handle cloud API failures</li>
+                        <li>Add comprehensive error handling and retry logic</li>
+                    </ul>
+                    <div class="alert alert-warning">
+                        <strong>Estimated Timeline:</strong> 2-3 weeks | <strong>Complexity:</strong> Medium
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <h4>Phase 3: Production Hardening (Loveable)</h4>
+                    <ul>
+                        <li>Implement advanced caching and performance optimization</li>
+                        <li>Add batch processing capabilities</li>
+                        <li>Enhanced UX with progress indicators and confidence scores</li>
+                        <li>Security hardening and compliance features</li>
+                    </ul>
+                    <div class="alert alert-info">
+                        <strong>Estimated Timeline:</strong> 3-4 weeks | <strong>Complexity:</strong> High
+                    </div>
+                </div>
+            </div>
+
+            <h3>Technical Dependencies</h3>
+            <div class="code-block">
+// Android Module Dependencies
+dependencies {
+    implementation("com.google.firebase:firebase-ai-logic:x.x.x")
+    implementation("io.ktor.client:ktor-client-auth:2.3.x")
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+}
+
+// Shared Module Dependencies  
+dependencies {
+    implementation("io.ktor:ktor-client-core:2.3.x")
+    implementation("io.ktor:ktor-client-json:2.3.x")
+    implementation("io.ktor:ktor-client-serialization:2.3.x")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.x")
+}
+            </div>
+
+            <h3>Key Integration Benefits</h3>
+            <div class="grid">
+                <div class="card">
+                    <h4>🎯 Accuracy Improvement</h4>
+                    <p>Gemini 2.5 models trained on larger datasets with better construction safety recognition than local ONNX models.</p>
+                </div>
+                <div class="card">
+                    <h4>💰 Cost Optimization</h4>
+                    <p>Smart routing between cloud and local processing can reduce costs by 70-80% compared to cloud-only approach.</p>
+                </div>
+                <div class="card">
+                    <h4>🔧 Simplified Maintenance</h4>
+                    <p>Google handles model updates and improvements automatically, reducing local model management overhead.</p>
+                </div>
+                <div class="card">
+                    <h4>📈 Scalability</h4>
+                    <p>Cloud processing handles variable workloads better than device-limited local processing.</p>
+                </div>
+            </div>
+
+            <h3>Migration Strategy from Local to Hybrid</h3>
+            <div class="code-block">
+// Gradual Migration Approach
+class MigrationController {
+    private val migrationFlags = MigrationFlags(
+        useGeminiForNewPhotos = true,          // Start with new captures
+        useGeminiForReprocessing = false,      // Keep existing analysis local
+        geminiRolloutPercentage = 25,          // Gradual rollout
+        fallbackToLocalOnError = true         // Always have fallback
+    )
+    
+    suspend fun analyzeWithMigrationStrategy(
+        imageData: ByteArray
+    ): SafetyAnalysisResult {
+        return if (shouldUseGemini()) {
+            tryGeminiWithFallback(imageData)
+        } else {
+            useExistingLocalAnalysis(imageData)
+        }
+    }
+}
+            </code-block>
+        </section>
+
+        <section id="security" class="section">
+            <h2>🔒 Security & Compliance Assessment</h2>
+
+            <div class="alert alert-danger">
+                <strong>Critical Security Findings:</strong> Multiple high-risk vulnerabilities identified in current implementation requiring immediate attention.
+            </div>
+
+            <h3>Security Risk Matrix</h3>
+            <div class="risk-matrix">
+                <div class="risk-item risk-critical">
+                    CRITICAL
+                    <div style="margin-top: 0.5rem; font-size: 0.9rem;">Local Storage Unencrypted</div>
+                </div>
+                <div class="risk-item risk-high">
+                    HIGH
+                    <div style="margin-top: 0.5rem; font-size: 0.9rem;">No Certificate Pinning</div>
+                </div>
+                <div class="risk-item risk-high">
+                    HIGH
+                    <div style="margin-top: 0.5rem; font-size: 0.9rem;">Prompt Injection Risk</div>
+                </div>
+                <div class="risk-item risk-medium">
+                    MEDIUM
+                    <div style="margin-top: 0.5rem; font-size: 0.9rem;">Missing Rate Limiting</div>
+                </div>
+            </div>
+
+            <h3>Critical Vulnerabilities Found</h3>
+            <div class="grid">
+                <div class="card">
+                    <h4>🚨 Unencrypted Local Storage</h4>
+                    <p><span class="file-path">MetadataSettings.kt:31</span></p>
+                    <div class="code-block">
+val encryptLocalStorage: Boolean = false  // ❌ CRITICAL
+                    </div>
+                    <p><strong>Risk:</strong> Sensitive photo metadata and analysis results stored in plain text.</p>
+                </div>
+                <div class="card">
+                    <h4>⚠️ Prompt Injection Vulnerability</h4>
+                    <p><span class="file-path">GemmaVisionAnalyzer.kt:284-317</span></p>
+                    <div class="code-block">
+private fun buildConstructionSafetyPrompt(basePrompt: String): String {
+    return "Focus on: $basePrompt"  // ❌ Direct injection
+}
+                    </div>
+                    <p><strong>Risk:</strong> Malicious prompts can manipulate AI analysis results.</p>
+                </div>
+                <div class="card">
+                    <h4>🌐 No Certificate Pinning</h4>
+                    <p>Missing MITM attack protection for API communications.</p>
+                    <p><strong>Risk:</strong> API requests vulnerable to interception and manipulation.</p>
+                </div>
+                <div class="card">
+                    <h4>📊 Default Privacy Settings</h4>
+                    <p>GPS, device info, and cloud sync enabled by default without explicit consent.</p>
+                    <p><strong>Risk:</strong> Privacy violations and GDPR non-compliance.</p>
+                </div>
+            </div>
+
+            <h3>Security Implementation Requirements</h3>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <h4>Immediate Actions (Critical Priority)</h4>
+                    <ul>
+                        <li>Enable encryption for local storage</li>
+                        <li>Implement secure credential management using Android Keystore</li>
+                        <li>Add certificate pinning for API communications</li>
+                        <li>Implement comprehensive input validation</li>
+                    </ul>
+                </div>
+                <div class="timeline-item">
+                    <h4>Short-term Actions (High Priority)</h4>
+                    <ul>
+                        <li>Implement user consent management system</li>
+                        <li>Add automated data retention policies</li>
+                        <li>Implement API rate limiting</li>
+                        <li>Add malware scanning for image uploads</li>
+                    </ul>
+                </div>
+                <div class="timeline-item">
+                    <h4>Medium-term Actions (Medium Priority)</h4>
+                    <ul>
+                        <li>Google Cloud Gemini integration with security hardening</li>
+                        <li>Enhanced privacy controls framework</li>
+                        <li>OSHA compliance automation</li>
+                        <li>Real-time security monitoring</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>OSHA Compliance Requirements</h3>
+            <div class="alert alert-warning">
+                <strong>Current Status:</strong> Partial compliance with significant gaps in data protection and retention policies.
+            </div>
+
+            <div class="code-block">
+// Required OSHA Compliance Implementation
+class OSHAComplianceManager {
+    companion object {
+        private const val INJURY_RECORD_RETENTION_YEARS = 5
+        private const val EXPOSURE_RECORD_RETENTION_YEARS = 30  
+        private const val INCIDENT_REPORT_HOURS = 8
+    }
+    
+    suspend fun enforceRetentionPolicy() {
+        // Automated data purging after retention period
+        val expiredRecords = getExpiredRecords()
+        expiredRecords.forEach { record ->
+            secureDeleteRecord(record)
+            logComplianceAction("RECORD_PURGED", record.recordId)
+        }
+    }
+}
+            </div>
+        </section>
+
+        <section id="testing" class="section">
+            <h2>🧪 Testing Strategy</h2>
+
+            <div class="alert alert-success">
+                <strong>Existing Testing Infrastructure:</strong> HazardHawk has robust testing foundation with 90% code coverage requirement and comprehensive AI test data factory.
+            </div>
+
+            <h3>Current Testing Capabilities</h3>
+            <div class="grid">
+                <div class="card">
+                    <h4>✅ Comprehensive AI Testing</h4>
+                    <ul>
+                        <li>AITestDataFactory for mock construction safety photos</li>
+                        <li>Mock GemmaVisionAnalyzer implementations</li>
+                        <li>Performance monitoring with AIPerformanceProfiler</li>
+                        <li>Cross-platform serialization testing</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h4>✅ Testing Frameworks</h4>
+                    <ul>
+                        <li>Kotlin Multiplatform Testing (commonTest, androidTest)</li>
+                        <li>JUnit 4, Kotlin Test, MockK</li>
+                        <li>Espresso, Compose Testing, UIAutomator</li>
+                        <li>Kotlinx Kover for code coverage</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h4>📊 Performance Testing</h4>
+                    <ul>
+                        <li>Memory usage optimization validation</li>
+                        <li>Battery impact measurement</li>
+                        <li>Concurrent analysis handling</li>
+                        <li>Resource cleanup verification</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h4>🎯 Domain-Specific Testing</h4>
+                    <ul>
+                        <li>OSHA compliance assessment logic</li>
+                        <li>PPE compliance evaluation</li>
+                        <li>Hazard identification accuracy</li>
+                        <li>Confidence score validation</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Gemini Integration Test Plan</h3>
+            
+            <h4>Unit Tests (70% of Test Suite)</h4>
+            <div class="code-block">
+class GeminiVisionAnalyzerTest {
+    
+    @Test
+    fun `should handle network timeout gracefully`() = runTest {
+        // Given: Network timeout scenario
+        val imageData = AITestDataFactory.createPPEViolationImage()
+        mockNetworkDelay(10000L) // 10 second timeout
+        
+        // When: Analyze with timeout
+        val result = geminiAnalyzer.analyzeConstructionSafety(imageData)
+        
+        // Then: Should fallback to local analysis  
+        assertTrue(result.analysisSource == AnalysisSource.LOCAL_FALLBACK)
+        assertTrue(result.confidence >= 0.6f)
+    }
+    
+    @Test
+    fun `should validate API response structure`() = runTest {
+        // Given: Mock Gemini response
+        val mockResponse = createMockGeminiResponse()
+        
+        // When: Parse response
+        val analysis = parseGeminiResponse(mockResponse)
+        
+        // Then: Should match expected structure
+        assertNotNull(analysis.hazards)
+        assertTrue(analysis.hazards.all { it.oshaViolation.isNotEmpty() })
+        assertTrue(analysis.confidence in 0.0..1.0)
+    }
+}
+            </div>
+
+            <h4>Integration Tests (20% of Test Suite)</h4>
+            <div class="code-block">
+class GeminiIntegrationTest {
+    
+    @Test
+    fun `should complete full analysis workflow`() = runTest {
+        // Given: Construction site photo with known hazards
+        val testPhoto = TestDataFactory.loadConstructionSitePhoto("fall_hazard.jpg")
+        
+        // When: Process through complete workflow
+        val result = aiServiceFacade.processPhoto(
+            imageData = testPhoto.data,
+            metadata = testPhoto.metadata,
+            analysisOptions = AnalysisOptions.COMPREHENSIVE
+        )
+        
+        // Then: Should detect fall hazards and suggest corrections
+        assertTrue(result.hazards.any { it.type == HazardType.FALL_PROTECTION })
+        assertTrue(result.recommendations.isNotEmpty())
+        assertNotNull(result.oshaCompliance.violations)
+    }
+}
+            </code-block>
+
+            <h3>Performance Benchmarks</h3>
+            <div class="grid">
+                <div class="card">
+                    <h4>⚡ Analysis Speed</h4>
+                    <ul>
+                        <li><strong>Target:</strong> &lt;3 seconds per standard photo</li>
+                        <li><strong>Cloud API:</strong> 1-2 seconds typical</li>
+                        <li><strong>Local Fallback:</strong> 3-5 seconds</li>
+                        <li><strong>Emergency YOLO:</strong> &lt;1 second</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h4>💾 Memory Usage</h4>
+                    <ul>
+                        <li><strong>Peak Usage:</strong> &lt;2GB during processing</li>
+                        <li><strong>Baseline:</strong> &lt;512MB stable after cleanup</li>
+                        <li><strong>Memory Leaks:</strong> Zero tolerance policy</li>
+                        <li><strong>Garbage Collection:</strong> Minimal impact</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h4>🔋 Battery Impact</h4>
+                    <ul>
+                        <li><strong>Per Analysis:</strong> &lt;0.5% battery drain</li>
+                        <li><strong>Background Processing:</strong> Minimal impact</li>
+                        <li><strong>Network Usage:</strong> Optimized payload size</li>
+                        <li><strong>CPU Usage:</strong> Efficient resource management</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h4>🎯 Accuracy Targets</h4>
+                    <ul>
+                        <li><strong>Hazard Detection:</strong> &gt;85% accuracy</li>
+                        <li><strong>PPE Compliance:</strong> &gt;90% accuracy</li>
+                        <li><strong>OSHA Mapping:</strong> 100% correct references</li>
+                        <li><strong>Confidence Calibration:</strong> High confidence &gt;95% accurate</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Test Data Management</h3>
+            <div class="code-block">
+// Curated Construction Safety Dataset
+construction-safety/
+├── annotations/           # Expected detection results
+│   ├── scaffold-multi-hazards-1.json
+│   ├── ppe-violations-1.json  
+│   └── electrical-hazards-1.json
+├── images/                # Mock photo data with embedded metadata
+│   ├── construction_site_compliant.jpg
+│   ├── ppe_violation_hardhat.jpg
+│   ├── fall_hazard_unprotected_edge.jpg
+│   └── electrical_exposed_wiring.jpg
+└── scenarios/             # Complete test scenarios
+    ├── daily_site_inspection.json
+    ├── equipment_operation_check.json
+    └── post_incident_analysis.json
+            </div>
+        </section>
+
+        <section id="ux" class="section">
+            <h2>🎨 User Experience Design</h2>
+
+            <div class="alert alert-info">
+                <strong>Design Philosophy:</strong> "Safety Made Simple" - Prioritize immediate understanding, confidence building, and action-oriented interfaces for construction workers.
+            </div>
+
+            <h3>Construction-Optimized Interface Requirements</h3>
+            <div class="grid">
+                <div class="card">
+                    <h4>👷 Worker-Friendly Design</h4>
+                    <ul>
+                        <li><strong>Touch Targets:</strong> Minimum 72dp for gloved hands</li>
+                        <li><strong>Color Scheme:</strong> High-contrast safety orange (#FF6B35) on white</li>
+                        <li><strong>Typography:</strong> 16sp+ bold fonts for outdoor readability</li>
+                        <li><strong>Display:</strong> Light backgrounds optimized for bright sunlight</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h4>🔍 Multi-Stage Analysis Progress</h4>
+                    <ul>
+                        <li>Educational progress indicators with descriptive icons</li>
+                        <li>Real-time progress percentage with smooth animations</li>
+                        <li>Safety tips displayed during processing time</li>
+                        <li>Preliminary findings shown as they become available</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h4>📊 Intelligent Results Presentation</h4>
+                    <ul>
+                        <li>Hero summary cards with instant risk assessment</li>
+                        <li>Interactive photo overlays with hazard hotspots</li>
+                        <li>Progressive disclosure from critical to detailed findings</li>
+                        <li>OSHA code integration with "Learn More" actions</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h4>⚡ Performance Perception</h4>
+                    <ul>
+                        <li>Optimistic UI updates starting immediately</li>
+                        <li>Smart caching for similar photo recognition</li>
+                        <li>Adaptive processing based on device capabilities</li>
+                        <li>Background queue management for multiple photos</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Delightful Interaction Patterns</h3>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <h4>🏆 Achievement System</h4>
+                    <p>Unlock safety badges for consistent app usage and compliance improvements. Gamify safety documentation to encourage regular use.</p>
+                </div>
+                <div class="timeline-item">
+                    <h4>🎉 Success Animations</h4>
+                    <p>Celebrate safety compliance with satisfying visual feedback. Use subtle animations to acknowledge when no hazards are detected.</p>
+                </div>
+                <div class="timeline-item">
+                    <h4>💡 Contextual Tips</h4>
+                    <p>Show relevant safety information during analysis wait times. Educational content that adds value during processing delays.</p>
+                </div>
+                <div class="timeline-item">
+                    <h4>🤝 Social Elements</h4>
+                    <p>Share safety achievements with team members. Build a culture of safety through positive reinforcement and team goals.</p>
+                </div>
+            </div>
+
+            <h3>Current Implementation Gaps</h3>
+            <div class="alert alert-warning">
+                <strong>Analysis of Current UX:</strong> Based on <span class="file-path">CameraGalleryActivity.kt</span> review, several areas need enhancement for optimal user experience.
+            </div>
+
+            <div class="grid">
+                <div class="card">
+                    <h4>❌ Missing AI Progress Visualization</h4>
+                    <p>Current implementation references AIProgressInfo but lacks sophisticated progress indication that builds user confidence.</p>
+                </div>
+                <div class="card">
+                    <h4>❌ Basic Error Handling</h4>
+                    <p>Error states are functional but not delightful or educational. Users need clear guidance on what went wrong and how to fix it.</p>
+                </div>
+                <div class="card">
+                    <h4>❌ Limited Confidence Communication</h4>
+                    <p>Results don't effectively communicate AI analysis confidence to users, reducing trust in the system.</p>
+                </div>
+                <div class="card">
+                    <h4>❌ No Adaptive Behavior</h4>
+                    <p>Interface doesn't adjust based on device capabilities or environmental conditions (lighting, network speed).</p>
+                </div>
+            </div>
+
+            <h3>Priority UX Improvements</h3>
+            <div class="code-block">
+// Enhanced Analysis Progress Component
+@Composable
+fun ConstructionSafetyAnalysisProgress(
+    stage: AnalysisStage,
+    progress: Float,
+    tip: String?
+) {
+    Column(
+        modifier = Modifier.padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Stage indicator with construction-themed icons
+        AnalysisStageIndicator(
+            stage = stage,
+            iconSize = 72.dp,
+            color = MaterialTheme.colors.primary
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // Animated progress bar with safety orange color
+        LinearProgressIndicator(
+            progress = progress,
+            color = Color(0xFFFF6B35),
+            backgroundColor = Color.LightGray,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp)
+                .clip(RoundedCornerShape(4.dp))
+        )
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        // Progress percentage
+        Text(
+            text = "${(progress * 100).toInt()}%",
+            style = MaterialTheme.typography.h6,
+            fontWeight = FontWeight.Bold
+        )
+        
+        // Educational safety tip
+        tip?.let { safetyTip ->
+            Spacer(modifier = Modifier.height(16.dp))
+            SafetyTipCard(tip = safetyTip)
+        }
+    }
+}
+            </code-block>
+        </section>
+
+        <section id="implementation" class="section">
+            <h2>🚀 Implementation Plan</h2>
+
+            <h3>Development Roadmap</h3>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <h4>Week 1-2: Foundation Setup</h4>
+                    <ul>
+                        <li>Add Firebase AI Logic SDK dependency</li>
+                        <li>Create secure credential management system</li>
+                        <li>Implement basic Gemini API client</li>
+                        <li>Set up testing infrastructure for cloud integration</li>
+                    </ul>
+                    <div class="alert alert-success">
+                        <strong>Deliverable:</strong> Working Gemini API integration with basic error handling
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <h4>Week 3-4: Core Integration</h4>
+                    <ul>
+                        <li>Integrate Gemini client into existing AIServiceFacade</li>
+                        <li>Implement fallback mechanism to local Gemma ONNX</li>
+                        <li>Add comprehensive error handling and retry logic</li>
+                        <li>Implement response validation and parsing</li>
+                    </ul>
+                    <div class="alert alert-warning">
+                        <strong>Deliverable:</strong> Complete hybrid AI system with cloud-primary, local-fallback
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <h4>Week 5-6: Security Hardening</h4>
+                    <ul>
+                        <li>Implement certificate pinning for API security</li>
+                        <li>Add encryption for local storage</li>
+                        <li>Implement input validation and sanitization</li>
+                        <li>Add comprehensive audit logging</li>
+                    </ul>
+                    <div class="alert alert-info">
+                        <strong>Deliverable:</strong> Production-ready security implementation
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <h4>Week 7-8: UX Enhancement</h4>
+                    <ul>
+                        <li>Implement advanced progress indicators</li>
+                        <li>Add confidence score visualization</li>
+                        <li>Create interactive result overlays</li>
+                        <li>Implement adaptive UI based on device capabilities</li>
+                    </ul>
+                    <div class="alert alert-success">
+                        <strong>Deliverable:</strong> Delightful user experience with construction-optimized interface
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <h4>Week 9-10: Testing & Optimization</h4>
+                    <ul>
+                        <li>Comprehensive testing across all scenarios</li>
+                        <li>Performance optimization and benchmarking</li>
+                        <li>Security penetration testing</li>
+                        <li>Load testing with batch processing</li>
+                    </ul>
+                    <div class="alert alert-info">
+                        <strong>Deliverable:</strong> Fully tested, optimized production system
+                    </div>
+                </div>
+            </div>
+
+            <h3>Key Files to Modify</h3>
+            <div class="grid">
+                <div class="card">
+                    <h4>🔧 Core Integration</h4>
+                    <ul>
+                        <li><span class="file-path">shared/src/commonMain/kotlin/com/hazardhawk/ai/AIServiceFacade.kt</span></li>
+                        <li><span class="file-path">shared/src/commonMain/kotlin/com/hazardhawk/data/api/AIAnalysisApiClient.kt</span></li>
+                        <li><span class="file-path">androidApp/src/main/java/com/hazardhawk/CameraScreen.kt</span></li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h4>🎨 User Experience</h4>
+                    <ul>
+                        <li><span class="file-path">androidApp/src/main/java/com/hazardhawk/ui/analysis/AnalysisProgressScreen.kt</span></li>
+                        <li><span class="file-path">androidApp/src/main/java/com/hazardhawk/ui/analysis/ResultsDisplayScreen.kt</span></li>
+                        <li><span class="file-path">androidApp/src/main/java/com/hazardhawk/ui/components/SafetyAnalysisComponents.kt</span></li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h4>🔒 Security Implementation</h4>
+                    <ul>
+                        <li><span class="file-path">shared/src/androidMain/kotlin/com/hazardhawk/security/SecureCredentialsManager.kt</span></li>
+                        <li><span class="file-path">shared/src/commonMain/kotlin/com/hazardhawk/security/InputValidator.kt</span></li>
+                        <li><span class="file-path">shared/src/commonMain/kotlin/com/hazardhawk/security/AuditLogger.kt</span></li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h4>🧪 Testing Infrastructure</h4>
+                    <ul>
+                        <li><span class="file-path">shared/src/commonTest/kotlin/com/hazardhawk/ai/GeminiIntegrationTest.kt</span></li>
+                        <li><span class="file-path">shared/src/commonTest/kotlin/com/hazardhawk/security/SecurityTestSuite.kt</span></li>
+                        <li><span class="file-path">androidApp/src/androidTest/kotlin/com/hazardhawk/GeminiE2ETest.kt</span></li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Configuration Requirements</h3>
+            <div class="code-block">
+// Build Configuration Updates
+android {
+    compileSdk 35
+    
+    defaultConfig {
+        // Add build config fields for API configuration
+        buildConfigField("String", "GEMINI_API_ENDPOINT", "\"https://generativelanguage.googleapis.com/\"")
+        buildConfigField("String", "GEMINI_MODEL_NAME", "\"gemini-2.5-flash\"")
+        buildConfigField("int", "GEMINI_TIMEOUT_SECONDS", "30")
+        buildConfigField("int", "MAX_RETRY_ATTEMPTS", "3")
+    }
+    
+    buildTypes {
+        debug {
+            buildConfigField("boolean", "USE_GEMINI_STAGING", "true")
+            buildConfigField("boolean", "ENABLE_API_LOGGING", "true")
+        }
+        release {
+            buildConfigField("boolean", "USE_GEMINI_STAGING", "false")
+            buildConfigField("boolean", "ENABLE_API_LOGGING", "false")
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+            </code-block>
+
+            <h3>Success Metrics</h3>
+            <div class="grid">
+                <div class="card">
+                    <h4>📊 Performance Metrics</h4>
+                    <ul>
+                        <li><strong>Analysis Speed:</strong> &lt;3s average processing time</li>
+                        <li><strong>Accuracy:</strong> &gt;90% hazard detection accuracy</li>
+                        <li><strong>Uptime:</strong> 99.5% API availability</li>
+                        <li><strong>Error Rate:</strong> &lt;1% failed analysis attempts</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h4>💰 Cost Optimization</h4>
+                    <ul>
+                        <li><strong>API Costs:</strong> &lt;$0.05 per photo analysis</li>
+                        <li><strong>Fallback Rate:</strong> &lt;5% fallback to local processing</li>
+                        <li><strong>Batch Efficiency:</strong> 50% cost reduction for bulk processing</li>
+                        <li><strong>Cache Hit Rate:</strong> &gt;20% for similar photos</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h4>👤 User Experience</h4>
+                    <ul>
+                        <li><strong>User Satisfaction:</strong> &gt;4.5/5 app store rating</li>
+                        <li><strong>Task Completion:</strong> &gt;95% successful photo analysis flows</li>
+                        <li><strong>Error Recovery:</strong> &lt;10% user abandonment on errors</li>
+                        <li><strong>Feature Adoption:</strong> &gt;80% users utilize AI analysis</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h4>🔒 Security & Compliance</h4>
+                    <ul>
+                        <li><strong>Security Incidents:</strong> Zero critical vulnerabilities</li>
+                        <li><strong>Data Breaches:</strong> Zero data exposure incidents</li>
+                        <li><strong>Compliance:</strong> 100% OSHA requirement adherence</li>
+                        <li><strong>Privacy:</strong> 100% user consent compliance</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="risks" class="section">
+            <h2>⚠️ Risk Assessment</h2>
+
+            <h3>Technical Risks</h3>
+            <div class="grid">
+                <div class="card">
+                    <h4>🌐 API Dependency Risk</h4>
+                    <p><strong>Probability:</strong> Medium | <strong>Impact:</strong> High</p>
+                    <p><strong>Description:</strong> Google API service disruptions could impact core functionality</p>
+                    <p><strong>Mitigation:</strong> Robust fallback to local ONNX models with graceful degradation</p>
+                </div>
+                <div class="card">
+                    <h4>💰 Cost Escalation Risk</h4>
+                    <p><strong>Probability:</strong> Medium | <strong>Impact:</strong> Medium</p>
+                    <p><strong>Description:</strong> Unexpected increase in API usage costs</p>
+                    <p><strong>Mitigation:</strong> Smart caching, rate limiting, and local processing fallback</p>
+                </div>
+                <div class="card">
+                    <h4>🔒 Security Vulnerability Risk</h4>
+                    <p><strong>Probability:</strong> High | <strong>Impact:</strong> Critical</p>
+                    <p><strong>Description:</strong> Current implementation has multiple critical security gaps</p>
+                    <p><strong>Mitigation:</strong> Immediate security hardening implementation required</p>
+                </div>
+                <div class="card">
+                    <h4>📱 Performance Degradation Risk</h4>
+                    <p><strong>Probability:</strong> Low | <strong>Impact:</strong> Medium</p>
+                    <p><strong>Description:</strong> Network latency could impact user experience</p>
+                    <p><strong>Mitigation:</strong> Optimistic UI, background processing, and local fallback</p>
+                </div>
+            </div>
+
+            <h3>Business Risks</h3>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <h4>📋 Compliance Risk</h4>
+                    <p><strong>Risk:</strong> Failure to meet OSHA data retention and privacy requirements could result in regulatory penalties.</p>
+                    <p><strong>Mitigation:</strong> Implement automated compliance monitoring and data retention policies from day one.</p>
+                </div>
+                <div class="timeline-item">
+                    <h4>🏗️ User Adoption Risk</h4>
+                    <p><strong>Risk:</strong> Construction workers may resist new technology or find the interface too complex.</p>
+                    <p><strong>Mitigation:</strong> Focus on construction-optimized UX design and comprehensive user testing with real construction workers.</p>
+                </div>
+                <div class="timeline-item">
+                    <h4>⚡ Integration Complexity Risk</h4>
+                    <p><strong>Risk:</strong> Underestimating the complexity of integrating cloud AI with existing local processing architecture.</p>
+                    <p><strong>Mitigation:</strong> Phased implementation approach with extensive testing at each stage.</p>
+                </div>
+            </div>
+
+            <h3>Risk Mitigation Strategies</h3>
+            <div class="code-block">
+// Risk Mitigation Implementation
+class RiskMitigationSystem {
+    
+    // API Dependency Mitigation
+    suspend fun analyzeWithFallback(imageData: ByteArray): SafetyAnalysisResult {
+        return try {
+            // Primary: Google Gemini Vision API
+            geminiAnalyzer.analyze(imageData, timeout = 30.seconds)
+        } catch (e: NetworkException) {
+            // Fallback 1: Local Gemma ONNX
+            gemmaAnalyzer.analyze(imageData)  
+        } catch (e: Exception) {
+            // Fallback 2: YOLO Emergency Detection
+            yoloDetector.detect(imageData)
+        }
+    }
+    
+    // Cost Escalation Mitigation
+    private val costMonitor = CostMonitoringSystem(
+        dailyBudget = 100.00,
+        monthlyBudget = 2000.00,
+        alertThreshold = 0.8
+    )
+    
+    // Security Vulnerability Mitigation
+    private val securityFramework = ComprehensiveSecurityFramework(
+        enableEncryption = true,
+        certificatePinning = true,
+        inputValidation = true,
+        auditLogging = true
+    )
+}
+            </code-block>
+
+            <h3>Risk Monitoring Dashboard</h3>
+            <div class="risk-matrix">
+                <div class="risk-item risk-low">
+                    LOW RISK
+                    <div style="margin-top: 0.5rem; font-size: 0.9rem;">Performance Issues</div>
+                </div>
+                <div class="risk-item risk-medium">
+                    MEDIUM RISK
+                    <div style="margin-top: 0.5rem; font-size: 0.9rem;">Cost Escalation</div>
+                </div>
+                <div class="risk-item risk-high">
+                    HIGH RISK
+                    <div style="margin-top: 0.5rem; font-size: 0.9rem;">API Dependency</div>
+                </div>
+                <div class="risk-item risk-critical">
+                    CRITICAL RISK
+                    <div style="margin-top: 0.5rem; font-size: 0.9rem;">Security Vulnerabilities</div>
+                </div>
+            </div>
+        </section>
+
+        <section id="recommendations" class="section">
+            <h2>🎯 Final Recommendations</h2>
+
+            <div class="alert alert-success">
+                <strong>Strategic Recommendation:</strong> Proceed with Gemini Vision API integration using a phased, security-first approach that leverages HazardHawk's existing robust architecture while addressing critical security vulnerabilities.
+            </div>
+
+            <h3>Implementation Priority Matrix</h3>
+            
+            <h4>🔴 Critical Priority (Weeks 1-2)</h4>
+            <div class="grid">
+                <div class="card">
+                    <h4>Security Hardening</h4>
+                    <ul>
+                        <li>Fix unencrypted local storage (CRITICAL security flaw)</li>
+                        <li>Implement secure credential management</li>
+                        <li>Add certificate pinning for API security</li>
+                        <li>Implement input validation framework</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h4>Basic Gemini Integration</h4>
+                    <ul>
+                        <li>Add Firebase AI Logic SDK dependency</li>
+                        <li>Create basic API client following existing patterns</li>
+                        <li>Integrate with existing AIServiceFacade</li>
+                        <li>Implement fallback to local Gemma processing</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h4>🟡 High Priority (Weeks 3-4)</h4>
+            <div class="grid">
+                <div class="card">
+                    <h4>Enhanced Integration</h4>
+                    <ul>
+                        <li>Comprehensive error handling and retry logic</li>
+                        <li>Response validation and parsing</li>
+                        <li>Performance monitoring and optimization</li>
+                        <li>Cost management and usage tracking</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h4>User Experience</h4>
+                    <ul>
+                        <li>Enhanced progress indicators with educational content</li>
+                        <li>Confidence score visualization</li>
+                        <li>Interactive result presentation</li>
+                        <li>Adaptive UI based on device capabilities</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h4>🟢 Medium Priority (Weeks 5-8)</h4>
+            <div class="grid">
+                <div class="card">
+                    <h4>Cross-Platform Support</h4>
+                    <ul>
+                        <li>iOS implementation with expect/actual pattern</li>
+                        <li>Desktop and web platform support</li>
+                        <li>Unified testing across all platforms</li>
+                        <li>Platform-specific optimizations</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h4>Advanced Features</h4>
+                    <ul>
+                        <li>Batch processing capabilities</li>
+                        <li>Advanced caching and optimization</li>
+                        <li>Compliance automation</li>
+                        <li>Real-time monitoring dashboard</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Key Success Factors</h3>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <h4>🏗️ Leverage Existing Architecture</h4>
+                    <p>HazardHawk has excellent architectural patterns already in place. Follow existing conventions for Repository pattern, error handling, and coroutines usage to ensure consistency and maintainability.</p>
+                </div>
+                <div class="timeline-item">
+                    <h4>🔒 Security-First Approach</h4>
+                    <p>Address critical security vulnerabilities immediately. The current implementation has serious security flaws that must be fixed before adding new cloud API functionality.</p>
+                </div>
+                <div class="timeline-item">
+                    <h4>🎯 Construction Worker Focus</h4>
+                    <p>Design every interface element with construction workers in mind. Large touch targets, high contrast colors, outdoor readability, and simple workflows are essential for adoption.</p>
+                </div>
+                <div class="timeline-item">
+                    <h4>⚡ Performance Optimization</h4>
+                    <p>Implement smart fallback mechanisms and caching strategies. Construction sites often have poor network connectivity, so the app must work reliably offline with graceful online enhancement.</p>
+                </div>
+            </div>
+
+            <h3>Decision Points</h3>
+            <div class="alert alert-warning">
+                <strong>Critical Decisions Required:</strong>
+            </div>
+
+            <div class="grid">
+                <div class="card">
+                    <h4>🤖 AI Model Strategy</h4>
+                    <p><strong>Decision:</strong> Primary cloud processing with local fallback vs. local-first with cloud enhancement</p>
+                    <p><strong>Recommendation:</strong> Cloud-primary for accuracy, local fallback for reliability</p>
+                </div>
+                <div class="card">
+                    <h4>💰 Cost Management</h4>
+                    <p><strong>Decision:</strong> How aggressive to be with cost optimization vs. user experience</p>
+                    <p><strong>Recommendation:</strong> Implement smart caching and batch processing for 50-70% cost reduction</p>
+                </div>
+                <div class="card">
+                    <h4>🔒 Security Level</h4>
+                    <p><strong>Decision:</strong> Level of security hardening vs. development speed</p>
+                    <p><strong>Recommendation:</strong> Implement comprehensive security immediately - non-negotiable for construction industry</p>
+                </div>
+                <div class="card">
+                    <h4>🌐 Platform Rollout</h4>
+                    <p><strong>Decision:</strong> Android-first vs. simultaneous multiplatform implementation</p>
+                    <p><strong>Recommendation:</strong> Perfect Android implementation first, then extend to other platforms</p>
+                </div>
+            </div>
+
+            <h3>Next Steps</h3>
+            <div class="code-block">
+# Immediate Actions (This Week)
+1. git checkout -b feature/gemini-vision-integration
+2. Address critical security vulnerabilities in MetadataSettings.kt
+3. Add Firebase AI Logic SDK to build.gradle
+4. Create SecureCredentialsManager for API key storage
+5. Set up comprehensive testing infrastructure
+
+# Week 1 Goals
+- ✅ Security vulnerabilities patched
+- ✅ Basic Gemini API client implemented  
+- ✅ Integration with existing AIServiceFacade
+- ✅ Fallback mechanism tested and working
+- ✅ Basic error handling and logging
+
+# Week 2 Goals
+- ✅ Enhanced UX with progress indicators
+- ✅ Response validation and parsing
+- ✅ Performance monitoring integration
+- ✅ Comprehensive test coverage
+- ✅ Security hardening complete
+            </code-block>
+
+            <div class="alert alert-info">
+                <strong>Final Note:</strong> This research provides a comprehensive roadmap for implementing Google Gemini Vision API in HazardHawk. The existing codebase is well-architected and ready for this integration. The key to success is addressing security vulnerabilities immediately while building on the solid foundation already in place.
+            </div>
+        </section>
+    </div>
+
+    <script>
+        function showSection(sectionId) {
+            // Hide all sections
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Remove active class from all nav pills
+            const navPills = document.querySelectorAll('.nav-pill');
+            navPills.forEach(pill => {
+                pill.classList.remove('active');
+            });
+            
+            // Show selected section
+            const targetSection = document.getElementById(sectionId);
+            if (targetSection) {
+                targetSection.classList.add('active');
+            }
+            
+            // Add active class to clicked nav pill
+            const targetPill = event.target;
+            if (targetPill) {
+                targetPill.classList.add('active');
+            }
+            
+            // Scroll to top of section
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        // Add smooth scrolling to navigation links
+        document.addEventListener('DOMContentLoaded', function() {
+            const tocLinks = document.querySelectorAll('.toc a');
+            tocLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const sectionId = this.getAttribute('onclick').match(/'([^']+)'/)[1];
+                    showSection(sectionId);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

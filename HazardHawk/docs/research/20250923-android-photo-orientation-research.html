@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Android Photo Orientation Handling Research - HazardHawk</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; }
+        .header { background: linear-gradient(135deg, #ff6b35, #e55a2b); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .section { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .critical { border-left: 5px solid #e74c3c; padding-left: 15px; background: #ffeaea; }
+        .solution { border-left: 5px solid #27ae60; padding-left: 15px; background: #eafaf1; }
+        .warning { border-left: 5px solid #f39c12; padding-left: 15px; background: #fef9e7; }
+        .code { background: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 5px; font-family: 'Courier New', monospace; overflow-x: auto; }
+        .issue { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .fix { background: #d1ecf1; border: 1px solid #b3d4fc; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #ff6b35; color: white; }
+        .scenario { background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        ul.checklist li { margin: 8px 0; }
+        ul.checklist li::marker { content: "✓ "; color: #27ae60; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>🔄 Android Photo Orientation Handling Research</h1>
+    <p><strong>HazardHawk Safety Camera - Portrait-Locked App Solutions</strong></p>
+    <p>Research Date: September 23, 2025 | Target: API 29-34</p>
+</div>
+
+<div class="section">
+    <h2>🎯 Executive Summary</h2>
+    <div class="critical">
+        <h3>Core Problem Identified</h3>
+        <p>HazardHawk's portrait-locked camera app saves photos with incorrect orientation. Preview shows correct orientation but saved photos appear rotated. This is a widespread Android issue affecting construction documentation integrity.</p>
+    </div>
+
+    <div class="solution">
+        <h3>Primary Solution</h3>
+        <p>Implement device orientation sensor monitoring with proper CameraX target rotation setting, combined with fallback EXIF correction for portrait-locked applications.</p>
+    </div>
+</div>
+
+<div class="section">
+    <h2>🔬 Technical Analysis</h2>
+
+    <h3>1. Android Camera2 vs CameraX Orientation Handling</h3>
+
+    <div class="scenario">
+        <h4>Camera2 API (Legacy)</h4>
+        <ul>
+            <li><strong>Manual Control</strong>: Requires explicit orientation handling</li>
+            <li><strong>Complexity</strong>: Must calculate JPEG orientation = (surfaceRotation + sensorOrientation + 270) % 360</li>
+            <li><strong>Device Specific</strong>: Varies significantly between manufacturers</li>
+            <li><strong>EXIF Writing</strong>: Must manually set EXIF orientation tags</li>
+        </ul>
+    </div>
+
+    <div class="scenario">
+        <h4>CameraX (Modern - Recommended)</h4>
+        <ul>
+            <li><strong>Automatic Handling</strong>: LifecycleCameraController automatically manages orientation</li>
+            <li><strong>WYSIWYG Approach</strong>: What You See Is What You Get preview matching</li>
+            <li><strong>Target Rotation</strong>: setTargetRotation() for manual override</li>
+            <li><strong>EXIF Consistency</strong>: Automatically writes correct EXIF orientation</li>
+        </ul>
+    </div>
+
+    <h3>2. EXIF vs MediaStore Orientation Conflicts</h3>
+
+    <table>
+        <tr>
+            <th>Aspect</th>
+            <th>EXIF Orientation</th>
+            <th>MediaStore.ORIENTATION</th>
+        </tr>
+        <tr>
+            <td>Data Source</td>
+            <td>Image file metadata</td>
+            <td>Android MediaStore cache</td>
+        </tr>
+        <tr>
+            <td>Accuracy</td>
+            <td>More current, file-based</td>
+            <td>May be stale/cached</td>
+        </tr>
+        <tr>
+            <td>Availability</td>
+            <td>Sometimes returns 0/UNDEFINED</td>
+            <td>Depends on MediaStore indexing</td>
+        </tr>
+        <tr>
+            <td>Recommendation</td>
+            <td>Primary source with fallback</td>
+            <td>Secondary/fallback option</td>
+        </tr>
+    </table>
+
+    <h3>3. Surface.ROTATION vs Device Rotation</h3>
+
+    <div class="warning">
+        <h4>Key Distinction</h4>
+        <p><strong>Display Rotation</strong>: Surface.ROTATION_* represents graphics rotation (opposite of device rotation)</p>
+        <p><strong>Device Rotation</strong>: Physical device orientation from natural position</p>
+    </div>
+
+    <div class="code">
+Surface.ROTATION_0   = No rotation (natural orientation)
+Surface.ROTATION_90  = Device rotated 90° counter-clockwise
+Surface.ROTATION_180 = Device upside down
+Surface.ROTATION_270 = Device rotated 90° clockwise
+    </div>
+</div>
+
+<div class="section">
+    <h2>🐛 Common Problems & Root Causes</h2>
+
+    <div class="issue">
+        <h4>Issue 1: Portrait App, Landscape Photo</h4>
+        <p><strong>Symptom</strong>: App locked to portrait, device held portrait, photo saves in landscape orientation</p>
+        <p><strong>Cause</strong>: Camera sensor is typically landscape-mounted, CameraX target rotation not set for portrait-locked apps</p>
+    </div>
+
+    <div class="issue">
+        <h4>Issue 2: Preview Correct, Saved Photo Wrong</h4>
+        <p><strong>Symptom</strong>: Camera preview shows correct orientation but final saved image is rotated</p>
+        <p><strong>Cause</strong>: Preview transformation != capture transformation, missing target rotation setup</p>
+    </div>
+
+    <div class="issue">
+        <h4>Issue 3: EXIF vs Pixel Data Mismatch</h4>
+        <p><strong>Symptom</strong>: EXIF orientation correct but pixel data rotated (or vice versa)</p>
+        <p><strong>Cause</strong>: Some devices save rotated pixels, others save landscape + EXIF orientation</p>
+    </div>
+
+    <div class="issue">
+        <h4>Issue 4: Device-Specific Behavior</h4>
+        <p><strong>Symptom</strong>: Same code works differently on Samsung vs Pixel vs other devices</p>
+        <p><strong>Cause</strong>: Manufacturer-specific camera HAL implementations</p>
+    </div>
+</div>
+
+<div class="section">
+    <h2>📱 API Level Changes (29-34)</h2>
+
+    <h3>Android 10 (API 29) - Scoped Storage Introduction</h3>
+    <ul>
+        <li>MediaStore access patterns changed</li>
+        <li>Legacy external storage with requestLegacyExternalStorage="true"</li>
+        <li>EXIF access still available via direct file paths</li>
+    </ul>
+
+    <h3>Android 11 (API 30) - Scoped Storage Enforced</h3>
+    <ul>
+        <li>requestLegacyExternalStorage ignored</li>
+        <li>MediaStore required for shared storage access</li>
+        <li>Direct file path access still available until API 32</li>
+    </ul>
+
+    <h3>Android 12 (API 31-32) - Last Direct Access</h3>
+    <ul>
+        <li>READ_EXTERNAL_STORAGE works until API 32</li>
+        <li>Direct file path EXIF access still available</li>
+    </ul>
+
+    <h3>Android 13+ (API 33-34) - Granular Permissions</h3>
+    <ul>
+        <li><strong>New permissions</strong>: READ_MEDIA_IMAGES, READ_MEDIA_AUDIO, READ_MEDIA_VIDEO</li>
+        <li><strong>Scoped storage mandatory</strong> for reading other apps' media</li>
+        <li><strong>MediaStore queries may return 0 items</strong> without proper permissions</li>
+    </ul>
+</div>
+
+<div class="section">
+    <h2>🔧 Specific Scenarios & Solutions</h2>
+
+    <div class="scenario">
+        <h4>Scenario 1: Portrait-Locked App Capturing Landscape Photos</h4>
+
+        <div class="issue">
+            <strong>Problem</strong>: App orientation locked to portrait, but saved photos appear in landscape regardless of how device is held.
+        </div>
+
+        <div class="fix">
+            <strong>Solution</strong>: Use OrientationEventListener to track device orientation and set CameraX target rotation accordingly.
+
+            <div class="code">
+// In HazardHawk implementation
+val orientationEventListener = object : OrientationEventListener(context) {
+    override fun onOrientationChanged(orientation: Int) {
+        val rotation = when {
+            orientation in 45..134 -> Surface.ROTATION_270
+            orientation in 135..224 -> Surface.ROTATION_180
+            orientation in 225..314 -> Surface.ROTATION_90
+            else -> Surface.ROTATION_0
+        }
+        imageCapture.targetRotation = rotation
+    }
+}
+orientationEventListener.enable()
+            </div>
+        </div>
+    </div>
+
+    <div class="scenario">
+        <h4>Scenario 2: EXIF Orientation Correct but Pixel Data Rotated</h4>
+
+        <div class="issue">
+            <strong>Problem</strong>: EXIF shows correct orientation but image viewer shows rotated image.
+        </div>
+
+        <div class="fix">
+            <strong>Solution</strong>: Read EXIF orientation and apply bitmap transformation during display.
+
+            <div class="code">
+// HazardHawk PhotoOrientationManager approach
+val orientationResult = PhotoOrientationManager.getInstance().analyzeOrientation(photoFile)
+val correctedBitmap = PhotoOrientationManager.getInstance()
+    .applyOrientationToBitmap(originalBitmap, orientationResult.orientation)
+            </div>
+        </div>
+    </div>
+
+    <div class="scenario">
+        <h4>Scenario 3: MediaStore vs EXIF Orientation Conflicts</h4>
+
+        <div class="issue">
+            <strong>Problem</strong>: MediaStore.Images.Media.ORIENTATION differs from EXIF TAG_ORIENTATION.
+        </div>
+
+        <div class="fix">
+            <strong>Solution</strong>: Implement dual-source orientation detection with fallback strategy.
+
+            <div class="code">
+// Primary: EXIF orientation
+val exifOrientation = ExifInterface(file).getAttributeInt(
+    ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL
+)
+
+// Fallback: MediaStore orientation if EXIF is undefined
+if (exifOrientation == ExifInterface.ORIENTATION_UNDEFINED) {
+    val mediaStoreOrientation = getOrientationFromMediaStore(uri)
+    // Use mediaStoreOrientation
+}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="section">
+    <h2>✅ Definitive Solutions for Portrait-Locked Apps</h2>
+
+    <div class="solution">
+        <h3>Solution 1: Enhanced CameraX Target Rotation (Recommended)</h3>
+
+        <div class="code">
+class EnhancedOrientationManager(private val context: Context) {
+    private var imageCapture: ImageCapture? = null
+
+    private val orientationEventListener = object : OrientationEventListener(context) {
+        override fun onOrientationChanged(orientation: Int) {
+            val targetRotation = when {
+                orientation in 45 until 135 -> Surface.ROTATION_270
+                orientation in 135 until 225 -> Surface.ROTATION_180
+                orientation in 225 until 315 -> Surface.ROTATION_90
+                else -> Surface.ROTATION_0
+            }
+
+            imageCapture?.targetRotation = targetRotation
+            Log.d("OrientationManager", "Device orientation: $orientation° -> Target rotation: $targetRotation")
+        }
+    }
+
+    fun start(imageCapture: ImageCapture) {
+        this.imageCapture = imageCapture
+        orientationEventListener.enable()
+    }
+
+    fun stop() {
+        orientationEventListener.disable()
+        imageCapture = null
+    }
+}
+        </div>
+    </div>
+
+    <div class="solution">
+        <h3>Solution 2: Post-Capture EXIF Correction</h3>
+
+        <div class="code">
+suspend fun correctPhotoOrientation(photoFile: File): Result<Unit> = withContext(Dispatchers.IO) {
+    try {
+        val orientationResult = PhotoOrientationManager.getInstance().analyzeOrientation(photoFile)
+
+        if (orientationResult.orientation != PhotoOrientationManager.PhotoOrientation.NORMAL) {
+            // Apply rotation to bitmap
+            val correctedBitmap = BitmapFactory.decodeFile(photoFile.absolutePath)?.let { bitmap ->
+                PhotoOrientationManager.getInstance().applyOrientationToBitmap(bitmap, orientationResult.orientation)
+            }
+
+            // Save corrected bitmap back to file
+            correctedBitmap?.let { bitmap ->
+                FileOutputStream(photoFile).use { out ->
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 95, out)
+                }
+
+                // Update EXIF to normal orientation
+                ExifInterface(photoFile.absolutePath).apply {
+                    setAttribute(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL.toString())
+                    saveAttributes()
+                }
+
+                bitmap.recycle()
+            }
+        }
+
+        Result.success(Unit)
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+}
+        </div>
+    </div>
+
+    <div class="solution">
+        <h3>Solution 3: Hybrid Approach (Current HazardHawk Implementation)</h3>
+
+        <ul class="checklist">
+            <li>Use CameraX LifecycleCameraController for automatic orientation handling</li>
+            <li>Monitor device orientation with OrientationEventListener</li>
+            <li>Set target rotation before takePicture() calls</li>
+            <li>Apply PhotoOrientationManager for display-time correction</li>
+            <li>Implement MediaStore.ORIENTATION fallback for API 33+ compatibility</li>
+        </ul>
+    </div>
+</div>
+
+<div class="section">
+    <h2>🏗️ HazardHawk Implementation Analysis</h2>
+
+    <h3>Current Implementation Strengths</h3>
+    <ul class="checklist">
+        <li>Uses CameraX LifecycleCameraController for modern orientation handling</li>
+        <li>Implements PhotoOrientationManager for centralized orientation logic</li>
+        <li>MediaStore.Images.Media.ORIENTATION setting in capture code</li>
+        <li>EXIF orientation preservation in MetadataEmbedder</li>
+        <li>Fallback orientation detection in PhotoOrientationManager</li>
+    </ul>
+
+    <h3>Identified Issues</h3>
+
+    <div class="warning">
+        <h4>Issue 1: Missing OrientationEventListener</h4>
+        <p>Current implementation lacks continuous device orientation monitoring for target rotation updates.</p>
+
+        <h4>Issue 2: Manual MediaStore.ORIENTATION Setting</h4>
+        <p>Setting MediaStore orientation based on Surface.ROTATION may conflict with CameraX's automatic handling.</p>
+
+        <h4>Issue 3: Portrait Lock Orientation Handling</h4>
+        <p>No specific handling for portrait-locked app scenario in device orientation detection.</p>
+    </div>
+
+    <h3>Recommended Improvements</h3>
+
+    <div class="fix">
+        <h4>1. Add OrientationEventListener Integration</h4>
+        <div class="code">
+// In SafetyHUDCameraScreen.kt
+val orientationManager = remember {
+    EnhancedOrientationManager(context, cameraController.imageCapture)
+}
+
+LaunchedEffect(hasCameraPermission) {
+    if (hasCameraPermission) {
+        orientationManager.start()
+    }
+}
+
+DisposableEffect(Unit) {
+    onDispose { orientationManager.stop() }
+}
+        </div>
+    </div>
+
+    <div class="fix">
+        <h4>2. Remove Manual MediaStore.ORIENTATION Setting</h4>
+        <p>Let CameraX handle orientation automatically and remove manual Surface.ROTATION mapping in ContentValues.</p>
+
+        <div class="code">
+// Remove this from capture code:
+put(MediaStore.Images.Media.ORIENTATION, when(deviceRotation) {
+    Surface.ROTATION_0 -> 0
+    Surface.ROTATION_90 -> 90
+    Surface.ROTATION_180 -> 180
+    Surface.ROTATION_270 -> 270
+    else -> 0
+})
+        </div>
+    </div>
+
+    <div class="fix">
+        <h4>3. Enhance PhotoOrientationManager Fallback</h4>
+        <p>Improve pixel-based orientation detection for portrait-locked scenarios.</p>
+    </div>
+</div>
+
+<div class="section">
+    <h2>🎯 Implementation Priority</h2>
+
+    <div class="critical">
+        <h3>High Priority (Immediate)</h3>
+        <ol>
+            <li><strong>Remove manual MediaStore.ORIENTATION setting</strong> - May conflict with CameraX</li>
+            <li><strong>Add OrientationEventListener</strong> - Essential for portrait-locked apps</li>
+            <li><strong>Test on Samsung devices</strong> - Known problematic manufacturer</li>
+        </ol>
+    </div>
+
+    <div class="warning">
+        <h3>Medium Priority (Next Sprint)</h3>
+        <ol>
+            <li><strong>Enhance PhotoOrientationManager</strong> - Better fallback detection</li>
+            <li><strong>Add orientation validation</strong> - Post-capture verification</li>
+            <li><strong>API 33+ permission handling</strong> - Granular media permissions</li>
+        </ol>
+    </div>
+
+    <div class="solution">
+        <h3>Low Priority (Future Enhancement)</h3>
+        <ol>
+            <li><strong>ML-based orientation detection</strong> - Content-aware orientation</li>
+            <li><strong>Device-specific handling</strong> - Manufacturer-specific workarounds</li>
+            <li><strong>Performance optimization</strong> - Reduce orientation processing overhead</li>
+        </ol>
+    </div>
+</div>
+
+<div class="section">
+    <h2>🧪 Testing Strategy</h2>
+
+    <h3>Test Scenarios</h3>
+
+    <table>
+        <tr>
+            <th>Scenario</th>
+            <th>Device Position</th>
+            <th>Expected Result</th>
+            <th>Test Priority</th>
+        </tr>
+        <tr>
+            <td>Portrait Hold</td>
+            <td>Normal upright</td>
+            <td>Portrait photo saved</td>
+            <td>Critical</td>
+        </tr>
+        <tr>
+            <td>Landscape Left</td>
+            <td>90° CCW rotation</td>
+            <td>Landscape photo saved</td>
+            <td>Critical</td>
+        </tr>
+        <tr>
+            <td>Landscape Right</td>
+            <td>90° CW rotation</td>
+            <td>Landscape photo saved</td>
+            <td>Critical</td>
+        </tr>
+        <tr>
+            <td>Upside Down</td>
+            <td>180° rotation</td>
+            <td>Upside-down photo saved</td>
+            <td>Medium</td>
+        </tr>
+        <tr>
+            <td>Flat on Table</td>
+            <td>Face up/down</td>
+            <td>Default orientation</td>
+            <td>Low</td>
+        </tr>
+    </table>
+
+    <h3>Device Test Matrix</h3>
+    <ul>
+        <li><strong>Samsung Galaxy</strong> (S22, S23, S24 series) - Known orientation issues</li>
+        <li><strong>Google Pixel</strong> (6, 7, 8 series) - Reference Android behavior</li>
+        <li><strong>OnePlus</strong> (9, 10, 11 series) - OxygenOS variations</li>
+        <li><strong>Xiaomi/MIUI</strong> - MIUI-specific camera behavior</li>
+    </ul>
+
+    <h3>API Level Testing</h3>
+    <ul>
+        <li><strong>API 29-30</strong>: Legacy storage vs scoped storage</li>
+        <li><strong>API 31-32</strong>: Transition period behavior</li>
+        <li><strong>API 33-34</strong>: Granular permissions and MediaStore queries</li>
+    </ul>
+</div>
+
+<div class="section">
+    <h2>📚 References & Resources</h2>
+
+    <h3>Official Documentation</h3>
+    <ul>
+        <li><a href="https://developer.android.com/media/camera/camerax/orientation-rotation">CameraX Use Case Rotations</a></li>
+        <li><a href="https://developer.android.com/reference/android/media/ExifInterface">ExifInterface Reference</a></li>
+        <li><a href="https://developer.android.com/training/data-storage/shared/media">Access Media Files from Shared Storage</a></li>
+    </ul>
+
+    <h3>Community Solutions</h3>
+    <ul>
+        <li><a href="https://stackoverflow.com/questions/63921260/android-camerax-image-rotated">Android CameraX Image Rotated - Stack Overflow</a></li>
+        <li><a href="https://github.com/android/camera-samples/issues/74">CameraX Wrong Image Orientation - GitHub Issue</a></li>
+        <li><a href="https://issuetracker.google.com/issues/151969438">Camera Preview vs Final Photo Orientation - Issue Tracker</a></li>
+    </ul>
+
+    <h3>Best Practices</h3>
+    <ul>
+        <li>Always use OrientationEventListener for portrait-locked apps</li>
+        <li>Implement dual-source orientation detection (EXIF + MediaStore)</li>
+        <li>Test extensively across device manufacturers</li>
+        <li>Validate saved images match preview orientation</li>
+        <li>Handle API-specific permission changes for media access</li>
+    </ul>
+</div>
+
+<div class="section">
+    <h2>🔮 Conclusion</h2>
+
+    <div class="solution">
+        <p><strong>For HazardHawk's portrait-locked construction safety camera:</strong></p>
+        <ul>
+            <li>✅ Implement OrientationEventListener for real-time device rotation tracking</li>
+            <li>✅ Remove manual MediaStore.ORIENTATION setting to avoid CameraX conflicts</li>
+            <li>✅ Maintain current PhotoOrientationManager for display-time corrections</li>
+            <li>✅ Test thoroughly on Samsung devices (known orientation issues)</li>
+            <li>✅ Prepare for API 33+ granular media permissions</li>
+        </ul>
+
+        <p>This approach ensures construction workers get properly oriented safety documentation photos regardless of how they hold their device during hazard documentation.</p>
+    </div>
+</div>
+
+<div style="text-align: center; color: #666; margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd;">
+    <p>Research compiled for HazardHawk Construction Safety Platform<br>
+    Focus: Portrait-locked camera orientation handling for OSHA compliance documentation</p>
+</div>
+
+</body>
+</html>

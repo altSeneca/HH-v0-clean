@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mobile Tag Manager - Option 1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Safety orange theme */
+        .safety-orange { color: #FF6B35; }
+        .safety-orange-bg { background-color: #FF6B35; }
+        .safety-orange-border { border-color: #FF6B35; }
+        
+        /* Mobile-optimized touch targets */
+        .touch-target { min-height: 56px; }
+        
+        /* Tag color indicators */
+        .tag-red { background-color: #EF4444; }
+        .tag-yellow { background-color: #F59E0B; }
+        .tag-blue { background-color: #3B82F6; }
+        .tag-green { background-color: #10B981; }
+        .tag-purple { background-color: #8B5CF6; }
+        
+        /* Bottom sheet animation */
+        .bottom-sheet {
+            transition: transform 0.3s ease-out;
+        }
+        
+        /* Safe area padding for notched devices */
+        .safe-top { padding-top: env(safe-area-inset-top); }
+        .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+        
+        /* Disable pull-to-refresh */
+        body {
+            overscroll-behavior-y: contain;
+        }
+        
+        /* Custom checkbox style */
+        input[type="checkbox"]:checked {
+            background-color: #FF6B35;
+            border-color: #FF6B35;
+        }
+        
+        /* Floating action button shadow */
+        .fab-shadow {
+            box-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen safe-top safe-bottom">
+    
+    <!-- Fixed Header -->
+    <div class="fixed top-0 left-0 right-0 z-40 safe-top">
+        <!-- Status Bar Space -->
+        <div class="safety-orange-bg h-6"></div>
+        
+        <!-- Navigation Bar -->
+        <div class="safety-orange-bg text-white px-4 py-4 flex items-center justify-between shadow-lg">
+            <button class="p-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+            </button>
+            <h1 class="text-xl font-bold flex-grow text-center">Manage Tags</h1>
+            <button class="p-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                </svg>
+            </button>
+        </div>
+        
+        <!-- Search Bar -->
+        <div class="bg-white px-4 py-3 border-b border-gray-200">
+            <div class="relative">
+                <input type="search" 
+                       placeholder="Search tags..." 
+                       class="w-full touch-target px-12 py-3 bg-gray-50 rounded-full text-base focus:outline-none focus:ring-2 focus:ring-orange-500">
+                <svg class="absolute left-4 top-4 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <button class="absolute right-4 top-4 p-1">
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Selected Count Bar (shown when items selected) -->
+        <div class="bg-orange-50 px-4 py-2 flex items-center justify-between border-b-2 border-orange-200">
+            <span class="text-sm font-medium safety-orange">2 tags selected</span>
+            <div class="flex gap-2">
+                <button class="px-3 py-1 text-sm font-medium text-blue-600">Edit</button>
+                <button class="px-3 py-1 text-sm font-medium text-red-600">Delete</button>
+                <button class="px-3 py-1 text-sm font-medium text-gray-600">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scrollable Content -->
+    <div class="pt-44 pb-24 px-4">
+        
+        <!-- Tag List -->
+        <div class="space-y-3">
+            
+            <!-- Tag Card 1 -->
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div class="p-4 flex items-center">
+                    <input type="checkbox" class="w-5 h-5 rounded text-orange-500 focus:ring-orange-500">
+                    <div class="w-4 h-4 rounded-full tag-red ml-4 mr-3"></div>
+                    <div class="flex-grow">
+                        <div class="font-semibold text-gray-900">Fall Hazard</div>
+                        <div class="text-sm text-gray-500 flex items-center gap-3 mt-1">
+                            <span>47 uses</span>
+                            <span>•</span>
+                            <span>2 hrs ago</span>
+                        </div>
+                    </div>
+                    <button class="p-2">
+                        <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Tag Card 2 -->
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div class="p-4 flex items-center">
+                    <input type="checkbox" checked class="w-5 h-5 rounded text-orange-500 focus:ring-orange-500">
+                    <div class="w-4 h-4 rounded-full tag-yellow ml-4 mr-3"></div>
+                    <div class="flex-grow">
+                        <div class="font-semibold text-gray-900">PPE Required</div>
+                        <div class="text-sm text-gray-500 flex items-center gap-3 mt-1">
+                            <span>89 uses</span>
+                            <span>•</span>
+                            <span>30 min ago</span>
+                        </div>
+                    </div>
+                    <button class="p-2">
+                        <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Tag Card 3 -->
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div class="p-4 flex items-center">
+                    <input type="checkbox" class="w-5 h-5 rounded text-orange-500 focus:ring-orange-500">
+                    <div class="w-4 h-4 rounded-full tag-blue ml-4 mr-3"></div>
+                    <div class="flex-grow">
+                        <div class="font-semibold text-gray-900">Electrical</div>
+                        <div class="text-sm text-gray-500 flex items-center gap-3 mt-1">
+                            <span>23 uses</span>
+                            <span>•</span>
+                            <span>1 day ago</span>
+                        </div>
+                    </div>
+                    <button class="p-2">
+                        <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Tag Card 4 -->
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div class="p-4 flex items-center">
+                    <input type="checkbox" checked class="w-5 h-5 rounded text-orange-500 focus:ring-orange-500">
+                    <div class="w-4 h-4 rounded-full tag-green ml-4 mr-3"></div>
+                    <div class="flex-grow">
+                        <div class="font-semibold text-gray-900">Heavy Equipment</div>
+                        <div class="text-sm text-gray-500 flex items-center gap-3 mt-1">
+                            <span>56 uses</span>
+                            <span>•</span>
+                            <span>4 hrs ago</span>
+                        </div>
+                    </div>
+                    <button class="p-2">
+                        <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Tag Card 5 -->
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div class="p-4 flex items-center">
+                    <input type="checkbox" class="w-5 h-5 rounded text-orange-500 focus:ring-orange-500">
+                    <div class="w-4 h-4 rounded-full tag-purple ml-4 mr-3"></div>
+                    <div class="flex-grow">
+                        <div class="font-semibold text-gray-900">Confined Space</div>
+                        <div class="text-sm text-gray-500 flex items-center gap-3 mt-1">
+                            <span>12 uses</span>
+                            <span>•</span>
+                            <span>3 days ago</span>
+                        </div>
+                    </div>
+                    <button class="p-2">
+                        <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- More tags... -->
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div class="p-4 flex items-center">
+                    <input type="checkbox" class="w-5 h-5 rounded text-orange-500 focus:ring-orange-500">
+                    <div class="w-4 h-4 rounded-full tag-red ml-4 mr-3"></div>
+                    <div class="flex-grow">
+                        <div class="font-semibold text-gray-900">Lockout/Tagout</div>
+                        <div class="text-sm text-gray-500 flex items-center gap-3 mt-1">
+                            <span>31 uses</span>
+                            <span>•</span>
+                            <span>5 hrs ago</span>
+                        </div>
+                    </div>
+                    <button class="p-2">
+                        <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Floating Action Button -->
+    <button class="fixed bottom-20 right-4 safety-orange-bg text-white w-14 h-14 rounded-full flex items-center justify-center fab-shadow z-30">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"/>
+        </svg>
+    </button>
+    
+    <!-- Bottom Navigation Bar -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 safe-bottom z-40">
+        <div class="flex justify-around py-2">
+            <button class="flex flex-col items-center p-2 text-gray-400">
+                <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+                <span class="text-xs">Home</span>
+            </button>
+            <button class="flex flex-col items-center p-2 safety-orange">
+                <svg class="w-6 h-6 mb-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                    <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 1 1 0 000 2H6a2 2 0 100 4h2a2 2 0 100-4h-.5a1 1 0 000-2H8a2 2 0 012 2v10a2 2 0 11-4 0V5z" clip-rule="evenodd"/>
+                </svg>
+                <span class="text-xs font-semibold">Tags</span>
+            </button>
+            <button class="flex flex-col items-center p-2 text-gray-400">
+                <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+                <span class="text-xs">Reports</span>
+            </button>
+            <button class="flex flex-col items-center p-2 text-gray-400">
+                <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                </svg>
+                <span class="text-xs">Profile</span>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Quick Add Bottom Sheet (hidden by default) -->
+    <div class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+        <div class="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl bottom-sheet safe-bottom">
+            <div class="w-12 h-1 bg-gray-300 rounded-full mx-auto mt-3"></div>
+            <div class="p-6">
+                <h3 class="text-xl font-bold mb-4">Create New Tag</h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tag Name</label>
+                        <input type="text" 
+                               placeholder="Enter tag name..." 
+                               class="w-full touch-target px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:safety-orange-border text-base">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Color</label>
+                        <div class="flex gap-3">
+                            <button class="w-12 h-12 rounded-xl tag-red border-4 border-white shadow-sm"></button>
+                            <button class="w-12 h-12 rounded-xl tag-yellow border-4 border-white shadow-sm"></button>
+                            <button class="w-12 h-12 rounded-xl tag-blue border-4 border-gray-300 shadow-sm"></button>
+                            <button class="w-12 h-12 rounded-xl tag-green border-4 border-white shadow-sm"></button>
+                            <button class="w-12 h-12 rounded-xl tag-purple border-4 border-white shadow-sm"></button>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                        <select class="w-full touch-target px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:safety-orange-border text-base bg-white">
+                            <option>Physical Hazard</option>
+                            <option>Chemical Hazard</option>
+                            <option>Biological Hazard</option>
+                            <option>Environmental</option>
+                            <option>Equipment Related</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="flex gap-3 mt-6">
+                    <button class="flex-1 touch-target bg-gray-200 text-gray-700 rounded-xl font-semibold">
+                        Cancel
+                    </button>
+                    <button class="flex-1 touch-target safety-orange-bg text-white rounded-xl font-semibold">
+                        Create Tag
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</body>
+</html>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Main photo storage -->
+    <external-files-path name="hazardhawk_photos" path="HazardHawk/Photos" />
+    <external-files-path name="hazardhawk_thumbnails" path="HazardHawk/Thumbnails" />
+    
+    <!-- Export and sharing paths -->
+    <external-files-path name="hazardhawk_exports" path="HazardHawk/Exports" />
+    <external-files-path name="hazardhawk_reports" path="HazardHawk/Reports" />
+    <external-files-path name="hazardhawk_zip" path="HazardHawk/ZIP" />
+    
+    <!-- Temporary files for sharing -->
+    <external-cache-path name="hazardhawk_temp" path="HazardHawk" />
+    <external-cache-path name="hazardhawk_shared" path="HazardHawk/Shared" />
+    
+    <!-- Internal storage for sensitive data -->
+    <files-path name="internal_files" path="." />
+    <cache-path name="internal_cache" path="." />
+</paths>

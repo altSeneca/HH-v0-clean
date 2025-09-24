@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HazardHawk Camera - Final</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-morphism {
+            backdrop-filter: blur(16px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .construction-orange {
+            background-color: #FF6B35;
+        }
+        .shadow-soft {
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+        }
+        .capture-button {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        }
+        .mode-active {
+            background: linear-gradient(135deg, #FF6B35, #FF8A65);
+        }
+        .metadata-overlay {
+            position: absolute;
+            bottom: 120px;
+            left: 16px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            line-height: 1.3;
+            max-width: 250px;
+        }
+        .zoom-controls {
+            position: absolute;
+            bottom: 180px;
+            left: 50%;
+            transform: translateX(-50%);
+            backdrop-filter: blur(16px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 24px;
+            padding: 12px 24px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+        .zoom-button {
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 8px 12px;
+            border-radius: 16px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+        }
+        .zoom-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .zoom-button.active {
+            background: #FF6B35;
+            color: white;
+            font-weight: 600;
+        }
+        .project-selector {
+            position: absolute;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 24px;
+            padding: 12px 20px;
+            min-width: 280px;
+            max-width: 400px;
+            z-index: 30;
+        }
+        .project-input {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            width: 100%;
+            outline: none;
+            text-align: center;
+        }
+        .project-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .project-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 8px;
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 8px 0;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+        .project-option {
+            padding: 12px 20px;
+            color: #333;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s ease;
+        }
+        .project-option:hover {
+            background: rgba(255, 107, 53, 0.1);
+        }
+        .project-option.add-new {
+            color: #FF6B35;
+            font-weight: 600;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        .dropdown-icon {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.8);
+            transition: transform 0.3s ease;
+        }
+        .dropdown-icon.open {
+            transform: translateY(-50%) rotate(180deg);
+        }
+    </style>
+</head>
+<body class="m-0 p-0 h-screen overflow-hidden bg-gray-900 relative">
+    <!-- Camera Viewfinder Background -->
+    <div class="w-full h-full bg-gradient-to-br from-gray-700 via-gray-600 to-gray-800 relative">
+        
+        <!-- Grid Overlay for Construction Focus -->
+        <div class="absolute inset-0 opacity-20 pointer-events-none">
+            <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <defs>
+                    <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+                        <path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" stroke-width="0.5"/>
+                    </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#grid)" />
+            </svg>
+        </div>
+
+        <!-- Top Project Selector (Centered) -->
+        <div class="project-selector">
+            <input 
+                type="text" 
+                class="project-input" 
+                placeholder="Select or add project..."
+                value="Downtown Construction - Phase 2"
+                id="projectInput"
+            />
+            <svg class="dropdown-icon w-4 h-4" id="dropdownIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+            
+            <div class="project-dropdown" id="projectDropdown">
+                <div class="project-option" data-project="Downtown Construction - Phase 2">Downtown Construction - Phase 2</div>
+                <div class="project-option" data-project="Site Safety Inspection">Site Safety Inspection</div>
+                <div class="project-option" data-project="Foundation Work - Building A">Foundation Work - Building A</div>
+                <div class="project-option" data-project="HVAC Installation - Floor 3">HVAC Installation - Floor 3</div>
+                <div class="project-option" data-project="Structural Steel - Tower B">Structural Steel - Tower B</div>
+                <div class="project-option add-new" data-project="new">+ Add New Project</div>
+            </div>
+        </div>
+
+        <!-- Top Right Controls -->
+        <div class="absolute top-4 right-4 z-20 pt-8">
+            <div class="flex space-x-3">
+                <!-- Flash -->
+                <button class="glass-morphism w-10 h-10 rounded-full flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path>
+                    </svg>
+                </button>
+                
+                <!-- Camera Flip -->
+                <button class="glass-morphism w-10 h-10 rounded-full flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m0-4l4-4"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Zoom Controls (repositioned above capture button, below center) -->
+        <div class="zoom-controls z-20">
+            <button class="zoom-button active">1×</button>
+            <button class="zoom-button">2×</button>
+            <button class="zoom-button">5×</button>
+            <button class="zoom-button">10×</button>
+        </div>
+
+        <!-- Gesture Indicators -->
+        <div class="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
+            <div class="flex flex-col items-center space-y-2 opacity-60">
+                <div class="text-white text-xs font-medium">⇅</div>
+                <div class="text-white text-xs">Swipe for ratios</div>
+            </div>
+        </div>
+
+        <!-- Metadata Overlay (positioned where it will appear on the image) -->
+        <div class="metadata-overlay">
+            <div>📅 2025-09-11 14:32:15 EST</div>
+            <div>📍 40.7128°N, 74.0060°W</div>
+            <div>🏗️ <span id="metadataProject">Downtown Construction - Phase 2</span></div>
+            <div>👤 Inspector: J. Smith</div>
+        </div>
+
+        <!-- Bottom Mode Selection -->
+        <div class="absolute bottom-32 left-1/2 transform -translate-x-1/2 z-20">
+            <div class="glass-morphism rounded-full p-1 flex">
+                <button class="mode-active text-white px-6 py-3 rounded-full text-sm font-semibold">Photo</button>
+                <button class="text-white px-6 py-3 rounded-full text-sm font-medium">Video</button>
+            </div>
+        </div>
+
+        <!-- Bottom Controls -->
+        <div class="absolute bottom-8 left-0 right-0 z-20 px-8">
+            <div class="flex items-center justify-between">
+                <!-- Gallery Thumbnail -->
+                <button class="w-14 h-14 rounded-xl bg-gray-700 border-2 border-white shadow-soft overflow-hidden">
+                    <div class="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500"></div>
+                </button>
+
+                <!-- Capture Button -->
+                <button class="capture-button w-20 h-20 rounded-full border-4 border-white flex items-center justify-center">
+                    <div class="w-4 h-4 bg-gray-900 rounded-full"></div>
+                </button>
+
+                <!-- Settings/Rotate -->
+                <button class="glass-morphism w-14 h-14 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Focus Indicator (Sample) -->
+        <div class="absolute left-1/2 top-1/3 transform -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none">
+            <div class="w-16 h-16 border-2 border-white rounded-full animate-pulse opacity-0">
+                <div class="w-2 h-2 bg-white rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Project selector functionality
+        const projectInput = document.getElementById('projectInput');
+        const projectDropdown = document.getElementById('projectDropdown');
+        const dropdownIcon = document.getElementById('dropdownIcon');
+        const metadataProject = document.getElementById('metadataProject');
+
+        // Toggle dropdown
+        projectInput.addEventListener('click', function() {
+            const isOpen = projectDropdown.style.display === 'block';
+            projectDropdown.style.display = isOpen ? 'none' : 'block';
+            dropdownIcon.classList.toggle('open', !isOpen);
+        });
+
+        // Handle project selection
+        document.querySelectorAll('.project-option').forEach(option => {
+            option.addEventListener('click', function() {
+                const projectValue = this.dataset.project;
+                
+                if (projectValue === 'new') {
+                    // Handle add new project
+                    const newProject = prompt('Enter new project name:');
+                    if (newProject && newProject.trim()) {
+                        projectInput.value = newProject.trim();
+                        metadataProject.textContent = newProject.trim();
+                    }
+                } else {
+                    projectInput.value = projectValue;
+                    metadataProject.textContent = projectValue;
+                }
+                
+                projectDropdown.style.display = 'none';
+                dropdownIcon.classList.remove('open');
+            });
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.project-selector')) {
+                projectDropdown.style.display = 'none';
+                dropdownIcon.classList.remove('open');
+            }
+        });
+
+        // Handle text input for project name
+        projectInput.addEventListener('input', function() {
+            metadataProject.textContent = this.value || 'No Project Selected';
+        });
+
+        // Zoom button interactions
+        document.querySelectorAll('.zoom-button').forEach(button => {
+            button.addEventListener('click', function() {
+                document.querySelectorAll('.zoom-button').forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // Simulate camera focus on tap
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.w-full.h-full.bg-gradient-to-br') && !e.target.closest('button') && !e.target.closest('.project-selector')) {
+                const focusRing = document.querySelector('.w-16.h-16.border-2.border-white.rounded-full.animate-pulse');
+                focusRing.style.left = e.clientX - 32 + 'px';
+                focusRing.style.top = e.clientY - 32 + 'px';
+                focusRing.style.opacity = '1';
+                
+                setTimeout(() => {
+                    focusRing.style.opacity = '0';
+                }, 1500);
+            }
+        });
+    </script>
+</body>
+</html>

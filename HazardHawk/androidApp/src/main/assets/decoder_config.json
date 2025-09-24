@@ -1,0 +1,11 @@
+{
+  "model_type": "gemma_text_decoder",
+  "vocab_size": 256000,
+  "hidden_size": 2048,
+  "num_attention_heads": 16,
+  "num_hidden_layers": 18,
+  "max_position_embeddings": 8192,
+  "optimized_for": "construction_safety_analysis",
+  "quantization": "int4",
+  "inference_framework": "onnx_runtime_mobile"
+}

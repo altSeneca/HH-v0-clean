@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HazardHawk User Journey - Variation 2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .wireframe-box { border: 2px solid #333; background: #fff; }
+        .wireframe-btn { border: 2px solid #333; background: #f0f0f0; }
+        .glass-effect { background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05)); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.3); }
+        .camera-wheel-vertical { position: absolute; right: 24px; top: 20%; display: flex; flex-direction: column; gap: 8px; }
+        .nav-breadcrumb { background: #f8f9fa; border: 2px solid #ddd; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen p-4">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold text-center mb-8 text-black">HazardHawk Complete Workflow - Horizontal Layout</h1>
+        
+        <!-- Breadcrumb Navigation -->
+        <div class="nav-breadcrumb p-3 rounded-lg mb-8">
+            <div class="flex items-center justify-center space-x-4 text-sm">
+                <span class="px-3 py-1 bg-orange-500 text-white rounded">1. Company</span>
+                <span>→</span>
+                <span class="px-3 py-1 bg-gray-200 rounded">2. Camera</span>
+                <span>→</span>
+                <span class="px-3 py-1 bg-gray-200 rounded">3. Tagging</span>
+                <span>→</span>
+                <span class="px-3 py-1 bg-gray-200 rounded">4. AI Analysis</span>
+                <span>→</span>
+                <span class="px-3 py-1 bg-gray-200 rounded">5. Gallery</span>
+                <span>→</span>
+                <span class="px-3 py-1 bg-gray-200 rounded">6. Reports</span>
+            </div>
+        </div>
+
+        <!-- Side-by-side Layout for Desktop/Tablet View -->
+        <div class="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-6">
+            
+            <!-- Screen 1: Company Entry -->
+            <div class="wireframe-box p-4 rounded-lg h-96">
+                <div class="border-b-2 border-gray-300 pb-2 mb-4">
+                    <h2 class="text-lg font-bold">Company Setup</h2>
+                    <p class="text-xs text-gray-600">Initialize project workspace</p>
+                </div>
+                <div class="space-y-4">
+                    <div class="wireframe-box h-8 rounded border border-dashed border-gray-400 flex items-center px-2">
+                        <span class="text-xs text-gray-500">Company Name</span>
+                    </div>
+                    <div class="wireframe-box h-8 rounded border border-dashed border-gray-400 flex items-center px-2">
+                        <span class="text-xs text-gray-500">Project Code</span>
+                    </div>
+                    <div class="wireframe-box h-8 rounded border border-dashed border-gray-400 flex items-center px-2">
+                        <span class="text-xs text-gray-500">Site Location</span>
+                    </div>
+                    <select class="wireframe-box h-8 w-full rounded border border-dashed border-gray-400 px-2 text-xs">
+                        <option>User Role</option>
+                    </select>
+                    <button class="wireframe-btn w-full h-10 rounded font-bold mt-6 bg-orange-100">BEGIN INSPECTION</button>
+                </div>
+                <div class="mt-4 text-center">
+                    <div class="inline-block w-6 h-6 bg-green-500 rounded-full text-white text-xs flex items-center justify-center">✓</div>
+                </div>
+            </div>
+
+            <!-- Screen 2: Camera Interface -->
+            <div class="wireframe-box p-3 rounded-lg h-96 relative">
+                <div class="border-b-2 border-gray-300 pb-2 mb-3">
+                    <h2 class="text-lg font-bold">Live Camera</h2>
+                    <p class="text-xs text-gray-600">Capture safety hazards</p>
+                </div>
+                
+                <!-- Camera Preview -->
+                <div class="wireframe-box h-48 rounded bg-gray-200 relative mb-3">
+                    <!-- Viewfinder Grid -->
+                    <div class="absolute inset-2">
+                        <div class="h-full w-full border border-dashed border-gray-500 relative">
+                            <div class="absolute inset-0 grid grid-cols-3 grid-rows-3">
+                                <div class="border-r border-b border-dashed border-gray-400"></div>
+                                <div class="border-r border-b border-dashed border-gray-400"></div>
+                                <div class="border-b border-dashed border-gray-400"></div>
+                                <div class="border-r border-b border-dashed border-gray-400"></div>
+                                <div class="border-r border-b border-dashed border-gray-400"></div>
+                                <div class="border-b border-dashed border-gray-400"></div>
+                                <div class="border-r border-dashed border-gray-400"></div>
+                                <div class="border-r border-dashed border-gray-400"></div>
+                                <div></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Metadata Overlay -->
+                    <div class="absolute top-1 left-1 glass-effect px-2 py-1 rounded text-xs">
+                        <div>GPS: 40.7128°N, 74.0060°W</div>
+                        <div>Time: 14:32:15</div>
+                    </div>
+                    
+                    <!-- Camera Wheel (24dp from edge) -->
+                    <div class="camera-wheel-vertical">
+                        <button class="w-10 h-10 wireframe-btn rounded-full text-xs font-bold">+</button>
+                        <button class="w-10 h-10 wireframe-btn rounded-full text-xs">ISO</button>
+                        <button class="w-10 h-10 wireframe-btn rounded-full text-xs">⚡</button>
+                        <button class="w-10 h-10 wireframe-btn rounded-full text-xs">F</button>
+                        <button class="w-10 h-10 wireframe-btn rounded-full text-xs font-bold">-</button>
+                    </div>
+                    
+                    <!-- Focus Indicator -->
+                    <div class="absolute bottom-4 left-4 w-8 h-8 border-2 border-white rounded"></div>
+                </div>
+                
+                <!-- Camera Controls -->
+                <div class="flex justify-between items-center">
+                    <button class="wireframe-btn w-8 h-8 rounded">📁</button>
+                    <div class="flex items-center space-x-2">
+                        <button class="wireframe-btn w-12 h-12 rounded-full border-4 border-orange-500 bg-orange-100">●</button>
+                    </div>
+                    <button class="wireframe-btn w-8 h-8 rounded">⚙</button>
+                </div>
+            </div>
+
+            <!-- Screen 3: Tagging & AI Analysis Combined -->
+            <div class="wireframe-box p-4 rounded-lg h-96">
+                <div class="border-b-2 border-gray-300 pb-2 mb-3">
+                    <h2 class="text-lg font-bold">Tag & Analyze</h2>
+                    <p class="text-xs text-gray-600">Identify hazards with AI</p>
+                </div>
+                
+                <!-- Photo Thumbnail -->
+                <div class="wireframe-box h-20 rounded bg-gray-200 mb-3 flex items-center justify-center">
+                    <span class="text-xs text-gray-600">Captured Image</span>
+                </div>
+                
+                <!-- Manual Tags -->
+                <div class="mb-3">
+                    <div class="text-xs font-bold mb-2">Manual Tags:</div>
+                    <div class="flex flex-wrap gap-1">
+                        <span class="px-2 py-1 bg-orange-100 border border-orange-400 rounded text-xs">Fall Risk</span>
+                        <span class="px-2 py-1 bg-red-100 border border-red-400 rounded text-xs">No PPE</span>
+                        <span class="px-2 py-1 wireframe-btn rounded text-xs">+ Add</span>
+                    </div>
+                </div>
+                
+                <!-- AI Analysis Results -->
+                <div class="mb-3">
+                    <div class="text-xs font-bold mb-2">AI Detected:</div>
+                    <div class="space-y-2">
+                        <div class="glass-effect p-2 rounded border-l-4 border-red-500">
+                            <div class="flex justify-between">
+                                <span class="text-xs font-bold text-red-600">CRITICAL</span>
+                                <span class="text-xs">95%</span>
+                            </div>
+                            <p class="text-xs">Unprotected edge detected</p>
+                        </div>
+                        <div class="glass-effect p-2 rounded border-l-4 border-orange-500">
+                            <div class="flex justify-between">
+                                <span class="text-xs font-bold text-orange-600">HIGH</span>
+                                <span class="text-xs">87%</span>
+                            </div>
+                            <p class="text-xs">Missing hard hat</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="wireframe-btn w-full h-8 rounded bg-orange-100 text-xs font-bold">SAVE & CONTINUE</button>
+            </div>
+
+            <!-- Screen 4: Gallery View -->
+            <div class="wireframe-box p-4 rounded-lg h-96">
+                <div class="border-b-2 border-gray-300 pb-2 mb-3">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-lg font-bold">Safety Gallery</h2>
+                            <p class="text-xs text-gray-600">Review captured hazards</p>
+                        </div>
+                        <button class="wireframe-btn px-2 py-1 rounded text-xs">Filter</button>
+                    </div>
+                </div>
+                
+                <!-- Gallery Grid -->
+                <div class="grid grid-cols-3 gap-2 mb-3">
+                    <div class="wireframe-box h-16 rounded bg-gray-200 relative">
+                        <div class="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border border-white"></div>
+                        <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white text-xs p-1">CRITICAL</div>
+                    </div>
+                    <div class="wireframe-box h-16 rounded bg-gray-200 relative">
+                        <div class="absolute top-0 right-0 w-3 h-3 bg-orange-500 rounded-full border border-white"></div>
+                        <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white text-xs p-1">HIGH</div>
+                    </div>
+                    <div class="wireframe-box h-16 rounded bg-gray-200 relative">
+                        <div class="absolute top-0 right-0 w-3 h-3 bg-yellow-500 rounded-full border border-white"></div>
+                        <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white text-xs p-1">MED</div>
+                    </div>
+                    <div class="wireframe-box h-16 rounded bg-gray-200 relative">
+                        <div class="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border border-white"></div>
+                        <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white text-xs p-1">CRITICAL</div>
+                    </div>
+                    <div class="wireframe-box h-16 rounded bg-gray-200 relative">
+                        <div class="absolute top-0 right-0 w-3 h-3 bg-green-500 rounded-full border border-white"></div>
+                        <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white text-xs p-1">LOW</div>
+                    </div>
+                    <div class="wireframe-box h-16 rounded bg-gray-200 relative">
+                        <div class="absolute top-0 right-0 w-3 h-3 bg-orange-500 rounded-full border border-white"></div>
+                        <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white text-xs p-1">HIGH</div>
+                    </div>
+                </div>
+                
+                <!-- Gallery Stats -->
+                <div class="glass-effect p-2 rounded mb-3 text-xs">
+                    <div class="flex justify-between">
+                        <span>Total: 24</span>
+                        <span class="text-red-600">Critical: 3</span>
+                        <span class="text-orange-600">High: 8</span>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-2">
+                    <button class="wireframe-btn flex-1 h-8 rounded text-xs">SELECT ALL</button>
+                    <button class="wireframe-btn flex-1 h-8 rounded bg-orange-100 text-xs">BULK ACTIONS</button>
+                </div>
+            </div>
+
+            <!-- Screen 5: Report Generation -->
+            <div class="wireframe-box p-4 rounded-lg h-96">
+                <div class="border-b-2 border-gray-300 pb-2 mb-3">
+                    <h2 class="text-lg font-bold">Generate Report</h2>
+                    <p class="text-xs text-gray-600">Create compliance documents</p>
+                </div>
+                
+                <!-- Report Template Selection -->
+                <div class="mb-3">
+                    <div class="text-xs font-bold mb-2">Report Type:</div>
+                    <div class="space-y-2">
+                        <label class="flex items-center space-x-2">
+                            <input type="radio" name="report" checked class="w-3 h-3">
+                            <span class="text-xs">Daily Safety Inspection</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="radio" name="report" class="w-3 h-3">
+                            <span class="text-xs">Incident Report</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="radio" name="report" class="w-3 h-3">
+                            <span class="text-xs">OSHA Compliance Summary</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="radio" name="report" class="w-3 h-3">
+                            <span class="text-xs">Weekly Safety Review</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Report Options -->
+                <div class="mb-3">
+                    <div class="text-xs font-bold mb-2">Include:</div>
+                    <div class="space-y-1">
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" checked class="w-3 h-3">
+                            <span class="text-xs">Photos with annotations</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" checked class="w-3 h-3">
+                            <span class="text-xs">GPS coordinates</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" class="w-3 h-3">
+                            <span class="text-xs">Risk assessment matrix</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" checked class="w-3 h-3">
+                            <span class="text-xs">Recommended actions</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Digital Signature -->
+                <div class="wireframe-box h-16 rounded border-2 border-dashed border-gray-400 flex items-center justify-center mb-3">
+                    <span class="text-xs text-gray-500">Digital Signature Area</span>
+                </div>
+                
+                <div class="flex space-x-2">
+                    <button class="wireframe-btn flex-1 h-8 rounded text-xs">PREVIEW</button>
+                    <button class="wireframe-btn flex-1 h-8 rounded bg-orange-100 text-xs font-bold">EXPORT PDF</button>
+                </div>
+            </div>
+
+            <!-- Screen 6: Settings & Emergency -->
+            <div class="wireframe-box p-4 rounded-lg h-96">
+                <div class="border-b-2 border-gray-300 pb-2 mb-3">
+                    <h2 class="text-lg font-bold">Settings & Safety</h2>
+                    <p class="text-xs text-gray-600">Configure and emergency controls</p>
+                </div>
+                
+                <!-- Emergency Controls -->
+                <div class="glass-effect p-3 rounded-lg border-2 border-red-300 mb-3">
+                    <div class="text-xs font-bold text-red-600 mb-2">EMERGENCY MODE</div>
+                    <button class="w-full bg-red-500 text-white h-12 rounded-lg font-bold text-sm">ACTIVATE EMERGENCY PROTOCOL</button>
+                    <p class="text-xs text-gray-600 mt-1">High contrast, loud alerts, emergency contacts</p>
+                </div>
+                
+                <!-- Accessibility Settings -->
+                <div class="mb-3">
+                    <div class="text-xs font-bold mb-2">Accessibility:</div>
+                    <div class="space-y-2">
+                        <label class="flex items-center justify-between">
+                            <span class="text-xs">High Contrast Mode</span>
+                            <div class="wireframe-box w-8 h-4 rounded-full bg-gray-200 relative">
+                                <div class="w-3 h-3 bg-white rounded-full absolute top-0.5 left-0.5"></div>
+                            </div>
+                        </label>
+                        <label class="flex items-center justify-between">
+                            <span class="text-xs">Large Touch Targets</span>
+                            <div class="wireframe-box w-8 h-4 rounded-full bg-orange-400 relative">
+                                <div class="w-3 h-3 bg-white rounded-full absolute top-0.5 right-0.5"></div>
+                            </div>
+                        </label>
+                        <label class="flex items-center justify-between">
+                            <span class="text-xs">Voice Feedback</span>
+                            <div class="wireframe-box w-8 h-4 rounded-full bg-gray-200 relative">
+                                <div class="w-3 h-3 bg-white rounded-full absolute top-0.5 left-0.5"></div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- App Settings -->
+                <div class="space-y-2 text-xs">
+                    <div class="flex justify-between">
+                        <span>Photo Quality</span>
+                        <select class="wireframe-box px-1 rounded">
+                            <option>High</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Auto-sync</span>
+                        <select class="wireframe-box px-1 rounded">
+                            <option>WiFi Only</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Storage</span>
+                        <span>2.3GB / 8GB</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Navigation Bar -->
+        <div class="wireframe-box p-4 rounded-lg mt-8 bg-gray-100">
+            <div class="flex justify-around items-center">
+                <div class="text-center">
+                    <div class="w-6 h-6 wireframe-box rounded mx-auto mb-1"></div>
+                    <span class="text-xs">Camera</span>
+                </div>
+                <div class="text-center">
+                    <div class="w-6 h-6 wireframe-box rounded mx-auto mb-1 bg-orange-100"></div>
+                    <span class="text-xs">Gallery</span>
+                </div>
+                <div class="text-center">
+                    <div class="w-6 h-6 wireframe-box rounded mx-auto mb-1"></div>
+                    <span class="text-xs">Reports</span>
+                </div>
+                <div class="text-center">
+                    <div class="w-6 h-6 wireframe-box rounded mx-auto mb-1"></div>
+                    <span class="text-xs">Settings</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

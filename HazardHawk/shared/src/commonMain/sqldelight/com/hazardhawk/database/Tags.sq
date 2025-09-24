@@ -1,0 +1,106 @@
+CREATE TABLE tags (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    category TEXT NOT NULL CHECK (category IN ('safety', 'ppe', 'equipment', 'environmental', 'compliance', 'custom')),
+    usage_count INTEGER DEFAULT 0,
+    last_used INTEGER,
+    project_specific INTEGER DEFAULT 0,
+    is_custom INTEGER DEFAULT 0,
+    osha_references TEXT,
+    description TEXT,
+    color TEXT,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+);
+
+-- Indexes for better query performance
+CREATE INDEX tags_name_idx ON tags(name);
+CREATE INDEX tags_category_idx ON tags(category);
+CREATE INDEX tags_usage_count_idx ON tags(usage_count);
+CREATE INDEX tags_last_used_idx ON tags(last_used);
+CREATE INDEX tags_project_specific_idx ON tags(project_specific);
+
+-- Insert a tag
+insertTag:
+INSERT INTO tags (
+    id, name, category, usage_count, last_used, project_specific, is_custom, 
+    osha_references, description, color, created_at, updated_at
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+-- Get tag by ID
+selectTagById:
+SELECT * FROM tags WHERE id = ?;
+
+-- Get tag by name
+selectTagByName:
+SELECT * FROM tags WHERE name = ?;
+
+-- Get all tags
+selectAllTags:
+SELECT * FROM tags ORDER BY usage_count DESC, name ASC;
+
+-- Get tags by category
+selectTagsByCategory:
+SELECT * FROM tags 
+WHERE category = ? 
+ORDER BY usage_count DESC, name ASC;
+
+-- Get most used tags (for recommendations)
+selectMostUsedTags:
+SELECT * FROM tags 
+ORDER BY usage_count DESC, last_used DESC 
+LIMIT ?;
+
+-- Get recent tags
+selectRecentTags:
+SELECT * FROM tags 
+WHERE last_used IS NOT NULL 
+ORDER BY last_used DESC 
+LIMIT ?;
+
+-- Search tags by name pattern
+searchTagsByName:
+SELECT * FROM tags 
+WHERE name LIKE '%' || ? || '%' 
+ORDER BY usage_count DESC, name ASC 
+LIMIT ?;
+
+-- Get tags for project (including project-specific and global)
+selectTagsForProject:
+SELECT * FROM tags 
+WHERE project_specific = FALSE OR project_specific = TRUE
+ORDER BY usage_count DESC, name ASC;
+
+-- Get custom tags
+selectCustomTags:
+SELECT * FROM tags 
+WHERE is_custom = TRUE 
+ORDER BY usage_count DESC, name ASC;
+
+-- Update tag usage
+updateTagUsage:
+UPDATE tags 
+SET usage_count = usage_count + 1, last_used = ?, updated_at = ?
+WHERE id = ?;
+
+-- Update tag details
+updateTag:
+UPDATE tags 
+SET name = ?, category = ?, description = ?, color = ?, updated_at = ?
+WHERE id = ?;
+
+-- Delete tag
+deleteTag:
+DELETE FROM tags WHERE id = ?;
+
+-- Get industry standard tags (pre-defined)
+selectIndustryStandardTags:
+SELECT * FROM tags 
+WHERE is_custom = FALSE AND osha_references IS NOT NULL
+ORDER BY usage_count DESC, name ASC;
+
+-- Reset usage count for tag
+resetTagUsage:
+UPDATE tags 
+SET usage_count = 0, updated_at = ?
+WHERE id = ?;

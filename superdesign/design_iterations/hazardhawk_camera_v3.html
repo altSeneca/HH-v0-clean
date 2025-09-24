@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HazardHawk Camera - Classic</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #000;
+            overflow: hidden;
+        }
+        
+        .glass {
+            backdrop-filter: blur(16px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .glass-dark {
+            backdrop-filter: blur(20px);
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .construction-gradient {
+            background: linear-gradient(135deg, #FF6B35, #FF8A65);
+        }
+        
+        .capture-glow {
+            background: radial-gradient(circle, #ffffff 0%, #f1f5f9 70%);
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.3), 0 0 0 8px rgba(255, 255, 255, 0.1), 0 8px 32px rgba(0, 0, 0, 0.15);
+        }
+        
+        .zoom-active {
+            background: rgba(255, 107, 53, 0.9) !important;
+            color: white !important;
+        }
+        
+        .mode-indicator {
+            background: linear-gradient(90deg, #FF6B35, transparent);
+            height: 3px;
+        }
+        
+        .safety-pulse {
+            animation: safety-pulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes safety-pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+        }
+        
+        .camera-preview {
+            background: linear-gradient(45deg, #374151, #4b5563, #6b7280);
+            background-size: 400% 400%;
+            animation: subtle-shift 12s ease-in-out infinite;
+        }
+        
+        @keyframes subtle-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        .professional-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.15;
+        }
+        
+        .professional-grid::before {
+            content: '';
+            position: absolute;
+            top: 33.33%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: white;
+        }
+        
+        .professional-grid::after {
+            content: '';
+            position: absolute;
+            bottom: 33.33%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: white;
+        }
+        
+        .professional-grid .vertical-line-1 {
+            position: absolute;
+            left: 33.33%;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: white;
+        }
+        
+        .professional-grid .vertical-line-2 {
+            position: absolute;
+            right: 33.33%;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="w-screen h-screen relative">
+        <!-- Professional Camera Background -->
+        <div class="absolute inset-0 camera-preview">
+            <!-- Professional Grid Lines -->
+            <div class="professional-grid">
+                <div class="vertical-line-1"></div>
+                <div class="vertical-line-2"></div>
+            </div>
+            
+            <!-- Top Minimal Status -->
+            <div class="absolute top-0 left-0 right-0 p-4 pt-12 z-20">
+                <div class="flex justify-between items-start">
+                    <!-- Left: Safety Status -->
+                    <div class="glass-dark rounded-2xl px-4 py-3 space-y-2">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-3 h-3 bg-green-400 rounded-full safety-pulse"></div>
+                            <span class="text-white text-sm font-semibold">COMPLIANT</span>
+                        </div>
+                        <div class="text-white text-xs opacity-80">Site: Zone A - Phase 2</div>
+                    </div>
+                    
+                    <!-- Right: Camera Controls -->
+                    <div class="flex flex-col space-y-3">
+                        <button class="glass-dark w-12 h-12 rounded-xl flex items-center justify-center group hover:bg-white hover:bg-opacity-20 transition-all">
+                            <svg class="w-6 h-6 text-white group-hover:text-yellow-300" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path>
+                            </svg>
+                        </button>
+                        <button class="glass-dark w-12 h-12 rounded-xl flex items-center justify-center group hover:bg-white hover:bg-opacity-20 transition-all">
+                            <svg class="w-6 h-6 text-white group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m0-4l4-4"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Center Elegant Zoom Controls -->
+            <div class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-12 z-20">
+                <div class="glass rounded-full px-8 py-4 flex items-center space-x-6 shadow-2xl">
+                    <button class="text-white text-base font-medium px-3 py-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-all">0.5×</button>
+                    <button class="zoom-active text-white text-lg font-bold px-4 py-2 rounded-full">1×</button>
+                    <button class="text-white text-base font-medium px-3 py-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-all">2×</button>
+                    <button class="text-white text-base font-medium px-3 py-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-all">5×</button>
+                </div>
+            </div>
+            
+            <!-- Aspect Ratio Indicators -->
+            <div class="absolute right-6 top-1/2 transform -translate-y-1/2 z-10">
+                <div class="glass-dark rounded-full p-4 flex flex-col space-y-3">
+                    <div class="w-6 h-4 border-2 border-white rounded opacity-40"></div>
+                    <div class="w-6 h-6 border-2 border-white rounded"></div>
+                    <div class="w-6 h-4 border-2 border-white rounded opacity-40"></div>
+                </div>
+                <div class="text-white text-xs text-center mt-2 opacity-60">Ratios</div>
+            </div>
+            
+            <!-- Bottom Mode Selection with Elegant Design -->
+            <div class="absolute bottom-36 left-0 right-0 z-20 px-8">
+                <div class="glass rounded-full p-2 max-w-xs mx-auto relative">
+                    <div class="mode-indicator absolute top-0 left-6 right-1/2 rounded-full"></div>
+                    <div class="flex relative z-10">
+                        <button class="flex-1 text-white px-8 py-4 rounded-full text-base font-semibold">Photo</button>
+                        <button class="flex-1 text-white px-8 py-4 rounded-full text-base font-medium opacity-70">Video</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Bottom Primary Controls -->
+            <div class="absolute bottom-8 left-0 right-0 z-20 px-8">
+                <div class="flex items-center justify-between">
+                    <!-- Gallery with Preview -->
+                    <button class="w-16 h-16 rounded-2xl overflow-hidden shadow-2xl border-2 border-white border-opacity-30 group">
+                        <div class="w-full h-full bg-gradient-to-tr from-blue-500 via-purple-500 to-pink-500 group-hover:scale-110 transition-transform duration-300"></div>
+                    </button>
+                    
+                    <!-- Primary Capture Button -->
+                    <button class="capture-glow w-24 h-24 rounded-full flex items-center justify-center group active:scale-95 transition-transform">
+                        <div class="w-6 h-6 bg-black rounded-full group-active:scale-90 transition-transform"></div>
+                    </button>
+                    
+                    <!-- Quick Actions -->
+                    <button class="glass-dark w-16 h-16 rounded-2xl flex items-center justify-center group shadow-2xl">
+                        <svg class="w-7 h-7 text-white group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Construction Tools Overlay -->
+            <div class="absolute top-1/4 left-4 z-20">
+                <div class="glass-dark rounded-2xl p-4 space-y-3">
+                    <div class="text-white text-sm font-semibold mb-2">Safety Tools</div>
+                    <button class="construction-gradient text-white px-4 py-2 rounded-lg text-sm font-medium w-full">PPE Check</button>
+                    <button class="glass text-white px-4 py-2 rounded-lg text-sm font-medium w-full">Hazard ID</button>
+                    <button class="glass text-white px-4 py-2 rounded-lg text-sm font-medium w-full">Measure</button>
+                </div>
+            </div>
+            
+            <!-- Professional Metadata Display -->
+            <div class="absolute bottom-4 left-4 z-20">
+                <div class="glass-dark rounded-xl px-3 py-2">
+                    <div class="text-white text-xs font-mono">
+                        <div>14:32:45 EST</div>
+                        <div>40.7128°N, 74.0060°W</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Focus Point Indicator -->
+            <div class="absolute left-1/3 top-1/4 z-10 pointer-events-none">
+                <div class="w-20 h-20 border border-white rounded-full opacity-50 animate-pulse">
+                    <div class="w-1 h-1 bg-white rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
+                    <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                        <div class="text-white text-xs font-medium">AF</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Level Indicator -->
+            <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-32 z-10">
+                <div class="glass-dark rounded-full px-6 py-2 flex items-center space-x-2">
+                    <div class="w-16 h-1 bg-gray-600 rounded-full relative">
+                        <div class="w-1 h-3 bg-green-400 rounded-full absolute left-1/2 transform -translate-x-1/2 -translate-y-1"></div>
+                    </div>
+                    <div class="text-white text-xs">0°</div>
+                </div>
+            </div>
+            
+            <!-- Additional Safety Indicators -->
+            <div class="absolute top-1/3 right-4 z-20">
+                <div class="glass-dark rounded-xl p-3 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-white text-xs font-medium">GPS</span>
+                        <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-white text-xs font-medium">TIME</span>
+                        <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-white text-xs font-medium">PROJECT</span>
+                        <div class="w-2 h-2 bg-orange-500 rounded-full"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Button interaction effects
+            const buttons = document.querySelectorAll('button');
+            buttons.forEach(button => {
+                button.addEventListener('mousedown', function() {
+                    this.style.transform = 'scale(0.95)';
+                });
+                
+                button.addEventListener('mouseup', function() {
+                    this.style.transform = '';
+                });
+                
+                button.addEventListener('mouseleave', function() {
+                    this.style.transform = '';
+                });
+            });
+            
+            // Simulate camera focus on tap
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.camera-preview') && !e.target.closest('button')) {
+                    // Create focus indicator
+                    const focusRing = document.createElement('div');
+                    focusRing.className = 'absolute w-16 h-16 border-2 border-white rounded-full z-10 pointer-events-none';
+                    focusRing.style.left = (e.clientX - 32) + 'px';
+                    focusRing.style.top = (e.clientY - 32) + 'px';
+                    focusRing.style.animation = 'focus-appear 1s ease-out forwards';
+                    
+                    document.body.appendChild(focusRing);
+                    
+                    setTimeout(() => {
+                        focusRing.remove();
+                    }, 1000);
+                }
+            });
+            
+            // Add focus animation
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes focus-appear {
+                    0% { transform: scale(1.5); opacity: 0; }
+                    50% { opacity: 1; }
+                    100% { transform: scale(1); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+        });
+    </script>
+</body>
+</html>

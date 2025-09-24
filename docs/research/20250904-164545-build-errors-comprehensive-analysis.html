@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HazardHawk Build Errors: Comprehensive Analysis & Resolution Plan</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background: #f5f7fa;
+            color: #2c3e50;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        .toc {
+            padding: 30px;
+            background: #f8f9fb;
+            border-bottom: 1px solid #e1e8ed;
+        }
+        .toc h2 {
+            margin-top: 0;
+            color: #34495e;
+        }
+        .toc ul {
+            list-style: none;
+            padding: 0;
+        }
+        .toc li {
+            margin: 8px 0;
+        }
+        .toc a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .toc a:hover {
+            color: #764ba2;
+        }
+        .content {
+            padding: 30px;
+        }
+        .section {
+            margin-bottom: 40px;
+        }
+        .section h2 {
+            color: #2c3e50;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+            margin-bottom: 25px;
+        }
+        .section h3 {
+            color: #34495e;
+            margin-top: 30px;
+        }
+        .error-box {
+            background: #fff5f5;
+            border-left: 4px solid #e53e3e;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .success-box {
+            background: #f0fff4;
+            border-left: 4px solid #38a169;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .warning-box {
+            background: #fffaf0;
+            border-left: 4px solid #dd6b20;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .info-box {
+            background: #ebf8ff;
+            border-left: 4px solid #3182ce;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        code {
+            background: #f7fafc;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+        pre {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+        .priority {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .priority.critical {
+            background: #fed7d7;
+            color: #c53030;
+        }
+        .priority.high {
+            background: #feebcb;
+            color: #dd6b20;
+        }
+        .priority.medium {
+            background: #e6fffa;
+            color: #38b2ac;
+        }
+        .priority.low {
+            background: #ebf8ff;
+            color: #3182ce;
+        }
+        .file-path {
+            font-family: monospace;
+            background: #f7fafc;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #4a5568;
+        }
+        .risk-matrix {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .risk-item {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #cbd5e0;
+        }
+        .actions {
+            background: #f8f9fb;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .timeline {
+            border-left: 3px solid #667eea;
+            padding-left: 30px;
+            margin: 20px 0;
+        }
+        .timeline-item {
+            margin-bottom: 30px;
+            position: relative;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -36px;
+            top: 8px;
+            width: 12px;
+            height: 12px;
+            background: #667eea;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🚀 HazardHawk Build Errors</h1>
+            <p>Comprehensive Analysis & Zero-Error Resolution Plan</p>
+            <p><strong>Generated:</strong> September 4, 2025 at 16:45:45</p>
+        </header>
+
+        <div class="toc">
+            <h2>📋 Table of Contents</h2>
+            <ul>
+                <li><a href="#executive-summary">Executive Summary</a></li>
+                <li><a href="#root-cause-analysis">Root Cause Analysis</a></li>
+                <li><a href="#build-error-catalog">Build Error Catalog</a></li>
+                <li><a href="#architecture-assessment">Architecture Assessment</a></li>
+                <li><a href="#resolution-plan">Resolution Plan</a></li>
+                <li><a href="#implementation-timeline">Implementation Timeline</a></li>
+                <li><a href="#risk-assessment">Risk Assessment</a></li>
+                <li><a href="#verification-strategy">Verification Strategy</a></li>
+                <li><a href="#appendix">Appendix</a></li>
+            </ul>
+        </div>
+
+        <div class="content">
+            <section id="executive-summary" class="section">
+                <h2>📊 Executive Summary</h2>
+                
+                <div class="info-box">
+                    <strong>Current Status:</strong> HazardHawk project has <strong>42+ compilation errors</strong> preventing successful builds across all platforms.
+                </div>
+
+                <h3>Key Findings</h3>
+                <ul>
+                    <li><strong>Root Cause:</strong> Duplicate shared module structure causing Gradle dependency resolution conflicts</li>
+                    <li><strong>Primary Issue:</strong> AI modules excluded from compilation due to platform-specific implementation gaps</li>
+                    <li><strong>Secondary Issues:</strong> Memory allocation, missing platform implementations, incomplete KMP configuration</li>
+                    <li><strong>Architecture Quality:</strong> Excellent foundation with comprehensive models and security considerations</li>
+                </ul>
+
+                <h3>Resolution Summary</h3>
+                <div class="success-box">
+                    <strong>Estimated Resolution Time:</strong> 2-3 days for complete zero-error build
+                    <br><strong>Complexity:</strong> Medium - Structural issues with solid architecture foundation
+                    <br><strong>Risk Level:</strong> Low - Well-defined fixes with minimal breaking changes
+                </div>
+            </section>
+
+            <section id="root-cause-analysis" class="section">
+                <h2>🔍 Root Cause Analysis</h2>
+
+                <h3>1. Duplicate Shared Module Structure</h3>
+                <div class="error-box">
+                    <strong>Primary Issue:</strong> Two conflicting shared modules exist in the project structure
+                    <br><br>
+                    <strong>Main Module:</strong> <span class="file-path">/HazardHawk/shared/</span> (Android-only, properly configured)
+                    <br><strong>Conflicting Module:</strong> <span class="file-path">/shared/</span> (Full KMP, missing dependencies)
+                </div>
+
+                <h3>2. AI Module Exclusion Crisis</h3>
+                <div class="warning-box">
+                    <strong>Issue:</strong> AI processing modules are excluded from compilation
+                    <br><strong>Impact:</strong> 42+ build errors from missing AI-related classes and functions
+                    <br><strong>Files Affected:</strong> All camera, analysis, and safety assessment components
+                </div>
+
+                <h3>3. Memory Allocation Insufficiency</h3>
+                <div class="error-box">
+                    <strong>Issue:</strong> JVM Metaspace exhaustion during complex multi-flavor builds
+                    <br><strong>Current:</strong> Max heap 4GB, Metaspace 1GB
+                    <br><strong>Required:</strong> Max heap 6GB, Metaspace 2GB for AI-enabled builds
+                </div>
+
+                <h3>4. Incomplete Platform Implementations</h3>
+                <div class="warning-box">
+                    <strong>Missing Implementations:</strong>
+                    <ul>
+                        <li>iOS target configuration in shared module</li>
+                        <li>Platform-specific AWS credentials providers</li>
+                        <li>S3UploadManager expect/actual functions</li>
+                        <li>Cross-platform AI service abstractions</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="build-error-catalog" class="section">
+                <h2>📋 Build Error Catalog</h2>
+
+                <h3><span class="priority critical">CRITICAL</span> Memory & Configuration Errors</h3>
+                
+                <div class="error-box">
+                    <strong>Error Type:</strong> JVM Metaspace OutOfMemoryError
+                    <br><strong>Location:</strong> Gradle build process
+                    <br><strong>Fix:</strong>
+                    <pre>// gradle.properties
+org.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=2g -XX:+UseG1GC
+kotlin.daemon.jvmargs=-Xmx3g -XX:MaxMetaspaceSize=1g</pre>
+                </div>
+
+                <div class="error-box">
+                    <strong>Error Type:</strong> Compose Compiler Plugin Missing
+                    <br><strong>Location:</strong> <span class="file-path">androidApp/build.gradle.kts</span>
+                    <br><strong>Fix:</strong>
+                    <pre>plugins {
+    alias(libs.plugins.composeCompiler) // Add this
+}</pre>
+                </div>
+
+                <h3><span class="priority high">HIGH</span> AI Module Compilation Errors</h3>
+
+                <div class="error-box">
+                    <strong>Error Type:</strong> AI modules excluded from build
+                    <br><strong>Location:</strong> <span class="file-path">shared/build.gradle.kts</span>
+                    <br><strong>Fix:</strong> Remove <code>kotlin.exclude("**/ai/**")</code> and implement platform-specific AI services
+                </div>
+
+                <div class="error-box">
+                    <strong>Error Type:</strong> Unresolved references to AI classes
+                    <br><strong>Affected Files:</strong>
+                    <ul>
+                        <li><span class="file-path">CameraScreen.kt</span></li>
+                        <li><span class="file-path">SafetyPhotoAssessment.kt</span></li>
+                        <li><span class="file-path">AnalysisRepositoryImpl.kt</span></li>
+                    </ul>
+                    <br><strong>Fix:</strong> Implement AIServiceFacade and platform-specific analyzers
+                </div>
+
+                <h3><span class="priority medium">MEDIUM</span> Platform Implementation Gaps</h3>
+
+                <div class="warning-box">
+                    <strong>Error Type:</strong> Missing iOS target in KMP configuration
+                    <br><strong>Location:</strong> <span class="file-path">shared/build.gradle.kts</span>
+                    <br><strong>Fix:</strong>
+                    <pre>kotlin {
+    androidTarget { ... }
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
+}</pre>
+                </div>
+
+                <div class="warning-box">
+                    <strong>Error Type:</strong> Missing expect/actual implementations
+                    <br><strong>Classes Affected:</strong>
+                    <ul>
+                        <li>DefaultAwsCredentialsProvider</li>
+                        <li>S3UploadManager.readPhotoFile()</li>
+                        <li>ImageOptimizer platform implementations</li>
+                    </ul>
+                </div>
+
+                <h3><span class="priority low">LOW</span> Dependency & Import Issues</h3>
+
+                <div class="info-box">
+                    <strong>Error Type:</strong> Hardcoded Material dependency version conflict
+                    <br><strong>Fix:</strong> Remove <code>implementation("androidx.compose.material:material:1.5.6")</code>
+                </div>
+
+                <div class="info-box">
+                    <strong>Error Type:</strong> Unused activity declarations in AndroidManifest.xml
+                    <br><strong>Fix:</strong> Remove test activities from production builds
+                </div>
+            </section>
+
+            <section id="architecture-assessment" class="section">
+                <h2>🏗️ Architecture Assessment</h2>
+
+                <h3>Strengths</h3>
+                <div class="success-box">
+                    <ul>
+                        <li><strong>Excellent Database Design:</strong> Comprehensive SQLDelight schema with FTS5 search</li>
+                        <li><strong>Clean Architecture:</strong> Proper separation of domain, data, and UI layers</li>
+                        <li><strong>Security Focus:</strong> Comprehensive permission handling and secure storage</li>
+                        <li><strong>Performance Monitoring:</strong> Built-in analytics and performance tracking</li>
+                        <li><strong>Test Coverage:</strong> 85+ test files with comprehensive strategies</li>
+                    </ul>
+                </div>
+
+                <h3>Areas for Improvement</h3>
+                <div class="warning-box">
+                    <ul>
+                        <li><strong>Platform Completeness:</strong> iOS implementations need completion</li>
+                        <li><strong>AI Integration:</strong> Platform-specific AI services need proper abstraction</li>
+                        <li><strong>Build Complexity:</strong> Overly complex multi-variant build configuration</li>
+                        <li><strong>Dependency Management:</strong> Some hardcoded versions and conflicts</li>
+                    </ul>
+                </div>
+
+                <h3>Technology Stack Assessment</h3>
+                <div class="info-box">
+                    <ul>
+                        <li><strong>Kotlin Multiplatform:</strong> 1.9.23 ✅ (Current and stable)</li>
+                        <li><strong>Jetpack Compose:</strong> BOM 2024.02.00 ✅ (Recent)</li>
+                        <li><strong>Android Gradle Plugin:</strong> 8.2.2 ✅ (Compatible)</li>
+                        <li><strong>SQLDelight:</strong> 2.0.1 ✅ (Latest)</li>
+                        <li><strong>Ktor:</strong> 2.3.8 ✅ (Stable)</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="resolution-plan" class="section">
+                <h2>🛠️ Resolution Plan</h2>
+
+                <h3>Phase 1: Critical Build Fixes <span class="priority critical">CRITICAL</span></h3>
+                <div class="actions">
+                    <h4>1.1 Memory Configuration</h4>
+                    <ul>
+                        <li>Update <span class="file-path">gradle.properties</span> with increased memory allocation</li>
+                        <li>Enable G1GC and string deduplication for better memory management</li>
+                        <li>Configure Kotlin daemon with appropriate memory settings</li>
+                    </ul>
+
+                    <h4>1.2 Compose Configuration</h4>
+                    <ul>
+                        <li>Add Compose Compiler plugin to <span class="file-path">androidApp/build.gradle.kts</span></li>
+                        <li>Remove hardcoded Material dependency causing version conflicts</li>
+                        <li>Ensure proper Compose BOM usage throughout the project</li>
+                    </ul>
+
+                    <h4>1.3 Clean Up Excluded Imports</h4>
+                    <ul>
+                        <li>Remove AI-related imports from camera and UI files</li>
+                        <li>Clean up build.gradle.kts exclusions temporarily</li>
+                        <li>Prepare foundation for AI service integration</li>
+                    </ul>
+                </div>
+
+                <h3>Phase 2: AI Module Integration <span class="priority high">HIGH</span></h3>
+                <div class="actions">
+                    <h4>2.1 AI Service Facade</h4>
+                    <ul>
+                        <li>Implement <code>AIServiceFacade</code> with expect/actual pattern</li>
+                        <li>Create platform-specific AI analyzer implementations</li>
+                        <li>Implement fallback mechanisms for offline/cloud scenarios</li>
+                    </ul>
+
+                    <h4>2.2 Platform-Specific AI Services</h4>
+                    <ul>
+                        <li><strong>Android:</strong> ONNX Runtime + Google Gemini integration</li>
+                        <li><strong>iOS:</strong> Core ML + cloud fallback implementation</li>
+                        <li><strong>Shared:</strong> Common AI result processing and caching</li>
+                    </ul>
+
+                    <h4>2.3 Re-enable AI Modules</h4>
+                    <ul>
+                        <li>Remove AI exclusions from build configuration</li>
+                        <li>Test AI module compilation across all platforms</li>
+                        <li>Implement proper error handling and service availability checks</li>
+                    </ul>
+                </div>
+
+                <h3>Phase 3: Platform Completeness <span class="priority medium">MEDIUM</span></h3>
+                <div class="actions">
+                    <h4>3.1 Complete KMP Configuration</h4>
+                    <ul>
+                        <li>Add iOS targets to shared module build configuration</li>
+                        <li>Implement missing expect/actual declarations</li>
+                        <li>Configure iOS-specific dependencies and source sets</li>
+                    </ul>
+
+                    <h4>3.2 AWS Integration Completion</h4>
+                    <ul>
+                        <li>Implement platform-specific AWS credentials providers</li>
+                        <li>Complete S3UploadManager platform implementations</li>
+                        <li>Add proper authentication and error handling</li>
+                    </ul>
+
+                    <h4>3.3 Platform-Specific Features</h4>
+                    <ul>
+                        <li>Complete camera implementations for all platforms</li>
+                        <li>Implement file system operations per platform</li>
+                        <li>Add platform-specific UI optimizations</li>
+                    </ul>
+                </div>
+
+                <h3>Phase 4: Optimization & Polish <span class="priority low">LOW</span></h3>
+                <div class="actions">
+                    <h4>4.1 Build Optimization</h4>
+                    <ul>
+                        <li>Simplify build variants for development efficiency</li>
+                        <li>Optimize Proguard/R8 rules for AI libraries</li>
+                        <li>Enable advanced build caching and parallelization</li>
+                    </ul>
+
+                    <h4>4.2 Performance Tuning</h4>
+                    <ul>
+                        <li>Implement lazy loading for heavy components</li>
+                        <li>Optimize image processing pipelines</li>
+                        <li>Add comprehensive performance monitoring</li>
+                    </ul>
+
+                    <h4>4.3 Test Infrastructure Restoration</h4>
+                    <ul>
+                        <li>Re-enable all 85+ test files for execution</li>
+                        <li>Fix CI/CD pipeline for multi-platform testing</li>
+                        <li>Implement automated regression testing</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="implementation-timeline" class="section">
+                <h2>⏰ Implementation Timeline</h2>
+
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <h4>Day 1: Critical Fixes (4-6 hours)</h4>
+                        <ul>
+                            <li>Configure Gradle memory settings</li>
+                            <li>Add Compose Compiler plugin</li>
+                            <li>Clean up AI imports and exclusions</li>
+                            <li>Verify basic Android build success</li>
+                        </ul>
+                    </div>
+
+                    <div class="timeline-item">
+                        <h4>Day 1-2: AI Service Foundation (6-8 hours)</h4>
+                        <ul>
+                            <li>Design AIServiceFacade architecture</li>
+                            <li>Implement expect/actual declarations</li>
+                            <li>Create platform-specific AI service stubs</li>
+                            <li>Test AI module compilation</li>
+                        </ul>
+                    </div>
+
+                    <div class="timeline-item">
+                        <h4>Day 2: Platform Implementations (4-6 hours)</h4>
+                        <ul>
+                            <li>Complete iOS KMP target configuration</li>
+                            <li>Implement missing expect/actual functions</li>
+                            <li>Add AWS integration platform implementations</li>
+                            <li>Test multi-platform compilation</li>
+                        </ul>
+                    </div>
+
+                    <div class="timeline-item">
+                        <h4>Day 2-3: Integration & Testing (4-6 hours)</h4>
+                        <ul>
+                            <li>Re-enable AI modules in build</li>
+                            <li>Implement AI service integration</li>
+                            <li>Test full application functionality</li>
+                            <li>Verify zero-error builds across all platforms</li>
+                        </ul>
+                    </div>
+
+                    <div class="timeline-item">
+                        <h4>Day 3: Optimization & Validation (2-4 hours)</h4>
+                        <ul>
+                            <li>Optimize build configuration</li>
+                            <li>Re-enable test infrastructure</li>
+                            <li>Validate CI/CD pipeline</li>
+                            <li>Document implementation decisions</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section id="risk-assessment" class="section">
+                <h2>⚠️ Risk Assessment</h2>
+
+                <div class="risk-matrix">
+                    <div class="risk-item">
+                        <h4>🔴 High Risk: AI Platform Compatibility</h4>
+                        <p><strong>Risk:</strong> AI services may have different capabilities/APIs across platforms</p>
+                        <p><strong>Mitigation:</strong> Implement common abstraction layer with capability detection</p>
+                        <p><strong>Probability:</strong> Medium | <strong>Impact:</strong> High</p>
+                    </div>
+
+                    <div class="risk-item">
+                        <h4>🟡 Medium Risk: Memory Requirements</h4>
+                        <p><strong>Risk:</strong> Increased memory usage may affect build server performance</p>
+                        <p><strong>Mitigation:</strong> Monitor build performance and adjust if needed</p>
+                        <p><strong>Probability:</strong> Low | <strong>Impact:</strong> Medium</p>
+                    </div>
+
+                    <div class="risk-item">
+                        <h4>🟢 Low Risk: Dependency Conflicts</h4>
+                        <p><strong>Risk:</strong> New dependencies may conflict with existing ones</p>
+                        <p><strong>Mitigation:</strong> Use version catalogs and careful dependency management</p>
+                        <p><strong>Probability:</strong> Low | <strong>Impact:</strong> Low</p>
+                    </div>
+
+                    <div class="risk-item">
+                        <h4>🟢 Low Risk: Test Infrastructure</h4>
+                        <p><strong>Risk:</strong> Restored tests may reveal additional issues</p>
+                        <p><strong>Mitigation:</strong> Gradual test re-enablement with fixing as needed</p>
+                        <p><strong>Probability:</strong> Medium | <strong>Impact:</strong> Low</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="verification-strategy" class="section">
+                <h2>✅ Verification Strategy</h2>
+
+                <h3>Build Verification Checklist</h3>
+                <div class="success-box">
+                    <h4>Phase 1 Verification</h4>
+                    <ul>
+                        <li>☐ <code>./gradlew clean build</code> succeeds without memory errors</li>
+                        <li>☐ Android app compiles and installs successfully</li>
+                        <li>☐ No compilation errors in build output</li>
+                        <li>☐ Gradle daemon stable with new memory settings</li>
+                    </ul>
+
+                    <h4>Phase 2 Verification</h4>
+                    <ul>
+                        <li>☐ AI modules compile without exclusions</li>
+                        <li>☐ AIServiceFacade implementations compile for all platforms</li>
+                        <li>☐ Camera integration works with AI services</li>
+                        <li>☐ No unresolved AI-related references</li>
+                    </ul>
+
+                    <h4>Phase 3 Verification</h4>
+                    <ul>
+                        <li>☐ iOS target compiles successfully</li>
+                        <li>☐ All expect/actual declarations resolved</li>
+                        <li>☐ AWS integration works across platforms</li>
+                        <li>☐ Multi-platform build succeeds</li>
+                    </ul>
+
+                    <h4>Phase 4 Verification</h4>
+                    <ul>
+                        <li>☐ Full application functionality verified</li>
+                        <li>☐ Test suite executes successfully</li>
+                        <li>☐ CI/CD pipeline passes all checks</li>
+                        <li>☐ Zero compilation errors across all platforms</li>
+                    </ul>
+                </div>
+
+                <h3>Automated Testing Strategy</h3>
+                <div class="info-box">
+                    <p><strong>Unit Tests:</strong> Verify all AI service abstractions and platform implementations</p>
+                    <p><strong>Integration Tests:</strong> Test AI processing pipeline end-to-end</p>
+                    <p><strong>Build Tests:</strong> Automated multi-platform compilation verification</p>
+                    <p><strong>Performance Tests:</strong> Monitor memory usage and build performance</p>
+                </div>
+            </section>
+
+            <section id="appendix" class="section">
+                <h2>📎 Appendix</h2>
+
+                <h3>Key File Locations</h3>
+                <div class="info-box">
+                    <ul>
+                        <li><strong>Main Project:</strong> <span class="file-path">/Users/aaron/Apps-Coded/HH-v0/HazardHawk/</span></li>
+                        <li><strong>Primary Shared Module:</strong> <span class="file-path">HazardHawk/shared/build.gradle.kts</span></li>
+                        <li><strong>Android App:</strong> <span class="file-path">HazardHawk/androidApp/build.gradle.kts</span></li>
+                        <li><strong>Version Catalog:</strong> <span class="file-path">HazardHawk/gradle/libs.versions.toml</span></li>
+                        <li><strong>Gradle Properties:</strong> <span class="file-path">HazardHawk/gradle.properties</span></li>
+                    </ul>
+                </div>
+
+                <h3>Critical Commands</h3>
+                <div class="info-box">
+                    <pre># Full clean and build
+./gradlew clean build
+
+# Android-specific build
+./gradlew :androidApp:assembleDebug
+
+# Test execution
+./gradlew allTests
+
+# Memory monitoring
+./gradlew build --scan</pre>
+                </div>
+
+                <h3>Documentation References</h3>
+                <div class="info-box">
+                    <ul>
+                        <li><strong>Kotlin Multiplatform:</strong> <a href="https://kotlinlang.org/docs/multiplatform.html">Official KMP Guide</a></li>
+                        <li><strong>Compose Multiplatform:</strong> <a href="https://github.com/JetBrains/compose-multiplatform">JetBrains Compose MP</a></li>
+                        <li><strong>SQLDelight:</strong> <a href="https://cashapp.github.io/sqldelight/">SQLDelight Documentation</a></li>
+                        <li><strong>Ktor Client:</strong> <a href="https://ktor.io/docs/client.html">Ktor Client Guide</a></li>
+                    </ul>
+                </div>
+
+                <h3>Research Agent Contributions</h3>
+                <div class="info-box">
+                    <p><strong>simple-architect:</strong> Identified duplicate shared module structure and architectural patterns</p>
+                    <p><strong>docs-curator:</strong> Researched latest KMP best practices and 2025 ecosystem updates</p>
+                    <p><strong>android-developer:</strong> Analyzed Android-specific build issues and memory problems</p>
+                    <p><strong>backend-developer:</strong> Assessed shared module KMP configuration and API integration</p>
+                    <p><strong>test-guardian:</strong> Evaluated test infrastructure and identified blocked test execution</p>
+                </div>
+            </section>
+        </div>
+    </div>
+</body>
+</html>

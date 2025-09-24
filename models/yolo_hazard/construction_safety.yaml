@@ -1,0 +1,23 @@
+
+# HazardHawk Construction Safety Dataset Configuration
+path: models/yolo_hazard/dataset
+train: images/train
+val: images/val
+test: images/test
+
+# Classes
+nc: 13
+names:
+  0: person
+  1: hard_hat
+  2: safety_vest
+  3: no_hard_hat
+  4: no_safety_vest
+  5: machinery
+  6: excavator
+  7: crane
+  8: truck
+  9: fall_hazard
+  10: electrical_hazard
+  11: safety_cone
+  12: barrier

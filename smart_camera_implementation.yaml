@@ -1,0 +1,558 @@
+# HazardHawk Smart Camera Implementation Plan
+# Priority 1: Intelligent Safety Photo Capture with Real-Time Tagging
+
+project:
+  name: HazardHawk Smart Camera Module
+  version: 1.0.0
+  platform: Kotlin Multiplatform
+  primary_target: Android
+  secondary_targets: [iOS, Desktop, Web]
+
+# Core Requirements
+requirements:
+  functional:
+    - camera_launch_on_app_start: true
+    - metadata_overlay:
+        - location: GPS coordinates and address
+        - timestamp: Date and time
+        - project_name: Current project identifier
+        - user_id: Safety manager ID
+    - compliance_tagging:
+        - binary_status: [Compliant, Needs Improvement]
+        - safety_tags: [PPE, Fall Protection, Electrical, Housekeeping, Equipment, Hot Work, Crane/Lift]
+        - custom_tags: User-defined tags with search
+    - ai_analysis:
+        - on_device: Quick hazard detection
+        - cloud_based: Comprehensive OSHA analysis
+    - offline_support:
+        - full_camera_functionality: true
+        - local_storage: SQLDelight
+        - sync_when_connected: true
+
+  non_functional:
+    - camera_launch_time: "< 2 seconds"
+    - photo_capture_time: "< 500ms"
+    - tag_selection_taps: "≤ 2"
+    - offline_availability: "100%"
+    - sync_reliability: "> 95%"
+
+# Technical Architecture
+architecture:
+  layers:
+    presentation:
+      framework: Jetpack Compose
+      components:
+        - CameraScreen
+        - MetadataOverlay
+        - TagSelectionDialog
+        - PhotoGallery
+        - SettingsScreen
+    
+    domain:
+      use_cases:
+        - CapturePhotoUseCase
+        - ApplyTagsUseCase
+        - AnalyzePhotoUseCase
+        - SyncPhotosUseCase
+        - GetRecommendedTagsUseCase
+      
+      entities:
+        - Photo
+        - Tag
+        - SafetyAnalysis
+        - Project
+        - User
+    
+    data:
+      repositories:
+        - PhotoRepository
+        - TagRepository
+        - AnalysisRepository
+        - SyncRepository
+      
+      data_sources:
+        local:
+          - SQLDelightDatabase
+          - SharedPreferences
+          - FileStorage
+        remote:
+          - S3StorageService
+          - GeminiVisionAPI
+          - BackendAPI
+
+# Implementation Phases
+phases:
+  phase_1:
+    name: Core Camera Implementation
+    duration: 1 week
+    priority: HIGH
+    tasks:
+      - setup_project:
+          description: Initialize Kotlin Multiplatform project
+          subtasks:
+            - Configure gradle build files
+            - Setup module structure (shared, androidApp, iosApp)
+            - Add core dependencies
+          
+      - implement_camerax:
+          description: Build camera capture functionality
+          code_structure:
+            main_class: com.hazardhawk.camera.CameraViewModel
+            dependencies:
+              - "androidx.camera:camera-core:1.3.0"
+              - "androidx.camera:camera-camera2:1.3.0"
+              - "androidx.camera:camera-lifecycle:1.3.0"
+              - "androidx.camera:camera-view:1.3.0"
+          implementation: |
+            class CameraViewModel @Inject constructor(
+                private val capturePhotoUseCase: CapturePhotoUseCase,
+                private val locationService: LocationService
+            ) : ViewModel() {
+                
+                fun capturePhoto(controller: LifecycleCameraController) {
+                    val outputFileOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+                    
+                    controller.takePicture(
+                        outputFileOptions,
+                        ContextCompat.getMainExecutor(context),
+                        object : ImageCapture.OnImageSavedCallback {
+                            override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                                embedMetadata(output.savedUri)
+                                showTagDialog()
+                            }
+                        }
+                    )
+                }
+            }
+      
+      - add_metadata_overlay:
+          description: Create overlay with location, time, project
+          components:
+            - GPSLocationProvider
+            - TimestampFormatter
+            - ProjectContextManager
+            - CanvasOverlayRenderer
+          
+      - setup_local_storage:
+          description: Configure SQLDelight database
+          schema: |
+            CREATE TABLE photos (
+                id TEXT PRIMARY KEY,
+                file_path TEXT NOT NULL,
+                timestamp INTEGER NOT NULL,
+                location_lat REAL,
+                location_lng REAL,
+                location_address TEXT,
+                project_id TEXT,
+                compliance_status TEXT,
+                sync_status TEXT DEFAULT 'pending',
+                created_at INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL
+            );
+
+  phase_2:
+    name: Smart Tag Management
+    duration: 1 week
+    priority: HIGH
+    tasks:
+      - design_tag_dialog:
+          description: Build post-capture tagging UI
+          components:
+            ComplianceStatusSelector:
+              options: [Compliant, NeedsImprovement]
+              ui_type: ToggleButtons
+            
+            QuickTagGrid:
+              layout: FlexboxLayout
+              max_visible: 8
+              selection_mode: multiple
+            
+            CustomTagSearch:
+              features:
+                - Autocomplete
+                - Recent searches
+                - Create new tag
+      
+      - implement_learning_algorithm:
+          description: Smart tag recommendation engine
+          algorithm:
+            weights:
+              personal_usage: 0.4
+              project_usage: 0.3
+              industry_standard: 0.3
+            promotion_threshold: 5
+            recency_window: 7_days
+          
+          code: |
+            class TagRecommendationEngine(
+                private val tagRepository: TagRepository
+            ) {
+                suspend fun getRecommendedTags(userId: String, projectId: String): List<Tag> {
+                    val personalTags = tagRepository.getPersonalTopTags(userId, limit = 10)
+                    val projectTags = tagRepository.getProjectTopTags(projectId, limit = 10)
+                    val industryTags = tagRepository.getIndustryStandardTags()
+                    
+                    return weightedMerge(
+                        personalTags to 0.4,
+                        projectTags to 0.3,
+                        industryTags to 0.3
+                    ).take(8)
+                }
+            }
+      
+      - create_tag_storage:
+          description: Database schema for tags
+          tables:
+            tags: |
+              CREATE TABLE tags (
+                  id TEXT PRIMARY KEY,
+                  name TEXT NOT NULL UNIQUE,
+                  category TEXT NOT NULL,
+                  usage_count INTEGER DEFAULT 0,
+                  last_used INTEGER,
+                  project_specific BOOLEAN DEFAULT FALSE,
+                  is_custom BOOLEAN DEFAULT FALSE,
+                  osha_references TEXT
+              );
+            
+            photo_tags: |
+              CREATE TABLE photo_tags (
+                  photo_id TEXT NOT NULL,
+                  tag_id TEXT NOT NULL,
+                  applied_at INTEGER NOT NULL,
+                  applied_by TEXT NOT NULL,
+                  PRIMARY KEY (photo_id, tag_id),
+                  FOREIGN KEY (photo_id) REFERENCES photos(id),
+                  FOREIGN KEY (tag_id) REFERENCES tags(id)
+              );
+
+  phase_3:
+    name: AI Integration
+    duration: 1 week
+    priority: MEDIUM
+    tasks:
+      - setup_on_device_ml:
+          description: Configure local AI processing
+          framework: ML Kit or TensorFlow Lite
+          models:
+            - hazard_detection_model
+            - ppe_compliance_model
+            - equipment_recognition_model
+          
+          implementation: |
+            class OnDeviceAnalyzer(
+                private val mlKitClient: FirebaseVisionImage
+            ) {
+                suspend fun quickAnalyze(bitmap: Bitmap): QuickAnalysis {
+                    val image = FirebaseVisionImage.fromBitmap(bitmap)
+                    val detector = FirebaseVision.getInstance().onDeviceImageLabeler
+                    
+                    return detector.processImage(image).await().let { labels ->
+                        QuickAnalysis(
+                            hazardsDetected = labels.filter { it.confidence > 0.7 },
+                            suggestedTags = labels.map { it.text }.take(5)
+                        )
+                    }
+                }
+            }
+      
+      - integrate_gemini_vision:
+          description: Setup Google Gemini Vision Pro 2.5
+          api_configuration:
+            endpoint: "https://generativelanguage.googleapis.com/v1beta"
+            model: "gemini-2.5-vision-pro"
+            rate_limit: 60_per_minute
+          
+          prompt_template: |
+            Analyze this construction site photo for safety compliance.
+            Tags applied by user: {tags}
+            Compliance status: {status}
+            
+            Identify:
+            1. Safety hazards present
+            2. PPE compliance issues
+            3. Applicable OSHA codes with descriptions
+            4. Severity level (High/Medium/Low)
+            5. Recommended corrective actions
+            
+            Format response as JSON with OSHA code references.
+      
+      - build_processing_pipeline:
+          description: Dual processing system
+          flow:
+            - capture_photo
+            - apply_user_tags
+            - queue_for_processing:
+                parallel:
+                  - on_device_quick_analysis
+                  - cloud_comprehensive_analysis
+            - merge_results
+            - update_ui
+            - store_analysis
+
+  phase_4:
+    name: Cloud Sync & Storage
+    duration: 1 week
+    priority: LOW
+    tasks:
+      - setup_aws_s3:
+          description: Configure S3 bucket for photo storage
+          configuration:
+            bucket_name: hazardhawk-photos-prod
+            region: us-east-1
+            storage_class: STANDARD_IA
+            lifecycle_rules:
+              - transition_to_glacier_after: 90_days
+              - delete_after: 7_years
+          
+          upload_strategy: |
+            class S3UploadManager(
+                private val s3Client: AmazonS3Client,
+                private val photoRepository: PhotoRepository
+            ) {
+                fun queueUpload(photo: Photo) {
+                    val uploadRequest = TransferUtility.builder()
+                        .s3Client(s3Client)
+                        .context(context)
+                        .build()
+                        .upload(
+                            bucketName,
+                            "${photo.projectId}/${photo.id}.jpg",
+                            File(photo.localPath)
+                        )
+                    
+                    uploadRequest.setTransferListener(object : TransferListener {
+                        override fun onStateChanged(id: Int, state: TransferState) {
+                            when (state) {
+                                TransferState.COMPLETED -> photoRepository.markSynced(photo.id)
+                                TransferState.FAILED -> scheduleRetry(photo.id)
+                            }
+                        }
+                    })
+                }
+            }
+      
+      - implement_sync_service:
+          description: Background sync with conflict resolution
+          components:
+            - WorkManager for Android
+            - BackgroundTasks for iOS
+            - Coroutines for shared logic
+          
+          sync_logic:
+            - Check network availability
+            - Get pending photos from local DB
+            - Upload photos in batches
+            - Handle conflicts (prefer server)
+            - Update sync timestamps
+      
+      - add_progress_indicators:
+          description: User feedback for sync status
+          ui_elements:
+            - Upload progress bar
+            - Sync status icon
+            - Failed upload retry button
+            - Sync history screen
+
+# Data Models
+models:
+  Photo:
+    properties:
+      id: String
+      filePath: String
+      timestamp: Long
+      location: Location
+      project: Project
+      complianceStatus: ComplianceStatus
+      tags: List<Tag>
+      analysis: SafetyAnalysis?
+      syncStatus: SyncStatus
+      metadata: PhotoMetadata
+  
+  Tag:
+    properties:
+      id: String
+      name: String
+      category: TagCategory
+      usageCount: Int
+      lastUsed: DateTime
+      projectSpecific: Boolean
+      oshaReferences: List<String>
+  
+  SafetyAnalysis:
+    properties:
+      id: String
+      photoId: String
+      hazards: List<Hazard>
+      oshaCodes: List<OSHACode>
+      severity: Severity
+      recommendations: List<String>
+      aiConfidence: Float
+      analyzedAt: DateTime
+  
+  Location:
+    properties:
+      latitude: Double
+      longitude: Double
+      address: String?
+      accuracy: Float
+
+# UI Components
+ui_components:
+  CameraScreen:
+    compose_structure: |
+      @Composable
+      fun CameraScreen(
+          navController: NavController,
+          viewModel: CameraViewModel = hiltViewModel()
+      ) {
+          val cameraPermissionState = rememberPermissionState(Manifest.permission.CAMERA)
+          val locationPermissionState = rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
+          
+          LaunchedEffect(Unit) {
+              cameraPermissionState.launchPermissionRequest()
+              locationPermissionState.launchPermissionRequest()
+          }
+          
+          Box(modifier = Modifier.fillMaxSize()) {
+              CameraPreviewWithOverlay(
+                  onPhotoCaptured = { uri ->
+                      viewModel.processPhoto(uri)
+                  }
+              )
+              
+              CaptureButton(
+                  modifier = Modifier.align(Alignment.BottomCenter),
+                  onClick = { viewModel.capturePhoto() }
+              )
+              
+              GalleryButton(
+                  modifier = Modifier.align(Alignment.BottomStart),
+                  onClick = { navController.navigate("gallery") }
+              )
+          }
+      }
+  
+  TagSelectionDialog:
+    compose_structure: |
+      @Composable
+      fun TagSelectionDialog(
+          photo: Photo,
+          recommendedTags: List<Tag>,
+          onDismiss: () -> Unit,
+          onConfirm: (ComplianceStatus, List<Tag>) -> Unit
+      ) {
+          var complianceStatus by remember { mutableStateOf<ComplianceStatus?>(null) }
+          var selectedTags by remember { mutableStateOf(emptySet<Tag>()) }
+          
+          AlertDialog(
+              onDismissRequest = onDismiss,
+              title = { Text("Tag Your Photo") },
+              text = {
+                  Column {
+                      ComplianceToggle(
+                          selected = complianceStatus,
+                          onSelect = { complianceStatus = it }
+                      )
+                      
+                      Spacer(modifier = Modifier.height(16.dp))
+                      
+                      TagGrid(
+                          tags = recommendedTags,
+                          selectedTags = selectedTags,
+                          onToggle = { tag ->
+                              selectedTags = if (tag in selectedTags) {
+                                  selectedTags - tag
+                              } else {
+                                  selectedTags + tag
+                              }
+                          }
+                      )
+                      
+                      CustomTagInput(
+                          onAddTag = { customTag ->
+                              selectedTags = selectedTags + customTag
+                          }
+                      )
+                  }
+              },
+              confirmButton = {
+                  TextButton(
+                      onClick = { onConfirm(complianceStatus!!, selectedTags.toList()) },
+                      enabled = complianceStatus != null
+                  ) {
+                      Text("Save")
+                  }
+              }
+          )
+      }
+
+# Testing Strategy
+testing:
+  unit_tests:
+    - TagRecommendationEngineTest
+    - PhotoMetadataEmbedderTest
+    - AIAnalysisParserTest
+    - SyncConflictResolverTest
+  
+  integration_tests:
+    - CameraCapturePipelineTest
+    - OfflineSyncTest
+    - S3UploadTest
+    - GeminiAPIIntegrationTest
+  
+  ui_tests:
+    - CameraScreenTest
+    - TagSelectionFlowTest
+    - MetadataOverlayTest
+    - GalleryNavigationTest
+  
+  performance_tests:
+    - CameraLaunchTimeTest: "< 2 seconds"
+    - PhotoCaptureSpeedTest: "< 500ms"
+    - TagRecommendationSpeedTest: "< 100ms"
+    - LocalSaveSpeedTest: "< 50ms"
+
+# Deployment Configuration
+deployment:
+  android:
+    min_sdk: 24
+    target_sdk: 34
+    permissions:
+      - android.permission.CAMERA
+      - android.permission.ACCESS_FINE_LOCATION
+      - android.permission.INTERNET
+      - android.permission.READ_EXTERNAL_STORAGE
+      - android.permission.WRITE_EXTERNAL_STORAGE
+    
+    proguard_rules: |
+      -keep class com.hazardhawk.models.** { *; }
+      -keep class androidx.camera.** { *; }
+      -keepattributes *Annotation*
+  
+  ios:
+    min_version: 14.0
+    info_plist_keys:
+      - NSCameraUsageDescription: "HazardHawk needs camera access to capture safety photos"
+      - NSLocationWhenInUseUsageDescription: "Location is used to tag photos with job site information"
+      - NSPhotoLibraryUsageDescription: "Access photos to upload safety documentation"
+
+# Success Metrics
+metrics:
+  performance:
+    - camera_launch_time: "< 2 seconds"
+    - photo_capture_latency: "< 500ms"
+    - tag_selection_time: "< 3 seconds"
+    - sync_success_rate: "> 95%"
+  
+  user_experience:
+    - photos_tagged_first_capture: "> 95%"
+    - documentation_time_reduction: "> 80%"
+    - offline_functionality: "100%"
+    - user_satisfaction_score: "> 4.5/5"
+  
+  ai_accuracy:
+    - hazard_detection_accuracy: "> 90%"
+    - osha_code_relevance: "> 95%"
+    - auto_tag_acceptance_rate: "> 85%"
+    - false_positive_rate: "< 5%"

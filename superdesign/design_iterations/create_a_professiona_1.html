@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HazardHawk Build Infrastructure Restoration - Project Timeline</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .timeline-bar {
+            height: 24px;
+            border-radius: 4px;
+            position: relative;
+            margin: 8px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .timeline-progress {
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.2) 0%, transparent 100%);
+        }
+        .milestone {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 2px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .dependency-line {
+            height: 2px;
+            background: #64748b;
+            position: absolute;
+            z-index: 10;
+        }
+        .phase-header {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            color: white;
+            font-weight: 600;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        .critical { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); }
+        .high { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); }
+        .medium { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+        .low { background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%); }
+        .grid-lines {
+            background-image: linear-gradient(to right, rgba(0,0,0,0.1) 1px, transparent 1px);
+            background-size: 100px 1px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-black">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-20">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl font-bold text-black">HazardHawk Build Infrastructure Restoration</h1>
+                    <p class="text-sm text-gray-600 mt-1">Project Orchestration Timeline & Resource Allocation</p>
+                </div>
+                <div class="flex items-center space-x-4 text-sm">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-4 h-4 rounded critical"></div>
+                        <span>Critical</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-4 h-4 rounded high"></div>
+                        <span>High</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-4 h-4 rounded medium"></div>
+                        <span>Medium</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-4 h-4 rounded low"></div>
+                        <span>Low</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Timeline Container -->
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Timeline Header -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-8">
+            <div class="grid-lines px-6 py-4">
+                <div class="grid grid-cols-12 gap-4 text-xs font-medium text-gray-700">
+                    <div class="col-span-3">Task / Resource</div>
+                    <div class="text-center">W1</div>
+                    <div class="text-center">W2</div>
+                    <div class="text-center">W3</div>
+                    <div class="text-center">W4</div>
+                    <div class="text-center">M2</div>
+                    <div class="text-center">M3</div>
+                    <div class="text-center">Progress</div>
+                    <div class="text-center">Owner</div>
+                    <div class="text-center">Dependencies</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phase 1: Critical Fixes (Week 1) -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-8">
+            <div class="phase-header px-6 py-3 rounded-t-lg">
+                <h2 class="text-lg font-semibold">Phase 1: Critical Fixes & Security Foundation (Week 1)</h2>
+            </div>
+            <div class="p-6 space-y-4">
+                <!-- Compilation Fixes -->
+                <div class="grid grid-cols-12 gap-4 items-center py-2 border-b border-gray-100">
+                    <div class="col-span-3">
+                        <h4 class="font-medium text-sm">Compilation Issues Resolution</h4>
+                        <p class="text-xs text-gray-600">15 remaining compilation errors</p>
+                    </div>
+                    <div class="relative">
+                        <div class="timeline-bar critical" style="width: 100%;">
+                            <div class="timeline-progress"></div>
+                            <div class="milestone critical" style="right: 4px;"></div>
+                        </div>
+                    </div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="text-xs text-center">85%</div>
+                    <div class="text-xs text-center font-medium">complete-reviewer</div>
+                    <div class="text-xs text-center">None</div>
+                </div>
+
+                <!-- Security Foundation -->
+                <div class="grid grid-cols-12 gap-4 items-center py-2 border-b border-gray-100">
+                    <div class="col-span-3">
+                        <h4 class="font-medium text-sm">Security Foundation</h4>
+                        <p class="text-xs text-gray-600">API credentials, certificate pinning</p>
+                    </div>
+                    <div class="relative">
+                        <div class="timeline-bar critical" style="width: 100%;">
+                            <div class="timeline-progress"></div>
+                            <div class="milestone critical" style="right: 4px;"></div>
+                        </div>
+                    </div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="text-xs text-center">0%</div>
+                    <div class="text-xs text-center font-medium">simple-architect</div>
+                    <div class="text-xs text-center">Compilation</div>
+                </div>
+
+                <!-- Cross-Platform Build -->
+                <div class="grid grid-cols-12 gap-4 items-center py-2">
+                    <div class="col-span-3">
+                        <h4 class="font-medium text-sm">Cross-Platform Validation</h4>
+                        <p class="text-xs text-gray-600">Android, iOS, KMP builds</p>
+                    </div>
+                    <div class="relative">
+                        <div class="timeline-bar high" style="width: 80%;">
+                            <div class="timeline-progress"></div>
+                            <div class="milestone high" style="right: 4px;"></div>
+                        </div>
+                    </div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="text-xs text-center">70%</div>
+                    <div class="text-xs text-center font-medium">test-guardian</div>
+                    <div class="text-xs text-center">Security</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phase 2: AI Service Restoration (Weeks 2-4) -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-8">
+            <div class="phase-header px-6 py-3 rounded-t-lg" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
+                <h2 class="text-lg font-semibold">Phase 2: AI Service Restoration & OSHA Compliance (Weeks 2-4)</h2>
+            </div>
+            <div class="p-6 space-y-4">
+                <!-- Gemini Vision API -->
+                <div class="grid grid-cols-12 gap-4 items-center py-2 border-b border-gray-100">
+                    <div class="col-span-3">
+                        <h4 class="font-medium text-sm">Gemini Vision API Integration</h4>
+                        <p class="text-xs text-gray-600">AI hazard detection restoration</p>
+                    </div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="relative">
+                        <div class="timeline-bar medium" style="width: 100%;">
+                            <div class="timeline-progress"></div>
+                        </div>
+                    </div>
+                    <div class="relative">
+                        <div class="timeline-bar medium" style="width: 60%;">
+                            <div class="timeline-progress"></div>
+                            <div class="milestone medium" style="right: 4px;"></div>
+                        </div>
+                    </div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="text-xs text-center">0%</div>
+                    <div class="text-xs text-center font-medium">simple-architect</div>
+                    <div class="text-xs text-center">Security</div>
+                </div>
+
+                <!-- S3 Upload Pipeline -->
+                <div class="grid grid-cols-12 gap-4 items-center py-2 border-b border-gray-100">
+                    <div class="col-span-3">
+                        <h4 class="font-medium text-sm">S3 Upload Pipeline</h4>
+                        <p class="text-xs text-gray-600">Photo storage with retry logic</p>
+                    </div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="relative">
+                        <div class="timeline-bar high" style="width: 100%;">
+                            <div class="timeline-progress"></div>
+                        </div>
+                    </div>
+                    <div class="relative">
+                        <div class="timeline-bar high" style="width: 100%;">
+                            <div class="timeline-progress"></div>
+                            <div class="milestone high" style="right: 4px;"></div>
+                        </div>
+                    </div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="text-xs text-center">30%</div>
+                    <div class="text-xs text-center font-medium">complete-reviewer</div>
+                    <div class="text-xs text-center">AI API</div>
+                </div>
+
+                <!-- OSHA Compliance -->
+                <div class="grid grid-cols-12 gap-4 items-center py-2">
+                    <div class="col-span-3">
+                        <h4 class="font-medium text-sm">OSHA Compliance Framework</h4>
+                        <p class="text-xs text-gray-600">Audit trail and reporting</p>
+                    </div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="relative">
+                        <div class="timeline-bar critical" style="width: 100%;">
+                            <div class="timeline-progress"></div>
+                        </div>
+                    </div>
+                    <div class="relative">
+                        <div class="timeline-bar critical" style="width: 100%;">
+                            <div class="timeline-progress"></div>
+                            <div class="milestone critical" style="right: 4px;"></div>
+                        </div>
+                    </div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="text-xs text-center">0%</div>
+                    <div class="text-xs text-center font-medium">docs-curator</div>
+                    <div class="text-xs text-center">Upload Pipeline</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phase 3: Advanced Features (Months 1-3) -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-8">
+            <div class="phase-header px-6 py-3 rounded-t-lg" style="background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%);">
+                <h2 class="text-lg font-semibold">Phase 3: Advanced Features & Performance Optimization (Months 1-3)</h2>
+            </div>
+            <div class="p-6 space-y-4">
+                <!-- Performance Monitoring -->
+                <div class="grid grid-cols-12 gap-4 items-center py-2 border-b border-gray-100">
+                    <div class="col-span-3">
+                        <h4 class="font-medium text-sm">Performance Monitoring</h4>
+                        <p class="text-xs text-gray-600">Real-time dashboards</p>
+                    </div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="relative">
+                        <div class="timeline-bar low" style="width: 100%;">
+                            <div class="timeline-progress"></div>
+                        </div>
+                    </div>
+                    <div class="relative">
+                        <div class="timeline-bar low" style="width: 60%;">
+                            <div class="timeline-progress"></div>
+                            <div class="milestone low" style="right: 4px;"></div>
+                        </div>
+                    </div>
+                    <div class="text-xs text-center">0%</div>
+                    <div class="text-xs text-center font-medium">test-guardian</div>
+                    <div class="text-xs text-center">OSHA Complete</div>
+                </div>
+
+                <!-- Multi-language Support -->
+                <div class="grid grid-cols-12 gap-4 items-center py-2 border-b border-gray-100">
+                    <div class="col-span-3">
+                        <h4 class="font-medium text-sm">Multi-language Support</h4>
+                        <p class="text-xs text-gray-600">Construction industry i18n</p>
+                    </div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="relative">
+                        <div class="timeline-bar medium" style="width: 70%;">
+                            <div class="timeline-progress"></div>
+                        </div>
+                    </div>
+                    <div class="relative">
+                        <div class="timeline-bar medium" style="width: 100%;">
+                            <div class="timeline-progress"></div>
+                            <div class="milestone medium" style="right: 4px;"></div>
+                        </div>
+                    </div>
+                    <div class="text-xs text-center">0%</div>
+                    <div class="text-xs text-center font-medium">docs-curator</div>
+                    <div class="text-xs text-center">Performance</div>
+                </div>
+
+                <!-- Security Audit -->
+                <div class="grid grid-cols-12 gap-4 items-center py-2">
+                    <div class="col-span-3">
+                        <h4 class="font-medium text-sm">Third-party Security Audit</h4>
+                        <p class="text-xs text-gray-600">Compliance certification</p>
+                    </div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="timeline-bar bg-gray-100" style="width: 100%;"></div>
+                    <div class="relative">
+                        <div class="timeline-bar critical" style="width: 100%;">
+                            <div class="timeline-progress"></div>
+                            <div class="milestone critical" style="right: 4px;"></div>
+                        </div>
+                    </div>
+                    <div class="text-xs text-center">0%</div>
+                    <div class="text-xs text-center font-medium">simple-architect</div>
+                    <div class="text-xs text-center">Multi-lang</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Success Metrics Dashboard -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-8">
+            <div class="px-6 py-3 bg-gray-50 rounded-t-lg border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-black">Success Metrics & Key Performance Indicators</h2>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-gray-50 p-4 rounded-lg border">
+                        <h4 class="font-medium text-sm text-gray-600">Build Success Rate</h4>
+                        <div class="text-2xl font-bold text-orange-600 mt-2">85%</div>
+                        <div class="text-xs text-gray-500 mt-1">Target: 100%</div>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg border">
+                        <h4 class="font-medium text-sm text-gray-600">Build Time</h4>
+                        <div class="text-2xl font-bold text-blue-600 mt-2">36s</div>
+                        <div class="text-xs text-gray-500 mt-1">Target: <40s</div>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg border">
+                        <h4 class="font-medium text-sm text-gray-600">Test Coverage</h4>
+                        <div class="text-2xl font-bold text-yellow-600 mt-2">85%</div>
+                        <div class="text-xs text-gray-500 mt-1">Target: 90%</div>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg border">
+                        <h4 class="font-medium text-sm text-gray-600">Security Vulnerabilities</h4>
+                        <div class="text-2xl font-bold text-red-600 mt-2">5</div>
+                        <div class="text-xs text-gray-500 mt-1">Target: 0 Critical</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resource Allocation Matrix -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-3 bg-gray-50 rounded-t-lg border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-black">Agent Resource Allocation & Coordination</h2>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="border border-orange-200 bg-orange-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-orange-800">simple-architect</h4>
+                        <p class="text-xs text-orange-600 mt-1">Technical architecture & system design</p>
+                        <div class="mt-3 space-y-1 text-xs">
+                            <div class="flex justify-between">
+                                <span>Security Foundation</span>
+                                <span class="font-medium">Week 1</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>AI Integration</span>
+                                <span class="font-medium">Week 2-3</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Security Audit</span>
+                                <span class="font-medium">Month 3</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="border border-blue-200 bg-blue-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-blue-800">complete-reviewer</h4>
+                        <p class="text-xs text-blue-600 mt-1">Code quality & compilation fixes</p>
+                        <div class="mt-3 space-y-1 text-xs">
+                            <div class="flex justify-between">
+                                <span>Compilation Issues</span>
+                                <span class="font-medium">Week 1</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>S3 Upload Pipeline</span>
+                                <span class="font-medium">Week 2-3</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="border border-yellow-200 bg-yellow-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-yellow-800">test-guardian</h4>
+                        <p class="text-xs text-yellow-600 mt-1">Testing strategy & CI/CD</p>
+                        <div class="mt-3 space-y-1 text-xs">
+                            <div class="flex justify-between">
+                                <span>Build Validation</span>
+                                <span class="font-medium">Week 1</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Performance Monitoring</span>
+                                <span class="font-medium">Month 2</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="border border-green-200 bg-green-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-green-800">docs-curator</h4>
+                        <p class="text-xs text-green-600 mt-1">Documentation & compliance</p>
+                        <div class="mt-3 space-y-1 text-xs">
+                            <div class="flex justify-between">
+                                <span>OSHA Framework</span>
+                                <span class="font-medium">Week 3-4</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Multi-language</span>
+                                <span class="font-medium">Month 2-3</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

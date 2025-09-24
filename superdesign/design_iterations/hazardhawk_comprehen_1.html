@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HazardHawk User Journey - Variation 1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .wireframe-box { border: 2px solid #333; background: #fff; }
+        .wireframe-btn { border: 2px solid #333; background: #f0f0f0; }
+        .glass-effect { background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05)); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.3); }
+        .camera-wheel { position: absolute; right: 24px; top: 50%; transform: translateY(-50%); }
+        .flow-arrow { border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 16px solid #333; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-4">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-center mb-8 text-black">HazardHawk User Journey Flow</h1>
+        
+        <!-- Flow 1: Company Entry -->
+        <div class="mb-12">
+            <div class="wireframe-box p-6 rounded-lg mx-auto max-w-sm">
+                <div class="text-center mb-4">
+                    <div class="w-16 h-16 wireframe-box mx-auto mb-4 rounded-full flex items-center justify-center">
+                        <span class="text-lg font-bold">HH</span>
+                    </div>
+                    <h2 class="text-xl font-bold mb-2">Company Setup</h2>
+                </div>
+                <div class="space-y-4">
+                    <div class="wireframe-box h-10 rounded border-2 border-dashed border-gray-400 flex items-center px-3">
+                        <span class="text-sm text-gray-600">Company Name</span>
+                    </div>
+                    <div class="wireframe-box h-10 rounded border-2 border-dashed border-gray-400 flex items-center px-3">
+                        <span class="text-sm text-gray-600">Project ID</span>
+                    </div>
+                    <button class="wireframe-btn w-full h-12 rounded font-bold">START HAZARD DETECTION</button>
+                </div>
+            </div>
+            <div class="flex justify-center mt-4">
+                <div class="flow-arrow"></div>
+            </div>
+        </div>
+
+        <!-- Flow 2: Camera Viewfinder -->
+        <div class="mb-12">
+            <div class="wireframe-box p-4 rounded-lg mx-auto max-w-md relative h-96">
+                <div class="text-center mb-2">
+                    <h3 class="font-bold">Camera Viewfinder</h3>
+                </div>
+                <!-- Camera Preview Area -->
+                <div class="wireframe-box h-64 rounded-lg bg-gray-200 relative mb-4">
+                    <div class="absolute inset-4 border-2 border-dashed border-gray-500 rounded-lg"></div>
+                    <div class="absolute top-2 left-2 glass-effect px-2 py-1 rounded text-xs">GPS: 40.7128°N</div>
+                    <div class="absolute top-2 right-2 glass-effect px-2 py-1 rounded text-xs">12:34 PM</div>
+                    
+                    <!-- Camera Wheel Controls (24dp positioning) -->
+                    <div class="camera-wheel flex flex-col space-y-2">
+                        <div class="w-12 h-12 wireframe-btn rounded-full flex items-center justify-center">Z+</div>
+                        <div class="w-12 h-12 wireframe-btn rounded-full flex items-center justify-center">ISO</div>
+                        <div class="w-12 h-12 wireframe-btn rounded-full flex items-center justify-center">F</div>
+                        <div class="w-12 h-12 wireframe-btn rounded-full flex items-center justify-center">Z-</div>
+                    </div>
+                </div>
+                
+                <!-- Bottom Controls -->
+                <div class="flex justify-between items-center">
+                    <button class="wireframe-btn w-12 h-12 rounded-lg">📁</button>
+                    <button class="wireframe-btn w-16 h-16 rounded-full border-4 border-orange-500">●</button>
+                    <button class="wireframe-btn w-12 h-12 rounded-lg">⚙</button>
+                </div>
+            </div>
+            <div class="flex justify-center mt-4">
+                <div class="flow-arrow"></div>
+            </div>
+        </div>
+
+        <!-- Flow 3: Tagging Interface -->
+        <div class="mb-12">
+            <div class="wireframe-box p-4 rounded-lg mx-auto max-w-md">
+                <h3 class="font-bold text-center mb-4">Photo Tagging</h3>
+                <div class="wireframe-box h-32 rounded-lg bg-gray-200 mb-4 flex items-center justify-center">
+                    <span class="text-gray-600">Captured Photo</span>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex flex-wrap gap-2">
+                        <span class="px-3 py-1 bg-orange-100 border-2 border-orange-400 rounded-full text-sm">Fall Hazard</span>
+                        <span class="px-3 py-1 bg-red-100 border-2 border-red-400 rounded-full text-sm">No PPE</span>
+                        <span class="px-3 py-1 bg-yellow-100 border-2 border-yellow-400 rounded-full text-sm">Electrical</span>
+                    </div>
+                    <div class="wireframe-box h-10 rounded border-2 border-dashed border-gray-400 flex items-center px-3">
+                        <span class="text-sm text-gray-600">Add custom tag...</span>
+                    </div>
+                    <button class="wireframe-btn w-full h-10 rounded font-bold bg-orange-100">ANALYZE WITH AI</button>
+                </div>
+            </div>
+            <div class="flex justify-center mt-4">
+                <div class="flow-arrow"></div>
+            </div>
+        </div>
+
+        <!-- Flow 4: AI Analysis Results -->
+        <div class="mb-12">
+            <div class="wireframe-box p-4 rounded-lg mx-auto max-w-md">
+                <h3 class="font-bold text-center mb-4">AI Safety Analysis</h3>
+                <div class="space-y-4">
+                    <div class="glass-effect p-3 rounded-lg border-2 border-red-300">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-red-600">HIGH RISK</span>
+                            <span class="text-sm">OSHA 1926.501</span>
+                        </div>
+                        <p class="text-sm mt-1">Worker at elevation without fall protection equipment</p>
+                    </div>
+                    <div class="glass-effect p-3 rounded-lg border-2 border-orange-300">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-orange-600">MEDIUM RISK</span>
+                            <span class="text-sm">OSHA 1926.95</span>
+                        </div>
+                        <p class="text-sm mt-1">Missing hard hat in construction zone</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="wireframe-btn flex-1 h-10 rounded">SAVE TO GALLERY</button>
+                        <button class="wireframe-btn flex-1 h-10 rounded bg-orange-100">GENERATE REPORT</button>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-center mt-4">
+                <div class="flow-arrow"></div>
+            </div>
+        </div>
+
+        <!-- Flow 5: Gallery Management -->
+        <div class="mb-12">
+            <div class="wireframe-box p-4 rounded-lg mx-auto max-w-md">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold">Safety Gallery</h3>
+                    <button class="wireframe-btn px-3 py-1 rounded text-sm">Filter</button>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="wireframe-box h-24 rounded bg-gray-200 relative">
+                        <div class="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full"></div>
+                        <div class="absolute bottom-1 left-1 text-xs bg-black text-white px-1 rounded">HIGH</div>
+                    </div>
+                    <div class="wireframe-box h-24 rounded bg-gray-200 relative">
+                        <div class="absolute top-1 right-1 w-4 h-4 bg-orange-500 rounded-full"></div>
+                        <div class="absolute bottom-1 left-1 text-xs bg-black text-white px-1 rounded">MED</div>
+                    </div>
+                    <div class="wireframe-box h-24 rounded bg-gray-200 relative">
+                        <div class="absolute top-1 right-1 w-4 h-4 bg-green-500 rounded-full"></div>
+                        <div class="absolute bottom-1 left-1 text-xs bg-black text-white px-1 rounded">LOW</div>
+                    </div>
+                    <div class="wireframe-box h-24 rounded bg-gray-200 relative">
+                        <div class="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full"></div>
+                        <div class="absolute bottom-1 left-1 text-xs bg-black text-white px-1 rounded">HIGH</div>
+                    </div>
+                </div>
+                <button class="wireframe-btn w-full h-10 rounded mt-4">SELECT MULTIPLE</button>
+            </div>
+            <div class="flex justify-center mt-4">
+                <div class="flow-arrow"></div>
+            </div>
+        </div>
+
+        <!-- Flow 6: Report Generation -->
+        <div class="mb-12">
+            <div class="wireframe-box p-4 rounded-lg mx-auto max-w-md">
+                <h3 class="font-bold text-center mb-4">Generate Report</h3>
+                <div class="space-y-4">
+                    <div class="wireframe-box p-3 rounded-lg border-2 border-dashed border-gray-400">
+                        <div class="text-sm font-bold mb-2">Report Template</div>
+                        <div class="space-y-1">
+                            <div class="flex items-center space-x-2">
+                                <input type="checkbox" checked class="w-4 h-4">
+                                <span class="text-sm">Daily Safety Inspection</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <input type="checkbox" class="w-4 h-4">
+                                <span class="text-sm">Incident Report</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <input type="checkbox" class="w-4 h-4">
+                                <span class="text-sm">OSHA Compliance</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="wireframe-box h-10 rounded border-2 border-dashed border-gray-400 flex items-center px-3">
+                        <span class="text-sm text-gray-600">Inspector Signature</span>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="wireframe-btn flex-1 h-10 rounded">PREVIEW</button>
+                        <button class="wireframe-btn flex-1 h-10 rounded bg-orange-100">EXPORT PDF</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Emergency Mode Toggle -->
+        <div class="glass-effect fixed bottom-4 right-4 p-3 rounded-full">
+            <button class="w-12 h-12 bg-red-500 text-white rounded-full font-bold">!</button>
+        </div>
+    </div>
+</body>
+</html>

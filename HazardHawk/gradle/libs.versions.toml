@@ -1,0 +1,208 @@
+[versions]
+# Core versions aligned for compatibility
+kotlin = "2.1.0"
+compose-bom = "2024.09.02"
+compose-compiler = "2.0.0"
+androidGradlePlugin = "8.7.0"
+
+# AndroidX versions
+androidx-activity-compose = "1.9.1"
+androidx-lifecycle = "2.8.4"
+androidx-core = "1.13.1"
+androidx-navigation = "2.7.7"
+
+# Camera and media
+camerax = "1.3.3"
+coil = "3.0.0"
+exifinterface = "1.3.7"
+
+# Networking and serialization
+ktor = "2.3.12"
+kotlinx-serialization = "1.6.3"
+kotlinx-coroutines = "1.8.1"
+kotlinx-datetime = "0.6.1"
+
+# Database and storage
+sqldelight = "2.0.2"
+
+# Dependency injection
+koin = "3.5.6"
+
+# AI and ML
+onnxruntime = "1.17.1"
+firebase-vertexai = "16.0.2"
+generativeai = "0.9.0"
+mlkit-vision = "17.0.8"
+tensorflow-lite = "2.14.0"
+# LiteRT dependencies - now using correct nightly dependencies
+litert-gpu = "0.0.0-nightly-SNAPSHOT"
+litert-support = "0.0.0-nightly-SNAPSHOT"
+tensorflow-lite-nightly = "0.0.0-nightly-SNAPSHOT"
+
+# AWS SDK for cloud services
+aws-sdk-kotlin = "1.0.0"
+
+# Testing
+junit = "4.13.2"
+mockk = "1.13.12"
+robolectric = "4.13"
+androidx-test = "1.5.0"
+androidx-test-ext-junit = "1.1.5"
+espresso = "3.6.1"
+
+[libraries]
+# Compose BOM - ensures all Compose libraries use compatible versions
+compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "compose-bom" }
+compose-ui = { group = "androidx.compose.ui", name = "ui" }
+compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+compose-material-icons = { group = "androidx.compose.material", name = "material-icons-extended" }
+compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
+compose-runtime-tracing = { group = "androidx.compose.runtime", name = "runtime-tracing", version = "1.0.0-beta01" }
+compose-activity = { group = "androidx.activity", name = "activity-compose", version.ref = "androidx-activity-compose" }
+
+# AndroidX Core
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core" }
+androidx-lifecycle-viewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "androidx-lifecycle" }
+androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "androidx-lifecycle" }
+androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
+androidx-lifecycle-livedata = { group = "androidx.lifecycle", name = "lifecycle-livedata-ktx", version.ref = "androidx-lifecycle" }
+androidx-lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "androidx-lifecycle" }
+androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "androidx-navigation" }
+
+# CameraX - aligned versions
+camerax-core = { group = "androidx.camera", name = "camera-core", version.ref = "camerax" }
+camerax-camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "camerax" }
+camerax-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "camerax" }
+camerax-view = { group = "androidx.camera", name = "camera-view", version.ref = "camerax" }
+
+# Image loading - Coil 3.0 for better performance
+coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
+coil-network-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
+
+# Networking
+ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
+ktor-client-android = { group = "io.ktor", name = "ktor-client-android", version.ref = "ktor" }
+ktor-client-darwin = { group = "io.ktor", name = "ktor-client-darwin", version.ref = "ktor" }
+ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-client-logging = { group = "io.ktor", name = "ktor-client-logging", version.ref = "ktor" }
+ktor-client-auth = { group = "io.ktor", name = "ktor-client-auth", version.ref = "ktor" }
+ktor-serialization-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
+
+# Serialization
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
+kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinx-datetime" }
+
+# Database
+sqldelight-runtime = { group = "app.cash.sqldelight", name = "runtime", version.ref = "sqldelight" }
+sqldelight-android-driver = { group = "app.cash.sqldelight", name = "android-driver", version.ref = "sqldelight" }
+sqldelight-native-driver = { group = "app.cash.sqldelight", name = "native-driver", version.ref = "sqldelight" }
+sqldelight-coroutines = { group = "app.cash.sqldelight", name = "coroutines-extensions", version.ref = "sqldelight" }
+
+# Dependency Injection
+koin-core = { group = "io.insert-koin", name = "koin-core", version.ref = "koin" }
+koin-android = { group = "io.insert-koin", name = "koin-android", version.ref = "koin" }
+koin-androidx-compose = { group = "io.insert-koin", name = "koin-androidx-compose", version.ref = "koin" }
+
+# AI and ML
+onnxruntime-android = { group = "com.microsoft.onnxruntime", name = "onnxruntime-android", version.ref = "onnxruntime" }
+firebase-vertexai = { group = "com.google.firebase", name = "firebase-vertexai", version.ref = "firebase-vertexai" }
+generativeai = { group = "com.google.ai.client.generativeai", name = "generativeai", version.ref = "generativeai" }
+mlkit-image-labeling = { group = "com.google.mlkit", name = "image-labeling", version.ref = "mlkit-vision" }
+mlkit-object-detection = { group = "com.google.mlkit", name = "object-detection", version.ref = "mlkit-vision" }
+tensorflow-lite = { group = "org.tensorflow", name = "tensorflow-lite", version.ref = "tensorflow-lite" }
+tensorflow-lite-gpu = { group = "org.tensorflow", name = "tensorflow-lite-gpu", version.ref = "tensorflow-lite" }
+tensorflow-lite-support = { group = "org.tensorflow", name = "tensorflow-lite-support", version = "0.4.4" }
+# Correct LiteRT dependencies
+tensorflow-lite-nightly = { group = "org.tensorflow", name = "tensorflow-lite", version.ref = "tensorflow-lite-nightly" }
+litert-gpu = { group = "com.google.ai.edge.litert", name = "litert-gpu", version.ref = "litert-gpu" }
+litert-support = { group = "com.google.ai.edge.litert", name = "litert-support", version.ref = "litert-support" }
+
+# Utilities
+exifinterface = { group = "androidx.exifinterface", name = "exifinterface", version.ref = "exifinterface" }
+uuid = { group = "com.benasher44", name = "uuid", version = "0.8.4" }
+
+# UI Components
+permissions = { group = "com.google.accompanist", name = "accompanist-permissions", version = "0.34.0" }
+zoomable = { group = "net.engawapg.lib", name = "zoomable", version = "1.6.1" }
+documentfile = { group = "androidx.documentfile", name = "documentfile", version = "1.0.1" }
+haze = { group = "dev.chrisbanes.haze", name = "haze", version = "1.6.10" }
+haze-materials = { group = "dev.chrisbanes.haze", name = "haze-materials", version = "1.6.10" }
+work-runtime = { group = "androidx.work", name = "work-runtime-ktx", version = "2.9.0" }
+paging-compose = { group = "androidx.paging", name = "paging-compose", version = "3.2.1" }
+paging-runtime = { group = "androidx.paging", name = "paging-runtime-ktx", version = "3.2.1" }
+
+# Security
+security-crypto = { group = "androidx.security", name = "security-crypto", version = "1.1.0-alpha06" }
+security-crypto-ktx = { group = "androidx.security", name = "security-crypto-ktx", version = "1.1.0-alpha06" }
+
+# Location
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version = "21.2.0" }
+
+# PDF Generation
+itext-core = { group = "com.itextpdf", name = "itext-core", version = "8.0.3" }
+itext-html2pdf = { group = "com.itextpdf", name = "html2pdf", version = "5.0.3" }
+
+
+# QR Code
+zxing-core = { group = "com.google.zxing", name = "core", version = "3.5.3" }
+zxing-android = { group = "com.journeyapps", name = "zxing-android-embedded", version = "4.3.0" }
+
+# AWS SDK for cloud services
+aws-sdk-cognitoidentityprovider = { group = "aws.sdk.kotlin", name = "cognitoidentityprovider", version.ref = "aws-sdk-kotlin" }
+aws-sdk-s3 = { group = "aws.sdk.kotlin", name = "s3", version.ref = "aws-sdk-kotlin" }
+
+# Testing
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlin" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+mockk-android = { group = "io.mockk", name = "mockk-android", version.ref = "mockk" }
+robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidx-test" }
+androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-test-ext-junit" }
+androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidx-test" }
+androidx-test-rules = { group = "androidx.test", name = "rules", version.ref = "androidx-test" }
+espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso" }
+espresso-intents = { group = "androidx.test.espresso", name = "espresso-intents", version.ref = "espresso" }
+uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version = "2.3.0" }
+benchmark-junit4 = { group = "androidx.benchmark", name = "benchmark-junit4", version = "1.2.4" }
+
+[plugins]
+# Core Android and Kotlin plugins
+androidApplication = { id = "com.android.application", version.ref = "androidGradlePlugin" }
+androidLibrary = { id = "com.android.library", version.ref = "androidGradlePlugin" }
+kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+
+# Compose compiler plugin
+composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+
+# Database
+sqlDelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }
+
+# Code coverage
+kover = { id = "org.jetbrains.kotlinx.kover", version = "0.7.6" }
+
+
+# Performance and quality
+detekt = { id = "io.gitlab.arturbosch.detekt", version = "1.23.6" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version = "12.1.0" }
+
+[bundles]
+# Common dependency bundles for easier management
+compose = ["compose-ui", "compose-ui-tooling-preview", "compose-material3", "compose-foundation", "compose-material-icons"]
+camerax = ["camerax-core", "camerax-camera2", "camerax-lifecycle", "camerax-view"]
+ktor-client = ["ktor-client-core", "ktor-client-content-negotiation", "ktor-serialization-json", "ktor-client-logging"]
+lifecycle = ["androidx-lifecycle-viewmodel", "androidx-lifecycle-viewmodel-compose", "androidx-lifecycle-runtime-compose", "androidx-lifecycle-process"]
+sqldelight = ["sqldelight-runtime", "sqldelight-coroutines"]
+koin = ["koin-core", "koin-android", "koin-androidx-compose"]
+ai-ml = ["onnxruntime-android", "tensorflow-lite", "mlkit-image-labeling"]
+test-unit = ["junit", "kotlin-test", "kotlinx-coroutines-test", "mockk"]
+test-android = ["androidx-test-ext-junit", "espresso-core", "compose-ui-test-junit4", "mockk-android"]

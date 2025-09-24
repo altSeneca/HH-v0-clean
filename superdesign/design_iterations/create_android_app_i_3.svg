@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <defs>
+    <radialGradient id="bg3" cx="50%" cy="40%" r="75%">
+      <stop offset="0%" style="stop-color:#1e3a8a"/>
+      <stop offset="100%" style="stop-color:#0f1729"/>
+    </radialGradient>
+    <linearGradient id="helmet3" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#fde047"/>
+      <stop offset="40%" style="stop-color:#facc15"/>
+      <stop offset="100%" style="stop-color:#a16207"/>
+    </linearGradient>
+    <linearGradient id="wings3" x1="30%" y1="0%" x2="100%" y2="70%">
+      <stop offset="0%" style="stop-color:#fde047"/>
+      <stop offset="40%" style="stop-color:#f59e0b"/>
+      <stop offset="100%" style="stop-color:#b45309"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background circle with subtle border -->
+  <circle cx="96" cy="96" r="86" fill="url(#bg3)" stroke="#1e3a8a" stroke-width="4"/>
+  
+  <!-- Hawk design - centered and bold -->
+  <g transform="translate(96,96)">
+    <!-- Wing base shadows -->
+    <path d="M-40,-22 L-70,-38 L-80,-28 L-75,-12 L-65,-2 L-50,3 L-38,0 Z" fill="#0f1729" opacity="0.3" transform="translate(2,2)"/>
+    <path d="M40,-22 L70,-38 L80,-28 L75,-12 L65,-2 L50,3 L38,0 Z" fill="#0f1729" opacity="0.3" transform="translate(2,2)"/>
+    
+    <!-- Wings - layered design -->
+    <!-- Left wing outer -->
+    <path d="M-40,-22 L-70,-38 L-80,-28 L-75,-12 L-65,-2 L-50,3 L-38,0 Z" fill="url(#wings3)" stroke="#0f1729" stroke-width="2"/>
+    <!-- Left wing segments -->
+    <path d="M-45,-18 L-65,-28 L-70,-22 L-60,-8 L-50,-5 Z" fill="#fbbf24" opacity="0.8"/>
+    <path d="M-50,-12 L-65,-18 L-68,-14 L-58,-6 L-52,-8 Z" fill="#fcd34d" opacity="0.9"/>
+    <path d="M-55,-8 L-70,-12 L-72,-8 L-62,-2 L-58,-4 Z" fill="#fde68a" opacity="0.7"/>
+    
+    <!-- Right wing outer -->
+    <path d="M40,-22 L70,-38 L80,-28 L75,-12 L65,-2 L50,3 L38,0 Z" fill="url(#wings3)" stroke="#0f1729" stroke-width="2"/>
+    <!-- Right wing segments -->
+    <path d="M45,-18 L65,-28 L70,-22 L60,-8 L50,-5 Z" fill="#fbbf24" opacity="0.8"/>
+    <path d="M50,-12 L65,-18 L68,-14 L58,-6 L52,-8 Z" fill="#fcd34d" opacity="0.9"/>
+    <path d="M55,-8 L70,-12 L72,-8 L62,-2 L58,-4 Z" fill="#fde68a" opacity="0.7"/>
+    
+    <!-- Body with gradient -->
+    <ellipse cx="0" cy="8" rx="22" ry="38" fill="#0f1729" stroke="#374151" stroke-width="2"/>
+    <ellipse cx="0" cy="8" rx="16" ry="32" fill="#1e293b" opacity="0.6"/>
+    
+    <!-- Head -->
+    <circle cx="0" cy="-18" r="24" fill="#0f1729" stroke="#374151" stroke-width="2"/>
+    
+    <!-- Safety helmet - professional design -->
+    <path d="M-24,-42 Q0,-52 24,-42 L22,-30 Q0,-35 -22,-30 Z" fill="url(#helmet3)" stroke="#0f1729" stroke-width="3"/>
+    <!-- Helmet details -->
+    <ellipse cx="0" cy="-42" rx="20" ry="3" fill="#a16207"/>
+    <rect x="-8" y="-47" width="4" height="8" fill="#0f1729" rx="2"/>
+    <rect x="-2" y="-47" width="4" height="8" fill="#0f1729" rx="2"/>
+    <rect x="4" y="-47" width="4" height="8" fill="#0f1729" rx="2"/>
+    <!-- Helmet chin strap -->
+    <path d="M-18,-30 Q-20,-25 -15,-20" fill="none" stroke="#a16207" stroke-width="2"/>
+    <path d="M18,-30 Q20,-25 15,-20" fill="none" stroke="#a16207" stroke-width="2"/>
+    
+    <!-- Eyes - piercing and focused -->
+    <ellipse cx="-10" cy="-20" rx="6" ry="5" fill="#fde047" filter="url(#glow)"/>
+    <ellipse cx="10" cy="-20" rx="6" ry="5" fill="#fde047" filter="url(#glow)"/>
+    <ellipse cx="-10" cy="-20" rx="4" ry="3" fill="#0f1729"/>
+    <ellipse cx="10" cy="-20" rx="4" ry="3" fill="#0f1729"/>
+    <!-- Eye shine -->
+    <circle cx="-11" cy="-22" r="1.5" fill="#fde047"/>
+    <circle cx="9" cy="-22" r="1.5" fill="#fde047"/>
+    
+    <!-- Beak -->
+    <path d="M0,-8 L-6,2 L0,6 L6,2 Z" fill="#facc15" stroke="#0f1729" stroke-width="2"/>
+    <ellipse cx="-2" cy="-3" rx="1" ry="0.8" fill="#0f1729"/>
+    <ellipse cx="2" cy="-3" rx="1" ry="0.8" fill="#0f1729"/>
+    
+    <!-- Chest emblem - construction shield -->
+    <path d="M0,12 L-10,25 L-8,35 L8,35 L10,25 Z" fill="#facc15" opacity="0.4" stroke="#a16207" stroke-width="1"/>
+    <circle cx="0" cy="22" r="3" fill="#fde047" opacity="0.8"/>
+  </g>
+  
+  <!-- Subtle outer glow -->
+  <circle cx="96" cy="96" r="86" fill="none" stroke="#fde047" stroke-width="1" opacity="0.3"/>
+</svg>

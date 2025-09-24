@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HazardHawk Settings State Memory Research - Comprehensive Analysis</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .executive-summary {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .critical-finding {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .recommendation {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .code-block {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 16px 0;
+            overflow-x: auto;
+        }
+        .code-block pre {
+            margin: 0;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .toc {
+            background-color: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .toc ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .toc li {
+            padding: 5px 0;
+        }
+        .toc a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .toc a:hover {
+            text-decoration: underline;
+        }
+        .section {
+            background-color: white;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .risk-matrix {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .risk-item {
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+        .risk-high { border-color: #dc3545; background-color: #f8d7da; }
+        .risk-medium { border-color: #ffc107; background-color: #fff3cd; }
+        .risk-low { border-color: #28a745; background-color: #d4edda; }
+        .implementation-phase {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+        .phase-header {
+            background-color: #e9ecef;
+            padding: 15px;
+            font-weight: bold;
+        }
+        .phase-content {
+            padding: 15px;
+        }
+        .metric {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            margin: 5px;
+            font-size: 14px;
+        }
+        .file-ref {
+            font-family: 'SF Mono', Monaco, monospace;
+            background-color: #f1f3f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+            border: 1px solid #d1d5db;
+        }
+        h1, h2, h3 { color: #2c3e50; }
+        h2 { border-bottom: 2px solid #e9ecef; padding-bottom: 10px; }
+        .icon { font-size: 1.2em; margin-right: 8px; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>🔧 HazardHawk Settings State Memory Research</h1>
+    <p>Comprehensive Analysis of Settings Persistence Issues</p>
+    <p><strong>Generated:</strong> September 8, 2025 | <strong>Project:</strong> HazardHawk v3.0</p>
+</div>
+
+<div class="executive-summary">
+    <h2><span class="icon">📋</span>Executive Summary</h2>
+    <p><strong>Issue:</strong> Settings constantly reset when users exit and reopen the HazardHawk app. GPS overlay, camera settings, and user preferences revert to default values despite user customization.</p>
+    
+    <p><strong>Root Cause:</strong> Settings are stored in SharedPreferences but not properly restored to ViewModels on app initialization. The app uses multiple fragmented preferences stores with inconsistent initialization patterns.</p>
+    
+    <p><strong>Impact:</strong> Critical UX failure for construction workers who need reliable, persistent settings in field conditions. Violates industry UX standards and potentially impacts OSHA compliance features.</p>
+    
+    <div class="metric">⚠️ High Priority</div>
+    <div class="metric">🏗️ Construction Impact</div>
+    <div class="metric">📱 UX Critical</div>
+</div>
+
+<div class="toc">
+    <h2><span class="icon">📑</span>Table of Contents</h2>
+    <ul>
+        <li><a href="#current-architecture">1. Current Architecture Analysis</a></li>
+        <li><a href="#root-causes">2. Root Cause Analysis</a></li>
+        <li><a href="#best-practices">3. Industry Best Practices</a></li>
+        <li><a href="#user-experience">4. User Experience Assessment</a></li>
+        <li><a href="#testing-strategy">5. Testing Strategy</a></li>
+        <li><a href="#security-compliance">6. Security & Compliance</a></li>
+        <li><a href="#recommendations">7. Implementation Recommendations</a></li>
+        <li><a href="#risk-assessment">8. Risk Assessment</a></li>
+        <li><a href="#implementation-roadmap">9. Implementation Roadmap</a></li>
+    </ul>
+</div>
+
+<div class="section" id="current-architecture">
+    <h2><span class="icon">🏗️</span>Current Architecture Analysis</h2>
+    
+    <div class="critical-finding">
+        <h3>🚨 Critical Architecture Issues</h3>
+        <p><strong>Fragmented Settings Storage:</strong> The app uses 3 separate SharedPreferences files with inconsistent patterns:</p>
+        <ul>
+            <li><span class="file-ref">hazard_hawk_prefs</span> - General app preferences</li>
+            <li><span class="file-ref">hazardhawk_metadata_settings</span> - Camera/metadata settings</li>
+            <li><span class="file-ref">photo_tags</span> - Tag storage</li>
+        </ul>
+        <p><strong>No Automatic State Restoration:</strong> ViewModels initialize with hardcoded defaults instead of loading persisted settings.</p>
+    </div>
+
+    <h3>Current State Management Patterns</h3>
+    
+    <div class="code-block">
+        <pre>
+// Current problematic pattern in DashboardViewModel.kt
+class DashboardViewModel(...) : ViewModel() {
+    private val _userRole = MutableStateFlow&lt;UserTier?&gt;(null)
+    
+    init {
+        // ❌ Hardcoded default instead of loading from storage
+        updateUserRole(UserTier.FIELD_ACCESS)
+    }
+}
+        </pre>
+    </div>
+
+    <h3>SharedPreferences Implementation Issues</h3>
+    <p>The <span class="file-ref">MetadataSettingsManager.kt</span> demonstrates manual serialization pattern:</p>
+    
+    <div class="code-block">
+        <pre>
+// Manual save pattern - requires explicit calls
+fun updateAppSettings(settings: AppSettings) {
+    with(sharedPrefs.edit()) {
+        putBoolean(KEY_AUTO_FOCUS, settings.cameraSettings.autoFocus)
+        // ... 50+ lines of manual serialization
+        apply() // ❌ No error handling or confirmation
+    }
+    _appSettings.value = settings // State update separate from persistence
+}
+        </pre>
+    </div>
+
+    <h3>Dependency Injection Limitations</h3>
+    <p>Current custom DI system (<span class="file-ref">ModuleRegistry.kt</span>) lacks lifecycle integration for automatic settings restoration.</p>
+</div>
+
+<div class="section" id="root-causes">
+    <h2><span class="icon">🔍</span>Root Cause Analysis</h2>
+
+    <div class="critical-finding">
+        <h3>Primary Failure Points</h3>
+        <ol>
+            <li><strong>Initialization Order:</strong> ViewModels initialize before SharedPreferences data is loaded</li>
+            <li><strong>No State Bridge:</strong> Missing bridge between persistent storage and reactive state</li>
+            <li><strong>Process Death Ignorance:</strong> No handling of Android process death scenarios</li>
+            <li><strong>Manual Save Requirements:</strong> Settings don't automatically persist on change</li>
+        </ol>
+    </div>
+
+    <h3>Detailed Analysis</h3>
+    
+    <h4>1. ViewModel Initialization Pattern</h4>
+    <div class="code-block">
+        <pre>
+// Current: Defaults override persisted values
+init {
+    updateUserRole(UserTier.FIELD_ACCESS) // ❌ Always sets default
+}
+
+// Required: Load from persistence first
+init {
+    viewModelScope.launch {
+        val persistedRole = settingsRepository.getUserRole() 
+        updateUserRole(persistedRole ?: UserTier.FIELD_ACCESS)
+    }
+}
+        </pre>
+    </div>
+
+    <h4>2. State Synchronization Gap</h4>
+    <p>SharedPreferences changes don't automatically propagate to StateFlow instances, requiring manual synchronization on every app start.</p>
+
+    <h4>3. Android Lifecycle Ignorance</h4>
+    <p>The app doesn't handle configuration changes, process death, or memory pressure scenarios where the system may recreate activities with fresh ViewModels.</p>
+</div>
+
+<div class="section" id="best-practices">
+    <h2><span class="icon">📚</span>Industry Best Practices (2025)</h2>
+
+    <div class="recommendation">
+        <h3>✅ Recommended Technology Stack</h3>
+        <ul>
+            <li><strong>Primary:</strong> DataStore + Multiplatform Settings for reliable persistence</li>
+            <li><strong>Architecture:</strong> Repository pattern with reactive Flows</li>
+            <li><strong>State Preservation:</strong> SavedStateHandle for ViewModel state survival</li>
+            <li><strong>Migration:</strong> Structured migration from SharedPreferences to DataStore</li>
+        </ul>
+    </div>
+
+    <h3>DataStore + Repository Pattern</h3>
+    <div class="code-block">
+        <pre>
+// Recommended architecture
+interface SettingsRepository {
+    val appSettings: Flow&lt;AppSettings&gt;
+    val userProfile: Flow&lt;UserProfile&gt;
+    
+    suspend fun updateAppSettings(settings: AppSettings)
+    suspend fun updateUserProfile(profile: UserProfile)
+}
+
+class SettingsRepositoryImpl(
+    private val dataStore: DataStore&lt;Preferences&gt;
+) : SettingsRepository {
+    
+    override val appSettings: Flow&lt;AppSettings&gt; = dataStore.data
+        .map { prefs -&gt; prefs.toAppSettings() }
+        .distinctUntilChanged()
+    
+    override suspend fun updateAppSettings(settings: AppSettings) {
+        dataStore.edit { prefs -&gt;
+            prefs[CAMERA_AUTO_FOCUS] = settings.cameraSettings.autoFocus
+            // Single atomic operation with automatic error handling
+        }
+    }
+}
+        </pre>
+    </div>
+
+    <h3>ViewModel Integration with Automatic Restoration</h3>
+    <div class="code-block">
+        <pre>
+class DashboardViewModel(
+    private val settingsRepository: SettingsRepository,
+    private val savedStateHandle: SavedStateHandle
+) : ViewModel() {
+    
+    // ✅ Automatically synced with persistent storage
+    val userProfile = settingsRepository.userProfile
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = UserProfile() // Only used until first load
+        )
+    
+    // ✅ Survives process death
+    var selectedItems by savedStateHandle.saveable { 
+        mutableStateOf(emptySet&lt;String&gt;()) 
+    }
+}
+        </pre>
+    </div>
+
+    <h3>Migration Strategy</h3>
+    <div class="code-block">
+        <pre>
+class LegacySettingsMigration {
+    suspend fun migrateToDataStore(context: Context, dataStore: DataStore&lt;Preferences&gt;) {
+        val oldMetadataPrefs = context.getSharedPreferences(
+            "hazardhawk_metadata_settings", Context.MODE_PRIVATE
+        )
+        
+        dataStore.edit { prefs -&gt;
+            // Consolidate all 3 SharedPreferences into single DataStore
+            migrateMetadataSettings(oldMetadataPrefs, prefs)
+            migrateTagSettings(oldTagPrefs, prefs)
+            migrateGeneralSettings(oldGeneralPrefs, prefs)
+        }
+    }
+}
+        </pre>
+    </div>
+</div>
+
+<div class="section" id="user-experience">
+    <h2><span class="icon">👷</span>User Experience Assessment</h2>
+
+    <div class="critical-finding">
+        <h3>🚨 Construction Worker Impact</h3>
+        <p><strong>Critical UX Failures:</strong></p>
+        <ul>
+            <li>Settings reset forces workers to reconfigure GPS, camera, and safety settings on every app launch</li>
+            <li>No visual feedback when settings are saved or fail to save</li>
+            <li>Interrupted workflows common in construction environments not handled gracefully</li>
+        </ul>
+    </div>
+
+    <h3>Construction-Specific UX Requirements</h3>
+    
+    <h4>Environmental Challenges</h4>
+    <ul>
+        <li><strong>Gloved Hands:</strong> Touch targets must be 56dp minimum (current: 44dp)</li>
+        <li><strong>Outdoor Visibility:</strong> High contrast needed for settings screens</li>
+        <li><strong>Interruptions:</strong> Frequent work interruptions require autosave patterns</li>
+        <li><strong>Safety Critical:</strong> OSHA-related settings need extra confirmation</li>
+    </ul>
+
+    <h4>Recommended UX Improvements</h4>
+    
+    <div class="recommendation">
+        <h3>Enhanced Persistence Feedback</h3>
+        <div class="code-block">
+            <pre>
+// Add immediate visual feedback
+data class SettingsPersistenceState(
+    val isSaving: Boolean = false,
+    val lastSaved: Long? = null,
+    val errorMessage: String? = null,
+    val pendingSyncCount: Int = 0
+)
+
+// Show status: "Saving..." → "Saved ✓" → Clear
+            </pre>
+        </div>
+    </div>
+
+    <div class="recommendation">
+        <h3>Construction-Optimized Touch Targets</h3>
+        <ul>
+            <li>56dp minimum for all toggles and buttons</li>
+            <li>72dp for safety-critical settings</li>
+            <li>Haptic feedback for tactile confirmation</li>
+            <li>High contrast borders for visibility</li>
+        </ul>
+    </div>
+
+    <div class="recommendation">
+        <h3>Simplified Settings Architecture</h3>
+        <p><strong>Current:</strong> 3-level hierarchy (Settings → Category → Tabs → Setting)</p>
+        <p><strong>Improved:</strong> Flat structure with most-used settings promoted to top level</p>
+    </div>
+</div>
+
+<div class="section" id="testing-strategy">
+    <h2><span class="icon">🧪</span>Testing Strategy</h2>
+
+    <div class="critical-finding">
+        <h3>🚨 Testing Gap Identified</h3>
+        <p><strong>Current Status:</strong> Extensive test infrastructure (46 test files, 1185+ methods) but <strong>zero dedicated settings persistence tests</strong>.</p>
+    </div>
+
+    <h3>Comprehensive Testing Strategy</h3>
+
+    <h4>Unit Testing (70% of effort)</h4>
+    <ul>
+        <li><strong>Persistence Layer:</strong> SharedPreferences operations, data serialization, error recovery</li>
+        <li><strong>StateFlow Reactive Testing:</strong> Multi-subscriber consistency, rapid updates</li>
+        <li><strong>Settings Validation:</strong> Field validation, type safety, enum handling</li>
+    </ul>
+
+    <div class="code-block">
+        <pre>
+@Test
+fun `settings persist across app restart`() = runTest {
+    val settings = AppSettings(cameraSettings = CameraSettings(autoFocus = false))
+    settingsRepository.updateAppSettings(settings)
+    
+    // Simulate app restart
+    clearViewModelStore()
+    recreateViewModel()
+    
+    assertEquals(false, viewModel.appSettings.value.cameraSettings.autoFocus)
+}
+        </pre>
+    </div>
+
+    <h4>Integration Testing (20% of effort)</h4>
+    <ul>
+        <li><strong>UI Integration:</strong> Settings drawer persistence, cross-tab state management</li>
+        <li><strong>Cross-Component:</strong> Settings impact on camera metadata, privacy controls</li>
+    </ul>
+
+    <h4>End-to-End Testing (10% of effort)</h4>
+    <ul>
+        <li><strong>App Lifecycle:</strong> Process death recovery, memory pressure handling</li>
+        <li><strong>Configuration Changes:</strong> Orientation, dark mode, language changes</li>
+    </ul>
+
+    <h3>Critical Edge Cases</h3>
+    <div class="risk-matrix">
+        <div class="risk-item risk-high">
+            <strong>Storage Full</strong>
+            <p>Graceful degradation when device storage is exhausted</p>
+        </div>
+        <div class="risk-item risk-medium">
+            <strong>Data Corruption</strong>
+            <p>Recovery to defaults when SharedPreferences corrupted</p>
+        </div>
+        <div class="risk-item risk-medium">
+            <strong>Concurrent Writes</strong>
+            <p>Data integrity during simultaneous setting updates</p>
+        </div>
+        <div class="risk-item risk-low">
+            <strong>Performance</strong>
+            <p>Large data handling without UI blocking</p>
+        </div>
+    </div>
+</div>
+
+<div class="section" id="security-compliance">
+    <h2><span class="icon">🔐</span>Security & Compliance Assessment</h2>
+
+    <div class="critical-finding">
+        <h3>🚨 Critical Security Vulnerabilities</h3>
+        <ol>
+            <li><strong>Unencrypted Sensitive Data:</strong> <span class="file-ref">TagStorage.kt</span> stores photo-tag relationships in plain text</li>
+            <li><strong>Mixed Security Architecture:</strong> Inconsistent encryption across different settings types</li>
+            <li><strong>GDPR Compliance Gaps:</strong> Missing consent mechanisms for behavioral analytics</li>
+        </ol>
+    </div>
+
+    <h3>Construction Industry Specific Risks</h3>
+    <ul>
+        <li><strong>Multi-Contractor Data Leakage:</strong> No tenant isolation could expose one contractor's settings to competitors</li>
+        <li><strong>OSHA Compliance Gaps:</strong> Safety-critical settings lack proper classification and protection</li>
+        <li><strong>Site Security Exposure:</strong> Location-based settings could reveal security-sensitive information</li>
+    </ul>
+
+    <h3>Compliance Requirements</h3>
+
+    <h4>GDPR Violations</h4>
+    <div class="risk-matrix">
+        <div class="risk-item risk-high">
+            <strong>Article 25 (Privacy by Design)</strong>
+            <p>Plain text sensitive data storage</p>
+        </div>
+        <div class="risk-item risk-high">
+            <strong>Article 30 (Processing Records)</strong>
+            <p>Missing documentation of data processing activities</p>
+        </div>
+        <div class="risk-item risk-medium">
+            <strong>Article 32 (Security)</strong>
+            <p>Inconsistent technical security measures</p>
+        </div>
+    </div>
+
+    <h4>Platform Compliance Issues</h4>
+    <ul>
+        <li>Android Data Safety declarations incomplete</li>
+        <li>iOS Privacy Manifest missing for 2025 App Store requirements</li>
+        <li>Construction industry audit trail requirements not met</li>
+    </ul>
+
+    <div class="recommendation">
+        <h3>Recommended Security Architecture</h3>
+        <div class="code-block">
+            <pre>
+// Tiered security classification
+enum class SettingsSecurityLevel {
+    PUBLIC,           // App theme, language
+    INTERNAL,         // User preferences, non-sensitive
+    CONFIDENTIAL,     // Contractor info, project details  
+    RESTRICTED        // Authentication tokens, location history
+}
+
+class SecureSettingsManager(
+    private val encryptedDataStore: DataStore&lt;Preferences&gt;,
+    private val regularDataStore: DataStore&lt;Preferences&gt;
+) {
+    fun getStorageForLevel(level: SettingsSecurityLevel): DataStore&lt;Preferences&gt; {
+        return when(level) {
+            RESTRICTED, CONFIDENTIAL -&gt; encryptedDataStore
+            else -&gt; regularDataStore
+        }
+    }
+}
+            </pre>
+        </div>
+    </div>
+</div>
+
+<div class="section" id="recommendations">
+    <h2><span class="icon">💡</span>Implementation Recommendations</h2>
+
+    <div class="recommendation">
+        <h3>✅ Recommended Solution: Repository + DataStore Pattern</h3>
+        <p><strong>Benefits:</strong></p>
+        <ul>
+            <li>Single source of truth for settings</li>
+            <li>Automatic state restoration across app restarts</li>
+            <li>Better performance than SharedPreferences</li>
+            <li>Type-safe operations with Kotlin serialization</li>
+            <li>Built-in migration support</li>
+        </ul>
+    </div>
+
+    <h3>Implementation Strategy</h3>
+
+    <div class="implementation-phase">
+        <div class="phase-header">Phase 1: Consolidate SharedPreferences (1 week)</div>
+        <div class="phase-content">
+            <ul>
+                <li>Create unified SettingsRepository interface</li>
+                <li>Implement DataStore-based repository</li>
+                <li>Create migration logic from 3 SharedPreferences to 1 DataStore</li>
+                <li>Add basic error handling and validation</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="implementation-phase">
+        <div class="phase-header">Phase 2: ViewModel Integration (1 week)</div>
+        <div class="phase-content">
+            <ul>
+                <li>Update all ViewModels to use SettingsRepository</li>
+                <li>Replace hardcoded defaults with repository flows</li>
+                <li>Add SavedStateHandle for UI-specific state</li>
+                <li>Implement reactive state synchronization</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="implementation-phase">
+        <div class="phase-header">Phase 3: UX Improvements (1-2 weeks)</div>
+        <div class="phase-content">
+            <ul>
+                <li>Add immediate visual feedback for setting changes</li>
+                <li>Implement construction-optimized touch targets</li>
+                <li>Add error handling with retry mechanisms</li>
+                <li>Create offline-first sync patterns</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="implementation-phase">
+        <div class="phase-header">Phase 4: Testing & Validation (1 week)</div>
+        <div class="phase-content">
+            <ul>
+                <li>Implement comprehensive persistence test suite</li>
+                <li>Add process death and lifecycle testing</li>
+                <li>Performance testing for large datasets</li>
+                <li>Security validation for sensitive settings</li>
+            </ul>
+        </div>
+    </div>
+
+    <h3>Architecture Benefits</h3>
+
+    <div class="code-block">
+        <pre>
+// Before: Manual, error-prone pattern
+fun updateSettings(settings: AppSettings) {
+    sharedPrefs.edit().apply {
+        putBoolean("auto_focus", settings.autoFocus)
+        apply() // ❌ No error handling
+    }
+    _settings.value = settings // ❌ Separate update
+}
+
+// After: Automatic, reliable pattern  
+suspend fun updateSettings(settings: AppSettings) {
+    settingsRepository.updateAppSettings(settings)
+    // ✅ StateFlow automatically updates UI
+    // ✅ Error handling built-in
+    // ✅ Atomic operation
+}
+        </pre>
+    </div>
+</div>
+
+<div class="section" id="risk-assessment">
+    <h2><span class="icon">⚠️</span>Risk Assessment</h2>
+
+    <h3>Technical Risks</h3>
+    <div class="risk-matrix">
+        <div class="risk-item risk-high">
+            <strong>Migration Complexity</strong>
+            <p>Moving from 3 SharedPreferences to 1 DataStore requires careful data migration</p>
+            <p><strong>Mitigation:</strong> Incremental migration with fallback mechanisms</p>
+        </div>
+        <div class="risk-item risk-medium">
+            <strong>Performance Impact</strong>
+            <p>DataStore is async-first, may affect synchronous settings access patterns</p>
+            <p><strong>Mitigation:</strong> Pre-cache critical settings, use StateFlow for UI</p>
+        </div>
+        <div class="risk-item risk-low">
+            <strong>Testing Coverage</strong>
+            <p>New reactive patterns require comprehensive test updates</p>
+            <p><strong>Mitigation:</strong> Phased testing approach with automated validation</p>
+        </div>
+    </div>
+
+    <h3>Business Risks</h3>
+    <div class="risk-matrix">
+        <div class="risk-item risk-high">
+            <strong>User Frustration</strong>
+            <p>Current settings reset issue directly impacts construction worker productivity</p>
+            <p><strong>Impact:</strong> Potential app abandonment, negative reviews</p>
+        </div>
+        <div class="risk-item risk-medium">
+            <strong>Compliance Risk</strong>
+            <p>OSHA-related settings that reset could impact safety compliance</p>
+            <p><strong>Impact:</strong> Regulatory issues for construction companies</p>
+        </div>
+        <div class="risk-item risk-medium">
+            <strong>Competitive Disadvantage</strong>
+            <p>Unreliable settings compared to competing construction apps</p>
+            <p><strong>Impact:</strong> Lost market share to more reliable alternatives</p>
+        </div>
+    </div>
+</div>
+
+<div class="section" id="implementation-roadmap">
+    <h2><span class="icon">🗓️</span>Implementation Roadmap</h2>
+
+    <h3>Timeline: 4-5 weeks total</h3>
+
+    <div class="implementation-phase">
+        <div class="phase-header">Week 1: Foundation (Sep 9-13)</div>
+        <div class="phase-content">
+            <h4>Day 1-2: Analysis & Setup</h4>
+            <ul>
+                <li>Audit current SharedPreferences usage patterns</li>
+                <li>Create SettingsRepository interface design</li>
+                <li>Set up DataStore dependencies and configuration</li>
+            </ul>
+            
+            <h4>Day 3-5: Migration Implementation</h4>
+            <ul>
+                <li>Implement DataStore-based SettingsRepository</li>
+                <li>Create migration logic from existing SharedPreferences</li>
+                <li>Add basic error handling and validation</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="implementation-phase">
+        <div class="phase-header">Week 2: ViewModel Integration (Sep 16-20)</div>
+        <div class="phase-content">
+            <h4>Day 1-3: Core Integration</h4>
+            <ul>
+                <li>Update DashboardViewModel to use repository pattern</li>
+                <li>Replace hardcoded defaults with repository flows</li>
+                <li>Update MetadataSettingsManager integration</li>
+            </ul>
+            
+            <h4>Day 4-5: State Management</h4>
+            <ul>
+                <li>Add SavedStateHandle for UI state preservation</li>
+                <li>Implement reactive state synchronization</li>
+                <li>Test process death scenarios</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="implementation-phase">
+        <div class="phase-header">Week 3: UX Improvements (Sep 23-27)</div>
+        <div class="phase-content">
+            <h4>Day 1-2: Visual Feedback</h4>
+            <ul>
+                <li>Add "Saving..." and "Saved ✓" indicators</li>
+                <li>Implement haptic feedback for setting changes</li>
+                <li>Add error states with retry mechanisms</li>
+            </ul>
+            
+            <h4>Day 3-5: Construction UX</h4>
+            <ul>
+                <li>Increase touch targets for gloved hands (56dp minimum)</li>
+                <li>Improve contrast for outdoor visibility</li>
+                <li>Add offline sync status indicators</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="implementation-phase">
+        <div class="phase-header">Week 4: Testing & Security (Sep 30 - Oct 4)</div>
+        <div class="phase-content">
+            <h4>Day 1-3: Test Implementation</h4>
+            <ul>
+                <li>Unit tests for SettingsRepository persistence</li>
+                <li>Integration tests for UI state management</li>
+                <li>End-to-end tests for app lifecycle scenarios</li>
+            </ul>
+            
+            <h4>Day 4-5: Security & Validation</h4>
+            <ul>
+                <li>Implement tiered encryption for sensitive settings</li>
+                <li>Add GDPR compliance mechanisms</li>
+                <li>Performance testing and optimization</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="implementation-phase">
+        <div class="phase-header">Week 5: Polish & Release (Oct 7-11)</div>
+        <div class="phase-content">
+            <ul>
+                <li>Final integration testing and bug fixes</li>
+                <li>Documentation updates</li>
+                <li>Staged rollout preparation</li>
+                <li>Monitoring and analytics setup</li>
+            </ul>
+        </div>
+    </div>
+
+    <h3>Success Metrics</h3>
+    <div class="metric">⚡ <100ms settings load time</div>
+    <div class="metric">💾 100% persistence reliability</div>
+    <div class="metric">👷 95% construction worker satisfaction</div>
+    <div class="metric">🔒 Zero security vulnerabilities</div>
+    <div class="metric">📱 Support all Android lifecycle scenarios</div>
+
+    <h3>Monitoring & Validation</h3>
+    <ul>
+        <li><strong>Settings Persistence Rate:</strong> Track successful save/load operations</li>
+        <li><strong>Error Recovery Rate:</strong> Monitor retry success rates</li>
+        <li><strong>User Satisfaction:</strong> In-app feedback on settings reliability</li>
+        <li><strong>Performance Metrics:</strong> Settings load time, UI response time</li>
+        <li><strong>Security Audits:</strong> Regular encryption and compliance checks</li>
+    </ul>
+</div>
+
+<div class="section">
+    <h2><span class="icon">📁</span>Referenced Files</h2>
+    <ul>
+        <li><span class="file-ref">HazardHawk/androidApp/src/main/java/com/hazardhawk/camera/MetadataSettings.kt</span></li>
+        <li><span class="file-ref">HazardHawk/androidApp/src/main/java/com/hazardhawk/ui/dashboard/DashboardViewModel.kt</span></li>
+        <li><span class="file-ref">HazardHawk/androidApp/src/main/java/com/hazardhawk/gallery/GalleryViewModel.kt</span></li>
+        <li><span class="file-ref">HazardHawk/androidApp/src/main/java/com/hazardhawk/di/ModuleRegistry.kt</span></li>
+        <li><span class="file-ref">HazardHawk/androidApp/src/main/java/com/hazardhawk/tags/TagStorage.kt</span></li>
+        <li><span class="file-ref">shared/src/androidMain/kotlin/com/hazardhawk/security/SecureStorageServiceImpl.kt</span></li>
+        <li><span class="file-ref">HazardHawk/androidApp/src/main/res/xml/backup_rules.xml</span></li>
+    </ul>
+</div>
+
+<div class="section">
+    <h2><span class="icon">🤖</span>Research Methodology</h2>
+    <p>This comprehensive analysis was conducted using parallel specialized agents:</p>
+    <ul>
+        <li><strong>Simple-Architect Agent:</strong> Analyzed current architecture patterns and identified structural issues</li>
+        <li><strong>Docs-Curator Agent:</strong> Researched industry best practices using Context7 documentation resources</li>
+        <li><strong>Loveable-UX Agent:</strong> Assessed user experience requirements specific to construction workers</li>
+        <li><strong>Test-Guardian Agent:</strong> Defined comprehensive testing strategy for persistence reliability</li>
+        <li><strong>Security-Compliance Agent:</strong> Evaluated security and regulatory compliance requirements</li>
+    </ul>
+    <p>Each agent contributed specialized expertise to ensure a complete, actionable solution addressing all aspects of the settings persistence problem.</p>
+</div>
+
+</body>
+</html>

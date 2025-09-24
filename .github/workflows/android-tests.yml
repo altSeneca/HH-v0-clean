@@ -1,0 +1,402 @@
+name: Android CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop, 'feature/*' ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  JAVA_VERSION: '17'
+  ANDROID_API_LEVEL: 30
+  ANDROID_TARGET: google_apis
+  ARCH: x86_64
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK
+      uses: actions/setup-java@v3
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'adopt'
+        
+    - name: Cache Gradle dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+          
+    - name: Grant execute permission for gradlew
+      run: |
+        cd HazardHawk
+        chmod +x gradlew
+        
+    - name: Run shared module unit tests
+      run: |
+        cd HazardHawk
+        ./gradlew :shared:testDebugUnitTest --stacktrace
+        
+    - name: Run Android unit tests
+      run: |
+        cd HazardHawk
+        ./gradlew :androidApp:testDebugUnitTest --stacktrace
+        
+    - name: Generate test coverage report
+      run: |
+        cd HazardHawk
+        ./gradlew koverHtmlReport --stacktrace
+        
+    - name: Upload unit test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: unit-test-results
+        path: |
+          HazardHawk/shared/build/test-results/
+          HazardHawk/androidApp/build/test-results/
+          HazardHawk/shared/build/reports/
+          HazardHawk/androidApp/build/reports/
+          
+    - name: Upload coverage reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: coverage-reports
+        path: |
+          HazardHawk/**/build/reports/kover/
+
+  instrumented-tests:
+    name: Instrumented Tests
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        api-level: [26, 30, 34]
+        target: [google_apis]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK
+      uses: actions/setup-java@v3
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'adopt'
+        
+    - name: Cache Gradle dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+          
+    - name: Cache AVD snapshot
+      uses: actions/cache@v3
+      id: avd-cache
+      with:
+        path: |
+          ~/.android/avd/*
+          ~/.android/adb*
+        key: avd-${{ matrix.api-level }}-${{ matrix.target }}
+        
+    - name: Create AVD and generate snapshot for caching
+      if: steps.avd-cache.outputs.cache-hit != 'true'
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: ${{ matrix.api-level }}
+        target: ${{ matrix.target }}
+        arch: ${{ env.ARCH }}
+        force-avd-creation: false
+        emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+        disable-animations: true
+        script: echo "Generated AVD snapshot for caching."
+        
+    - name: Grant execute permission for gradlew
+      run: |
+        cd HazardHawk
+        chmod +x gradlew
+        
+    - name: Run instrumented tests
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: ${{ matrix.api-level }}
+        target: ${{ matrix.target }}
+        arch: ${{ env.ARCH }}
+        force-avd-creation: false
+        emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+        disable-animations: true
+        script: |
+          cd HazardHawk
+          ./gradlew :androidApp:connectedDebugAndroidTest --stacktrace
+          
+    - name: Upload instrumented test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: instrumented-test-results-api${{ matrix.api-level }}
+        path: |
+          HazardHawk/androidApp/build/reports/androidTests/
+          HazardHawk/androidApp/build/outputs/androidTest-results/
+
+  static-analysis:
+    name: Static Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK
+      uses: actions/setup-java@v3
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'adopt'
+        
+    - name: Cache Gradle dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+          
+    - name: Grant execute permission for gradlew
+      run: |
+        cd HazardHawk
+        chmod +x gradlew
+        
+    - name: Run Kotlin linting
+      run: |
+        cd HazardHawk
+        ./gradlew ktlintCheck --stacktrace
+        
+    - name: Run Detekt static analysis
+      run: |
+        cd HazardHawk
+        ./gradlew detekt --stacktrace
+        
+    - name: Upload static analysis results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: static-analysis-results
+        path: |
+          HazardHawk/**/build/reports/ktlint/
+          HazardHawk/**/build/reports/detekt/
+
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Run CodeQL Analysis
+      uses: github/codeql-action/init@v2
+      with:
+        languages: java, kotlin
+        
+    - name: Set up JDK
+      uses: actions/setup-java@v3
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'adopt'
+        
+    - name: Build for security analysis
+      run: |
+        cd HazardHawk
+        chmod +x gradlew
+        ./gradlew assembleDebug --stacktrace
+        
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v2
+
+  performance-tests:
+    name: Performance Testing
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK
+      uses: actions/setup-java@v3
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'adopt'
+        
+    - name: Cache Gradle dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+          
+    - name: Grant execute permission for gradlew
+      run: |
+        cd HazardHawk
+        chmod +x gradlew
+        
+    - name: Run performance tests
+      run: |
+        cd HazardHawk
+        ./gradlew :shared:testDebugUnitTest --tests="*.performance.*" --stacktrace
+        
+    - name: Generate performance reports
+      run: |
+        cd HazardHawk
+        echo "Performance test results:" > performance_summary.txt
+        find . -name "*PerformanceTest*.xml" -exec cat {} \; >> performance_summary.txt
+        
+    - name: Upload performance results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: performance-test-results
+        path: HazardHawk/performance_summary.txt
+
+  osha-compliance-tests:
+    name: OSHA Compliance Testing
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK
+      uses: actions/setup-java@v3
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'adopt'
+        
+    - name: Cache Gradle dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+          
+    - name: Grant execute permission for gradlew
+      run: |
+        cd HazardHawk
+        chmod +x gradlew
+        
+    - name: Run OSHA compliance tests
+      run: |
+        cd HazardHawk
+        ./gradlew :shared:testDebugUnitTest --tests="*.compliance.*" --stacktrace
+        
+    - name: Upload compliance test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: osha-compliance-results
+        path: HazardHawk/shared/build/test-results/
+
+  build-apk:
+    name: Build APK
+    runs-on: ubuntu-latest
+    needs: [unit-tests, static-analysis]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK
+      uses: actions/setup-java@v3
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'adopt'
+        
+    - name: Cache Gradle dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+          
+    - name: Grant execute permission for gradlew
+      run: |
+        cd HazardHawk
+        chmod +x gradlew
+        
+    - name: Build debug APK
+      run: |
+        cd HazardHawk
+        ./gradlew assembleDebug --stacktrace
+        
+    - name: Build release APK
+      run: |
+        cd HazardHawk
+        ./gradlew assembleRelease --stacktrace
+        
+    - name: Upload APK artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: apk-builds
+        path: |
+          HazardHawk/androidApp/build/outputs/apk/debug/*.apk
+          HazardHawk/androidApp/build/outputs/apk/release/*.apk
+
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [unit-tests, instrumented-tests, static-analysis, performance-tests, osha-compliance-tests]
+    if: always()
+    
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+      
+    - name: Generate test summary
+      run: |
+        echo "# HazardHawk Test Summary" > test_summary.md
+        echo "" >> test_summary.md
+        echo "## Test Results Overview" >> test_summary.md
+        echo "- **Unit Tests**: $(if [ -d "unit-test-results" ]; then echo "✅ Completed"; else echo "❌ Failed"; fi)" >> test_summary.md
+        echo "- **Instrumented Tests**: $(if [ -d "instrumented-test-results-api30" ]; then echo "✅ Completed"; else echo "❌ Failed"; fi)" >> test_summary.md
+        echo "- **Static Analysis**: $(if [ -d "static-analysis-results" ]; then echo "✅ Completed"; else echo "❌ Failed"; fi)" >> test_summary.md
+        echo "- **Performance Tests**: $(if [ -d "performance-test-results" ]; then echo "✅ Completed"; else echo "❌ Failed"; fi)" >> test_summary.md
+        echo "- **OSHA Compliance**: $(if [ -d "osha-compliance-results" ]; then echo "✅ Completed"; else echo "❌ Failed"; fi)" >> test_summary.md
+        echo "" >> test_summary.md
+        echo "## Test Categories Validated" >> test_summary.md
+        echo "- 📸 **Camera System**: Aspect ratios, capture workflow, metadata" >> test_summary.md
+        echo "- 🏷️ **Tag Management**: OSHA compliance, search performance" >> test_summary.md
+        echo "- 📱 **UI/UX**: Compose testing, accessibility validation" >> test_summary.md
+        echo "- ⚡ **Performance**: Memory usage, capture timing benchmarks" >> test_summary.md
+        echo "- 🛡️ **Security**: CodeQL analysis, vulnerability scanning" >> test_summary.md
+        echo "- 🏗️ **OSHA Compliance**: Safety standard validation" >> test_summary.md
+        cat test_summary.md
+        
+    - name: Upload test summary
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-summary-report
+        path: test_summary.md

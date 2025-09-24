@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HazardHawk PhotoViewer Improvements - Comprehensive Research Analysis</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        .header {
+            background: linear-gradient(135deg, #FF6B35, #FF8E35);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 700;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        .toc {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .toc h2 {
+            color: #FF6B35;
+            margin-top: 0;
+            border-bottom: 2px solid #FF6B35;
+            padding-bottom: 10px;
+        }
+        .toc ul {
+            list-style: none;
+            padding: 0;
+        }
+        .toc li {
+            margin: 8px 0;
+        }
+        .toc a {
+            color: #333;
+            text-decoration: none;
+            padding: 5px 0;
+            display: block;
+            border-left: 3px solid transparent;
+            padding-left: 15px;
+            transition: all 0.3s ease;
+        }
+        .toc a:hover {
+            border-left-color: #FF6B35;
+            color: #FF6B35;
+            padding-left: 20px;
+        }
+        .section {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .section h2 {
+            color: #FF6B35;
+            margin-top: 0;
+            font-size: 1.8em;
+            border-bottom: 2px solid #FF6B35;
+            padding-bottom: 10px;
+        }
+        .section h3 {
+            color: #333;
+            font-size: 1.4em;
+            margin-top: 25px;
+        }
+        .issue-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            border-left: 4px solid #FF6B35;
+        }
+        .issue-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .priority {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        .priority.critical { background: #dc3545; color: white; }
+        .priority.high { background: #fd7e14; color: white; }
+        .priority.medium { background: #ffc107; color: black; }
+        .priority.low { background: #28a745; color: white; }
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+            font-size: 0.9em;
+        }
+        .recommendation {
+            background: #e8f5e8;
+            border: 1px solid #c3e6c3;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            border-left: 4px solid #28a745;
+        }
+        .risk-matrix {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .risk-item {
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            border-left: 4px solid #FF6B35;
+        }
+        .screenshot {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            margin: 15px 0;
+        }
+        .findings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .finding-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid #17a2b8;
+        }
+        .agent-summary {
+            background: linear-gradient(135deg, #6f42c1, #8b5cf6);
+            color: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        .implementation-timeline {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        .file-reference {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-family: monospace;
+            font-size: 0.9em;
+            display: inline-block;
+            margin: 2px;
+        }
+        .success { color: #28a745; font-weight: 600; }
+        .warning { color: #ffc107; font-weight: 600; }
+        .danger { color: #dc3545; font-weight: 600; }
+        .info { color: #17a2b8; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 PhotoViewer Improvements Research</h1>
+        <p>Comprehensive Analysis & Implementation Strategy</p>
+        <p><strong>Generated:</strong> September 23, 2025 | <strong>Project:</strong> HazardHawk v3</p>
+    </div>
+
+    <div class="toc">
+        <h2>📋 Table of Contents</h2>
+        <ul>
+            <li><a href="#executive-summary">Executive Summary</a></li>
+            <li><a href="#current-issues">Current Issues Analysis</a></li>
+            <li><a href="#architectural-findings">Architectural Findings</a></li>
+            <li><a href="#ux-recommendations">UX Recommendations</a></li>
+            <li><a href="#technical-solutions">Technical Solutions</a></li>
+            <li><a href="#security-compliance">Security & Compliance</a></li>
+            <li><a href="#testing-strategy">Testing Strategy</a></li>
+            <li><a href="#implementation-roadmap">Implementation Roadmap</a></li>
+            <li><a href="#risk-assessment">Risk Assessment</a></li>
+            <li><a href="#appendices">Appendices</a></li>
+        </ul>
+    </div>
+
+    <div id="executive-summary" class="section">
+        <h2>📊 Executive Summary</h2>
+
+        <div class="agent-summary">
+            <h3>🎯 Research Scope</h3>
+            <p>Comprehensive analysis of 6 critical PhotoViewer issues using 5 specialized research agents deployed in parallel for maximum efficiency and depth of analysis.</p>
+        </div>
+
+        <h3>Key Findings Overview</h3>
+        <div class="findings-grid">
+            <div class="finding-card">
+                <h4 class="success">✅ Architecture Assessment</h4>
+                <p>Current PhotoViewer architecture is fundamentally sound with clean separation of concerns. Issues are incremental fixes requiring minimal refactoring.</p>
+            </div>
+            <div class="finding-card">
+                <h4 class="warning">⚠️ UX Issues Identified</h4>
+                <p>Top navigation controls overlapping photo content impacting construction worker usability. Need construction-grade interaction patterns.</p>
+            </div>
+            <div class="finding-card">
+                <h4 class="info">🔧 Technical Complexity</h4>
+                <p>Low to medium complexity fixes. Most issues stem from state management patterns and UI layout approaches rather than fundamental architecture problems.</p>
+            </div>
+            <div class="finding-card">
+                <h4 class="danger">🔐 Security Concerns</h4>
+                <p>Medium-high risk identified in GPS metadata privacy and AI service data handling. GDPR compliance gaps require immediate attention.</p>
+            </div>
+        </div>
+
+        <div class="implementation-timeline">
+            <h3>📅 Implementation Timeline</h3>
+            <p><strong>Estimated Duration:</strong> 3-4 weeks</p>
+            <p><strong>Priority Order:</strong> Photo capture duplication → OSHA state persistence → Top buttons overlay → Metadata hardcoding → AI recommendations → OSHA integration</p>
+            <p><strong>Resource Requirements:</strong> 1 senior Android developer, 1 UX designer consultation, Security review</p>
+        </div>
+    </div>
+
+    <div id="current-issues" class="section">
+        <h2>🚨 Current Issues Analysis</h2>
+
+        <p>Based on the screenshots provided and parallel agent analysis, here are the 6 critical issues identified:</p>
+
+        <div class="issue-card">
+            <div class="issue-title">Problem 1: Top Button Overlay</div>
+            <div class="priority critical">Critical</div>
+            <p><strong>Current State:</strong> Top navigation buttons (back, navigation, page indicator, share, delete) are overlaying the photo content, making it difficult to view the full image.</p>
+            <p><strong>Impact:</strong> Poor user experience for construction workers, especially when trying to analyze safety hazards in photos.</p>
+            <p><strong>Root Cause:</strong> Fixed positioning in Box layout with Alignment.TopCenter causing overlay instead of proper spacing.</p>
+            <div class="code-block">
+// Current problematic approach in PhotoViewer.kt:387
+Box(modifier = Modifier.fillMaxSize()) {
+    ConstructionPhotoViewer(...)
+    TopControlsBar(
+        modifier = Modifier.align(Alignment.TopCenter) // Causes overlay
+    )
+}</div>
+        </div>
+
+        <div class="issue-card">
+            <div class="issue-title">Problem 2: Hardcoded Metadata</div>
+            <div class="priority high">High Priority</div>
+            <p><strong>Current State:</strong> Info tab displays hardcoded "HazardHawk Safety Project Demo" and "Construction Site" instead of real photo metadata.</p>
+            <p><strong>Impact:</strong> Inaccurate project tracking and location data, affecting safety documentation reliability.</p>
+            <p><strong>Root Cause:</strong> MetadataEmbedder.extractMetadataFromPhoto() exists but not utilized in PhotoMetadataPanel.</p>
+            <div class="file-reference">HazardHawk/androidApp/src/main/java/com/hazardhawk/ui/gallery/PhotoViewer.kt:387-388</div>
+        </div>
+
+        <div class="issue-card">
+            <div class="issue-title">Problem 3: Tag Management OSHA Gap</div>
+            <div class="priority medium">Medium Priority</div>
+            <p><strong>Current State:</strong> Basic tag list without OSHA category integration. No connection between safety standards and tagging system.</p>
+            <p><strong>Impact:</strong> Missed OSHA compliance opportunities, inefficient safety documentation workflows.</p>
+            <p><strong>Root Cause:</strong> Separate systems - MobileTagManager vs OSHAAnalysisResult without integration bridge.</p>
+        </div>
+
+        <div class="issue-card">
+            <div class="issue-title">Problem 4: Non-Interactive AI Tags</div>
+            <div class="priority medium">Medium Priority</div>
+            <p><strong>Current State:</strong> AI recommendations displayed but not easily clickable to add to photo tags. Poor visual feedback.</p>
+            <p><strong>Impact:</strong> Inefficient workflow, workers may miss important AI-detected safety tags.</p>
+            <p><strong>Root Cause:</strong> Limited interactivity in recommendation chips, minimal user feedback systems.</p>
+        </div>
+
+        <div class="issue-card">
+            <div class="issue-title">Problem 5: OSHA State Loss</div>
+            <div class="priority high">High Priority</div>
+            <p><strong>Current State:</strong> OSHA analysis results disappear when switching tabs, forcing re-analysis.</p>
+            <p><strong>Impact:</strong> Poor user experience, wasted processing time, potential data loss.</p>
+            <p><strong>Root Cause:</strong> Local state management with remember(photo.id) instead of lifted state pattern.</p>
+            <div class="code-block">
+// Current problematic pattern:
+// Line 744 uses local state that resets between tabs
+var oshaAnalysis by remember(photo.id) { mutableStateOf<OSHAAnalysisResult?>(null) }</div>
+        </div>
+
+        <div class="issue-card">
+            <div class="issue-title">Problem 6: Photo Capture Duplication</div>
+            <div class="priority critical">Critical</div>
+            <p><strong>Current State:</strong> Two photos being created and saved instead of single high-quality image.</p>
+            <p><strong>Impact:</strong> Storage waste, gallery clutter, confusion for users, potential performance issues.</p>
+            <p><strong>Root Cause:</strong> Multiple capture triggers (volume button + UI button) without proper capture guard.</p>
+            <div class="file-reference">HazardHawk/androidApp/src/main/java/com/hazardhawk/ui/camera/hud/SafetyHUDCameraScreen.kt</div>
+        </div>
+    </div>
+
+    <div id="architectural-findings" class="section">
+        <h2>🏗️ Architectural Findings</h2>
+
+        <div class="agent-summary">
+            <h3>🤖 Simple-Architect Agent Analysis</h3>
+            <p>Comprehensive architectural review focusing on maintainability, simplification opportunities, and implementation patterns.</p>
+        </div>
+
+        <h3>Current Architecture Strengths</h3>
+        <ul>
+            <li><strong>Clean Architecture:</strong> Well-separated UI, business logic, and data layers</li>
+            <li><strong>Dependency Injection:</strong> Proper Koin DI implementation for services</li>
+            <li><strong>State Management:</strong> Consistent use of Compose state patterns</li>
+            <li><strong>Modular Design:</strong> Clear component separation for reusability</li>
+        </ul>
+
+        <h3>Architectural Patterns Used</h3>
+        <div class="code-block">
+PhotoViewer Structure:
+├── ConstructionPhotoViewer (Photo Display)
+├── TopControlsBar (Navigation)
+├── PhotoInfoSection (Tabbed Interface)
+│   ├── InfoTab (Metadata)
+│   ├── TagsTab (Tag Management)
+│   ├── AIAnalysisTab (AI Integration)
+│   └── OSHATab (Compliance)
+└── MetadataEmbedder (Data Handling)</div>
+
+        <h3>Recommended Architectural Improvements</h3>
+        <div class="recommendation">
+            <h4>1. State Management Enhancement</h4>
+            <p>Lift OSHA and AI analysis state to PhotoInfoSection level to prevent loss during tab navigation. Follow the existing AI analysis pattern implemented at line 304.</p>
+        </div>
+
+        <div class="recommendation">
+            <h4>2. Layout Strategy Evolution</h4>
+            <p>Transition from Box overlay to Column-based layout for better content organization and scrollability.</p>
+        </div>
+
+        <div class="recommendation">
+            <h4>3. Metadata Service Integration</h4>
+            <p>Enhance existing MetadataEmbedder integration in PhotoMetadataPanel to utilize real photo data instead of hardcoded values.</p>
+        </div>
+    </div>
+
+    <div id="ux-recommendations" class="section">
+        <h2>🎨 UX Recommendations</h2>
+
+        <div class="agent-summary">
+            <h3>💝 Loveable-UX Agent Analysis</h3>
+            <p>Construction worker-focused UX research emphasizing safety, efficiency, and delightful interactions in challenging environments.</p>
+        </div>
+
+        <h3>Construction Worker Design Principles</h3>
+        <div class="risk-matrix">
+            <div class="risk-item">
+                <h4>🧤 Glove-Friendly Interaction</h4>
+                <p>Extra-large touch targets (56dp minimum), extended auto-fade timing (5s vs standard 2s), haptic feedback for confirmation.</p>
+            </div>
+            <div class="risk-item">
+                <h4>☀️ Outdoor Visibility</h4>
+                <p>High contrast overlays (85% opacity), construction-grade color schemes, anti-glare considerations.</p>
+            </div>
+            <div class="risk-item">
+                <h4>⚡ Efficiency Focus</h4>
+                <p>Maximum 2-tap navigation to any feature, progressive disclosure of complex features, smart defaults.</p>
+            </div>
+            <div class="risk-item">
+                <h4>🔊 Noisy Environment</h4>
+                <p>Strong visual feedback, vibration patterns, minimal audio dependency.</p>
+            </div>
+        </div>
+
+        <h3>Specific UX Solutions</h3>
+
+        <div class="recommendation">
+            <h4>Auto-fade Top Controls</h4>
+            <p>Implement adaptive auto-fade with construction-friendly timing:</p>
+            <ul>
+                <li>5-second auto-hide delay (vs 2s standard)</li>
+                <li>Tap photo to toggle visibility</li>
+                <li>High contrast semi-transparent background</li>
+                <li>Smooth animations with haptic feedback</li>
+            </ul>
+        </div>
+
+        <div class="recommendation">
+            <h4>Interactive AI Tag Selection</h4>
+            <p>Progressive disclosure with visual feedback:</p>
+            <ul>
+                <li>Grouped recommendations by hazard type</li>
+                <li>Multi-select with visual confirmation</li>
+                <li>Quick action buttons for common workflows</li>
+                <li>Clear selection state with animated transitions</li>
+            </ul>
+        </div>
+
+        <div class="recommendation">
+            <h4>Scrollable Layout Design</h4>
+            <p>Vertical-first design avoiding gesture conflicts:</p>
+            <ul>
+                <li>60% screen for photo viewing</li>
+                <li>40% for scrollable metadata/controls</li>
+                <li>No horizontal gesture conflicts</li>
+                <li>Performance-optimized lazy loading</li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="technical-solutions" class="section">
+        <h2>⚙️ Technical Solutions</h2>
+
+        <div class="agent-summary">
+            <h3>📚 Technical Documentation Agent Analysis</h3>
+            <p>Comprehensive technical research covering Jetpack Compose best practices, Android metadata handling, and state management patterns for 2025.</p>
+        </div>
+
+        <h3>Implementation Approaches</h3>
+
+        <div class="issue-card">
+            <div class="issue-title">1. Top Button Overlay Solution</div>
+            <div class="code-block">
+// Option A: Auto-fade overlay
+var showTopControls by remember { mutableStateOf(true) }
+LaunchedEffect(Unit) {
+    delay(5000) // Construction-friendly timing
+    showTopControls = false
+}
+
+// Option B: Fixed header with scrollable content
+Column {
+    TopControlsBar(...) // Fixed position
+    Box { ConstructionPhotoViewer(...) } // Dedicated photo area
+    ScrollableContent(...)
+}</div>
+        </div>
+
+        <div class="issue-card">
+            <div class="issue-title">2. Metadata Extraction Enhancement</div>
+            <div class="code-block">
+// Enhanced metadata extraction
+suspend fun extractComprehensiveMetadata(file: File): PhotoMetadata {
+    val exif = ExifInterface(file.absolutePath)
+    return PhotoMetadata(
+        projectName = extractProjectFromMetadata(exif),
+        location = extractGPSLocation(exif),
+        timestamp = extractTimestamp(exif),
+        deviceInfo = extractDeviceInfo(exif)
+    )
+}</div>
+        </div>
+
+        <div class="issue-card">
+            <div class="issue-title">3. State Persistence Pattern</div>
+            <div class="code-block">
+// Lift state to parent level
+@Composable
+fun PhotoInfoSection(...) {
+    var aiAnalysis by remember(photo.id) { mutableStateOf<AIAnalysis?>(null) }
+    var oshaAnalysis by remember(photo.id) { mutableStateOf<OSHAAnalysis?>(null) }
+
+    // Pass state down to tabs
+    TabContent(
+        aiAnalysis = aiAnalysis,
+        oshaAnalysis = oshaAnalysis,
+        onAIResult = { aiAnalysis = it },
+        onOSHAResult = { oshaAnalysis = it }
+    )
+}</div>
+        </div>
+
+        <div class="issue-card">
+            <div class="issue-title">4. Photo Capture Guard</div>
+            <div class="code-block">
+class PhotoCaptureController {
+    private var isCapturing = false
+
+    suspend fun capturePhoto(): Result<File> {
+        if (isCapturing) return Result.failure(Exception("Capture in progress"))
+        isCapturing = true
+        try {
+            return performCapture()
+        } finally {
+            isCapturing = false
+        }
+    }
+}</div>
+        </div>
+
+        <h3>Performance Optimizations</h3>
+        <ul>
+            <li><strong>Image Loading:</strong> Coil with memory/disk caching, progressive loading</li>
+            <li><strong>Compose:</strong> Stable keys, minimal recomposition, lazy loading</li>
+            <li><strong>State Management:</strong> Efficient state updates, proper lifecycle handling</li>
+            <li><strong>Memory:</strong> Bitmap optimization, proper cleanup, resource management</li>
+        </ul>
+    </div>
+
+    <div id="security-compliance" class="section">
+        <h2>🔐 Security & Compliance Assessment</h2>
+
+        <div class="agent-summary">
+            <h3>🛡️ Security-Compliance Agent Analysis</h3>
+            <p>Comprehensive security and regulatory compliance assessment focusing on GDPR, OSHA requirements, and construction safety data handling.</p>
+        </div>
+
+        <h3>Critical Security Risks Identified</h3>
+
+        <div class="risk-matrix">
+            <div class="risk-item">
+                <h4 class="danger">🌍 GPS Privacy (HIGH RISK)</h4>
+                <p>Raw GPS coordinates in EXIF without consent. Potential GDPR violation with fines up to €20M.</p>
+            </div>
+            <div class="risk-item">
+                <h4 class="danger">🤖 AI Data Handling (HIGH RISK)</h4>
+                <p>Photo data to Google servers without adequate safeguards. Missing Data Processing Agreement compliance.</p>
+            </div>
+            <div class="risk-item">
+                <h4 class="warning">📁 Storage Security (MEDIUM)</h4>
+                <p>Temporary file cleanup gaps, missing audit trails, file permission issues.</p>
+            </div>
+            <div class="risk-item">
+                <h4 class="warning">📋 OSHA Compliance (MEDIUM)</h4>
+                <p>Missing 30-year retention requirements, no chain of custody for incident photos.</p>
+            </div>
+        </div>
+
+        <h3>Immediate Security Actions Required</h3>
+        <div class="recommendation">
+            <h4>1. GPS Consent Management</h4>
+            <p>Implement explicit consent system for location data collection and sharing.</p>
+        </div>
+
+        <div class="recommendation">
+            <h4>2. Photo Sharing Security</h4>
+            <p>Strip sensitive metadata before sharing, create sanitized versions for external distribution.</p>
+        </div>
+
+        <div class="recommendation">
+            <h4>3. AI Service Data Governance</h4>
+            <p>Implement data minimization (crop photos), add transfer logging, validate Google DPA.</p>
+        </div>
+
+        <h3>Compliance Framework</h3>
+        <ul>
+            <li><strong>GDPR:</strong> Data subject rights, consent withdrawal, privacy-by-design</li>
+            <li><strong>OSHA:</strong> Retention policies, digital signatures, audit trails</li>
+            <li><strong>Security:</strong> Encryption at rest/transit, access controls, vulnerability management</li>
+        </ul>
+    </div>
+
+    <div id="testing-strategy" class="section">
+        <h2>🧪 Testing Strategy</h2>
+
+        <div class="agent-summary">
+            <h3>🛡️ Test-Guardian Agent Analysis</h3>
+            <p>Comprehensive testing framework ensuring all PhotoViewer improvements are thoroughly validated with construction worker focus and regulatory compliance.</p>
+        </div>
+
+        <h3>Testing Framework Distribution</h3>
+        <div class="risk-matrix">
+            <div class="risk-item">
+                <h4>📊 Unit Tests (60%)</h4>
+                <p>Business logic, state management, data transformations, metadata extraction</p>
+            </div>
+            <div class="risk-item">
+                <h4>🔗 Integration Tests (30%)</h4>
+                <p>Component interactions, API integration, database operations, AI services</p>
+            </div>
+            <div class="risk-item">
+                <h4>🌐 End-to-End Tests (10%)</h4>
+                <p>Complete workflows, cross-system functionality, user journey validation</p>
+            </div>
+        </div>
+
+        <h3>Issue-Specific Test Coverage</h3>
+
+        <div class="issue-card">
+            <div class="issue-title">UI Layout Tests</div>
+            <p><strong>Focus:</strong> Auto-fade behavior, fixed header positioning, scrollable layout</p>
+            <div class="code-block">
+@Test
+fun topControlsBar_autoFadesBehavior_constructionWorkerTiming()
+@Test
+fun topControlsBar_smoothFadeAnimation_noJarringTransitions()
+@Test
+fun scrollableLayout_noGestureConflicts_verticalScrollOnly()</div>
+        </div>
+
+        <div class="issue-card">
+            <div class="issue-title">Metadata Extraction Tests</div>
+            <p><strong>Focus:</strong> Real vs hardcoded data, GPS handling, EXIF processing</p>
+            <div class="code-block">
+@Test
+fun photoMetadata_extractsRealProjectInfo_fromEXIFAndDatabase()
+@Test
+fun locationService_reverseGeocode_coordinatesToAddress()
+@Test
+fun metadataCache_persistsAcrossAppRestarts()</div>
+        </div>
+
+        <div class="issue-card">
+            <div class="issue-title">State Persistence Tests</div>
+            <p><strong>Focus:</strong> Tab switching, analysis results, configuration changes</p>
+            <div class="code-block">
+@Test
+fun tabSwitching_preservesAIAnalysisResults()
+@Test
+fun configurationChange_maintainsAnalysisResults()
+@Test
+fun appRecovery_restoresPhotoViewerState()</div>
+        </div>
+
+        <h3>Construction Worker Usability Tests</h3>
+        <ul>
+            <li><strong>Glove Operation:</strong> Large touch targets, extended timeouts</li>
+            <li><strong>One-Handed Use:</strong> Reachable controls, efficient gestures</li>
+            <li><strong>Outdoor Conditions:</strong> High contrast mode, bright screen tests</li>
+            <li><strong>Interruption Recovery:</strong> State maintenance during work breaks</li>
+        </ul>
+
+        <h3>Performance Benchmarks</h3>
+        <div class="code-block">
+Success Criteria:
+- PhotoViewer launch time: <500ms
+- AI analysis result display: <200ms after completion
+- Tab switching response: <100ms
+- Memory usage: <50MB per session
+- Battery impact: <2% additional drain</div>
+    </div>
+
+    <div id="implementation-roadmap" class="section">
+        <h2>🗺️ Implementation Roadmap</h2>
+
+        <h3>Phase-Based Implementation Strategy</h3>
+
+        <div class="implementation-timeline">
+            <h4>📅 Phase 1: Critical Fixes (Week 1-2)</h4>
+            <div class="priority critical">Critical Priority</div>
+            <ul>
+                <li><strong>Photo Capture Duplication:</strong> Implement capture guard mechanism</li>
+                <li><strong>OSHA State Persistence:</strong> Lift state to parent component</li>
+                <li><strong>Top Button Overlay:</strong> Implement auto-fade or fixed header</li>
+            </ul>
+            <p><strong>Deliverables:</strong> Core functionality fixes, immediate UX improvements</p>
+        </div>
+
+        <div class="implementation-timeline">
+            <h4>📅 Phase 2: Data & Integration (Week 2-3)</h4>
+            <div class="priority high">High Priority</div>
+            <ul>
+                <li><strong>Metadata Extraction:</strong> Replace hardcoded values with real data</li>
+                <li><strong>AI Tag Interactions:</strong> Enhance recommendation selection UX</li>
+                <li><strong>Security Improvements:</strong> GPS consent, data sanitization</li>
+            </ul>
+            <p><strong>Deliverables:</strong> Dynamic metadata, improved AI workflow, security compliance</p>
+        </div>
+
+        <div class="implementation-timeline">
+            <h4>📅 Phase 3: Advanced Features (Week 3-4)</h4>
+            <div class="priority medium">Medium Priority</div>
+            <ul>
+                <li><strong>OSHA Tag Integration:</strong> Connect tag management with compliance system</li>
+                <li><strong>Performance Optimization:</strong> Image loading, state management</li>
+                <li><strong>Testing & Validation:</strong> Comprehensive test suite execution</li>
+            </ul>
+            <p><strong>Deliverables:</strong> Complete feature integration, performance optimization, quality assurance</p>
+        </div>
+
+        <h3>Resource Requirements</h3>
+        <div class="risk-matrix">
+            <div class="risk-item">
+                <h4>👨‍💻 Development Team</h4>
+                <p>1 Senior Android Developer, 1 UX Designer (consultation), 1 QA Engineer</p>
+            </div>
+            <div class="risk-item">
+                <h4>🔍 Review & Compliance</h4>
+                <p>Security review, OSHA compliance validation, Architecture review</p>
+            </div>
+            <div class="risk-item">
+                <h4>🧪 Testing Resources</h4>
+                <p>Multiple Android devices, Construction site testing, Performance monitoring</p>
+            </div>
+            <div class="risk-item">
+                <h4>📋 Project Management</h4>
+                <p>Sprint planning, Stakeholder communication, Progress tracking</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="risk-assessment" class="section">
+        <h2>⚠️ Risk Assessment & Mitigation</h2>
+
+        <h3>Technical Risks</h3>
+        <div class="risk-matrix">
+            <div class="risk-item">
+                <h4 class="warning">State Management Complexity</h4>
+                <p><strong>Risk:</strong> Breaking existing state patterns during OSHA persistence fix</p>
+                <p><strong>Mitigation:</strong> Comprehensive testing, gradual migration, rollback plan</p>
+            </div>
+            <div class="risk-item">
+                <h4 class="warning">Performance Impact</h4>
+                <p><strong>Risk:</strong> New features affecting photo loading performance</p>
+                <p><strong>Mitigation:</strong> Performance benchmarks, optimization strategies, monitoring</p>
+            </div>
+            <div class="risk-item">
+                <h4 class="info">Integration Compatibility</h4>
+                <p><strong>Risk:</strong> AI service or OSHA system integration issues</p>
+                <p><strong>Mitigation:</strong> Fallback mechanisms, error handling, service mocking</p>
+            </div>
+        </div>
+
+        <h3>Business Risks</h3>
+        <div class="risk-matrix">
+            <div class="risk-item">
+                <h4 class="danger">Regulatory Compliance</h4>
+                <p><strong>Risk:</strong> GDPR/OSHA violations from metadata handling</p>
+                <p><strong>Mitigation:</strong> Legal review, compliance testing, privacy controls</p>
+            </div>
+            <div class="risk-item">
+                <h4 class="warning">User Adoption</h4>
+                <p><strong>Risk:</strong> Construction workers rejecting new UX patterns</p>
+                <p><strong>Mitigation:</strong> User testing, gradual rollout, training materials</p>
+            </div>
+        </div>
+
+        <h3>Risk Probability & Impact Matrix</h3>
+        <div class="code-block">
+High Impact, Low Probability:  Regulatory compliance violations
+High Impact, High Probability: State management breaking changes
+Low Impact, High Probability:  Minor UX adjustment needs
+Low Impact, Low Probability:   Performance degradation</div>
+
+        <h3>Mitigation Strategies</h3>
+        <div class="recommendation">
+            <h4>1. Incremental Rollout</h4>
+            <p>Deploy fixes in phases with feature flags, allowing rollback if issues arise.</p>
+        </div>
+
+        <div class="recommendation">
+            <h4>2. Comprehensive Testing</h4>
+            <p>Extensive testing before each phase deployment, including construction site pilots.</p>
+        </div>
+
+        <div class="recommendation">
+            <h4>3. Monitoring & Analytics</h4>
+            <p>Real-time monitoring of performance, crashes, and user behavior patterns.</p>
+        </div>
+    </div>
+
+    <div id="appendices" class="section">
+        <h2>📎 Appendices</h2>
+
+        <h3>A. File Locations for Implementation</h3>
+        <div class="code-block">
+Primary Files:
+├── PhotoViewer.kt (Main component)
+├── SafetyHUDCameraScreen.kt (Capture logic)
+├── MetadataEmbedder.kt (Data extraction)
+├── MobileTagManager.kt (Tag management)
+└── GeminiVisionAnalyzer.kt (AI integration)
+
+Supporting Files:
+├── OSHARegulationRepository.kt (Compliance)
+├── PhotoStorageManagerCompat.kt (Storage)
+└── SecureKeyManager.kt (Security)</div>
+
+        <h3>B. Agent Research Summary</h3>
+        <div class="findings-grid">
+            <div class="finding-card">
+                <h4>🏗️ Simple-Architect</h4>
+                <p>Architecture is sound, fixes are incremental, maintain clean patterns</p>
+            </div>
+            <div class="finding-card">
+                <h4>💝 Loveable-UX</h4>
+                <p>Construction-worker focused design, glove-friendly interactions, outdoor visibility</p>
+            </div>
+            <div class="finding-card">
+                <h4>🧪 Test-Guardian</h4>
+                <p>Comprehensive testing strategy, performance benchmarks, construction usability tests</p>
+            </div>
+            <div class="finding-card">
+                <h4>📚 Docs-Curator</h4>
+                <p>Technical best practices, 2025 Jetpack Compose patterns, Android metadata handling</p>
+            </div>
+            <div class="finding-card">
+                <h4>🔐 Security-Compliance</h4>
+                <p>GPS privacy risks, GDPR compliance gaps, OSHA retention requirements</p>
+            </div>
+        </div>
+
+        <h3>C. Key Metrics & KPIs</h3>
+        <div class="code-block">
+Success Metrics:
+- Zero photo capture duplicates (100% success rate)
+- OSHA analysis persistence (100% state retention)
+- Top button overlay elimination (0% content blocking)
+- Real metadata display (100% dynamic data)
+- AI tag selection improvement (>80% interaction success)
+- Security compliance (100% GDPR/OSHA adherence)</div>
+
+        <h3>D. Dependencies & Prerequisites</h3>
+        <ul>
+            <li><strong>Android API Level:</strong> Minimum API 24, Target API 34</li>
+            <li><strong>Jetpack Compose:</strong> BOM 2025.05.01 or later</li>
+            <li><strong>External Services:</strong> Google Gemini Vision API, OSHA regulation database</li>
+            <li><strong>Testing Framework:</strong> Espresso, Compose Testing, JUnit 4</li>
+            <li><strong>Security Requirements:</strong> AES-256-GCM encryption, secure key storage</li>
+        </ul>
+
+        <div class="agent-summary">
+            <h3>📋 Research Completion Status</h3>
+            <p><strong>All research agents completed successfully.</strong> Comprehensive analysis conducted across architecture, UX, testing, documentation, and security domains. Ready for implementation phase initiation.</p>
+            <p><strong>Next Steps:</strong> Review findings with stakeholders, prioritize implementation phases, assign development resources.</p>
+        </div>
+    </div>
+
+    <footer style="text-align: center; margin-top: 50px; padding: 20px; color: #666; border-top: 1px solid #e9ecef;">
+        <p><strong>Document Generated:</strong> September 23, 2025 9:13 AM</p>
+        <p><strong>Research Duration:</strong> Parallel agent execution - 5 specialized analyses</p>
+        <p><strong>Project:</strong> HazardHawk v3 PhotoViewer Improvements</p>
+        <p><em>🤖 Generated with specialized AI research agents for comprehensive analysis</em></p>
+    </footer>
+</body>
+</html>

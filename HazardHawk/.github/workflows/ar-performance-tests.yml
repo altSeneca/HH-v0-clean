@@ -1,0 +1,175 @@
+name: AR Performance Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'androidApp/src/main/java/com/hazardhawk/ar/**'
+      - 'androidApp/src/main/java/com/hazardhawk/ui/ar/**'
+      - 'androidApp/src/main/java/com/hazardhawk/camera/**'
+      - 'shared/src/commonMain/kotlin/com/hazardhawk/ar/**'
+      - 'androidApp/src/test/java/com/hazardhawk/ar/**'
+      - 'androidApp/src/androidTest/java/com/hazardhawk/ar/**'
+      - 'shared/src/commonTest/kotlin/com/hazardhawk/ar/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'androidApp/src/main/java/com/hazardhawk/ar/**'
+      - 'androidApp/src/main/java/com/hazardhawk/ui/ar/**'
+      - 'androidApp/src/main/java/com/hazardhawk/camera/**'
+      - 'shared/src/commonMain/kotlin/com/hazardhawk/ar/**'
+      - 'androidApp/src/test/java/com/hazardhawk/ar/**'
+      - 'androidApp/src/androidTest/java/com/hazardhawk/ar/**'
+      - 'shared/src/commonTest/kotlin/com/hazardhawk/ar/**'
+  schedule:
+    # Run performance tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      performance_threshold:
+        description: 'Performance threshold (ms per frame)'
+        required: false
+        default: '16.67'
+      memory_threshold:
+        description: 'Memory threshold (MB)'
+        required: false
+        default: '500'
+      coverage_threshold:
+        description: 'Minimum test coverage (%)'
+        required: false
+        default: '85'
+
+env:
+  PERFORMANCE_THRESHOLD: ${{ github.event.inputs.performance_threshold || '16.67' }}
+  MEMORY_THRESHOLD: ${{ github.event.inputs.memory_threshold || '500' }}
+  MIN_COVERAGE: ${{ github.event.inputs.coverage_threshold || '85' }}
+
+jobs:
+  ar-unit-tests:
+    name: AR Unit Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: Cache Gradle dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+          
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+      
+    - name: Run AR unit tests
+      run: |
+        ./gradlew :androidApp:testDebugUnitTest \
+          --tests "com.hazardhawk.ar.*" \
+          -PtestLogging.events=passed,skipped,failed,standard_out,standard_error
+          
+    - name: Run shared module AR tests
+      run: |
+        ./gradlew :shared:testDebugUnitTest \
+          --tests "com.hazardhawk.ar.*" \
+          -PtestLogging.events=passed,skipped,failed,standard_out,standard_error
+          
+    - name: Generate test coverage report
+      run: ./gradlew koverHtmlReport
+      
+    - name: Upload unit test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: ar-unit-test-results
+        path: |
+          androidApp/build/reports/tests/
+          shared/build/reports/tests/
+          androidApp/build/reports/kover/
+
+  ar-performance-benchmarks:
+    name: AR Performance Benchmarks
+    runs-on: macos-latest
+    needs: [ar-unit-tests]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: Cache Gradle dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+          
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+      
+    - name: Run performance test script
+      run: |
+        chmod +x ./run_ar_performance_tests.sh
+        PERFORMANCE_THRESHOLD=${{ env.PERFORMANCE_THRESHOLD }} \
+        MEMORY_THRESHOLD=${{ env.MEMORY_THRESHOLD }} \
+        MIN_COVERAGE=${{ env.MIN_COVERAGE }} \
+        ./run_ar_performance_tests.sh
+        
+    - name: Upload performance results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: ar-performance-results
+        path: |
+          test-results/ar-performance/
+          
+    - name: Generate performance summary
+      if: always()
+      run: |
+        echo "# AR Performance Test Summary" > performance_summary.md
+        echo "**Test Run:** $(date)" >> performance_summary.md
+        echo "**Thresholds:**" >> performance_summary.md
+        echo "- Frame Time: ≤ ${{ env.PERFORMANCE_THRESHOLD }}ms" >> performance_summary.md
+        echo "- Memory Usage: ≤ ${{ env.MEMORY_THRESHOLD }}MB" >> performance_summary.md
+        echo "- Coverage: ≥ ${{ env.MIN_COVERAGE }}%" >> performance_summary.md
+        
+        if [ -f "test-results/ar-performance/performance_analysis_*.md" ]; then
+          echo "" >> performance_summary.md
+          cat test-results/ar-performance/performance_analysis_*.md >> performance_summary.md
+        fi
+        
+    - name: Comment PR with performance results
+      if: github.event_name == 'pull_request' && always()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          
+          if (fs.existsSync('performance_summary.md')) {
+            const summary = fs.readFileSync('performance_summary.md', 'utf8');
+            
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });
+          }

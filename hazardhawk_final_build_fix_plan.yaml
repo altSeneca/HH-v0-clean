@@ -1,0 +1,178 @@
+# HazardHawk Final Build Fix Plan
+# Generated: 2025-08-27
+# Goal: Achieve 0 compilation errors
+
+project:
+  name: HazardHawk
+  current_errors: 27
+  target_errors: 0
+  estimated_time: 2-3 hours
+
+error_categories:
+  critical:
+    - category: SYNTAX_ERRORS
+      description: "Structural and syntax issues preventing compilation"
+      count: 10
+      files:
+        - path: "shared/src/commonMain/kotlin/com/hazardhawk/data/PhotoStorageManager.kt"
+          issues:
+            - line: 431
+              error: "Extra closing brace in string interpolation"
+              fix: "Remove extra } from string template"
+            - line: 443
+              error: "Malformed member declarations"
+              fix: "Fix try-catch block structure"
+            - line: 328
+              error: "Continue outside loop (false positive)"
+              fix: "No fix needed - valid Kotlin syntax"
+
+  high:
+    - category: MULTIPLATFORM_COMPATIBILITY
+      description: "Platform-specific APIs used in common module"
+      count: 12
+      files:
+        - path: "shared/src/commonMain/kotlin/com/hazardhawk/performance/GalleryPerformanceMonitor.kt"
+          issues:
+            - lines: [55, 72, 73, 86]
+              error: "System.currentTimeMillis() not available"
+              fix: "Replace with Clock.System.now().toEpochMilliseconds()"
+            - lines: [120, 123]
+              error: "String.format() not available"
+              fix: "Use Kotlin string templates"
+        
+        - path: "shared/src/commonMain/kotlin/com/hazardhawk/performance/ThumbnailCacheManager.kt"
+          issues:
+            - line: 75
+              error: "LinkedHashMap constructor mismatch"
+              fix: "Use proper Kotlin constructor"
+
+  medium:
+    - category: VISIBILITY_ISSUES
+      description: "Access modifier problems"
+      count: 3
+      files:
+        - path: "shared/src/commonMain/kotlin/com/hazardhawk/data/TagRepositoryImpl.kt"
+          issues:
+            - lines: [151, 177]
+              error: "Cannot access 'toTag': it is private"
+              fix: "Change from private to internal or public"
+
+  low:
+    - category: IMPORT_ISSUES
+      description: "Missing imports and references"
+      count: 2
+      files:
+        - path: "shared/src/commonMain/kotlin/com/hazardhawk/domain/AnalyzePhotoUseCase.kt"
+          issues:
+            - lines: [120-122]
+              error: "DatabaseResult not imported, when not exhaustive"
+              fix: "Add import and else branch"
+
+fixes:
+  priority_1_critical:
+    - file: "PhotoStorageManager.kt"
+      actions:
+        - description: "Fix string interpolation syntax"
+          line: 431
+          old: '${filePath.substringBeforeLast(".")}_compressed.${filePath.substringAfterLast(".")}}'
+          new: '${filePath.substringBeforeLast(".")}_compressed.${filePath.substringAfterLast(".")}'
+        
+        - description: "Fix try-catch structure"
+          lines: "423-445"
+          action: "Ensure proper brace matching and catch block closure"
+
+  priority_2_multiplatform:
+    - file: "GalleryPerformanceMonitor.kt"
+      actions:
+        - description: "Replace System.currentTimeMillis()"
+          pattern: "System.currentTimeMillis()"
+          replacement: "Clock.System.now().toEpochMilliseconds()"
+          
+        - description: "Replace String.format()"
+          pattern: 'String.format("%.2f", value)'
+          replacement: '"%.2f".format(value)" or "${value.format(2)}"'
+    
+    - file: "ThumbnailCacheManager.kt"
+      actions:
+        - description: "Fix LinkedHashMap constructor"
+          line: 75
+          old: "LinkedHashMap<K, V>(initialCapacity, loadFactor, accessOrder)"
+          new: "LinkedHashMap<K, V>(initialCapacity)"
+
+  priority_3_visibility:
+    - file: "TagRepositoryImpl.kt"
+      actions:
+        - description: "Make toTag() accessible"
+          search: "private fun com.hazardhawk.database.Tags.toTag()"
+          replace: "internal fun com.hazardhawk.database.Tags.toTag()"
+
+  priority_4_imports:
+    - file: "AnalyzePhotoUseCase.kt"
+      actions:
+        - description: "Add DatabaseResult import"
+          add_import: "import com.hazardhawk.models.DatabaseResult"
+        
+        - description: "Make when exhaustive"
+          add_else: "Add else -> null branch to when expression"
+
+implementation_steps:
+  - step: 1
+    title: "Fix PhotoStorageManager syntax"
+    commands:
+      - "Fix string interpolation on line 431"
+      - "Verify try-catch block structure"
+    verification: "./gradlew :shared:compileDebugKotlinAndroid"
+    
+  - step: 2
+    title: "Fix multiplatform compatibility"
+    commands:
+      - "Global replace System.currentTimeMillis()"
+      - "Replace String.format() with templates"
+      - "Fix LinkedHashMap constructors"
+    verification: "./gradlew :shared:compileCommonMainKotlinMetadata"
+    
+  - step: 3
+    title: "Fix visibility issues"
+    commands:
+      - "Change toTag() visibility modifier"
+      - "Verify extension function accessibility"
+    verification: "./gradlew :shared:compileDebugKotlinAndroid"
+    
+  - step: 4
+    title: "Fix import issues"
+    commands:
+      - "Add missing imports"
+      - "Make when expressions exhaustive"
+    verification: "./gradlew :shared:build"
+    
+  - step: 5
+    title: "Full build test"
+    commands:
+      - "./gradlew clean"
+      - "./gradlew :androidApp:assembleDebug"
+    expected: "BUILD SUCCESSFUL"
+
+testing:
+  unit_tests:
+    - "./gradlew :shared:test"
+    - "./gradlew :androidApp:test"
+  
+  integration_tests:
+    - "./gradlew :androidApp:connectedAndroidTest"
+
+success_criteria:
+  - "0 compilation errors in shared module"
+  - "0 compilation errors in androidApp module"  
+  - "APK builds successfully"
+  - "App installs and runs on device"
+
+rollback:
+  - "Git stash all changes if issues arise"
+  - "Revert to previous working state"
+  - "Apply fixes incrementally"
+
+notes:
+  - "Some 'continue' errors are false positives - valid Kotlin syntax"
+  - "Multiplatform compatibility is critical for shared module"
+  - "Performance monitoring classes are lower priority"
+  - "Core business logic must compile first"

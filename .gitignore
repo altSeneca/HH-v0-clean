@@ -1,0 +1,103 @@
+# Screenshots folder
+screenshots/
+
+# macOS system files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Build directories and artifacts
+**/build/
+**/out/
+**/target/
+
+# Gradle files
+.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
+!gradle-wrapper.properties
+!gradle/wrapper/gradle-wrapper.properties
+
+# Android Studio and IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+.idea_modules/
+atlassian-ide-plugin.xml
+
+# iOS build artifacts
+iosApp/build/
+DerivedData/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+
+# Python environments and cache
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+ai_conversion_env/
+gemma_download_env/
+scripts/venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.pytest_cache/
+
+# Model files and cache (large binary files)
+model_cache/
+models/*.onnx
+models/*.pt
+models/*.tflite
+models/**/*.bin
+models/**/*.onnx
+models/**/*.pt
+models/**/*.tflite
+*.npy
+*.h5
+*.pb
+
+# Log files
+*.log
+logs/
+test-results/
+reports/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+
+# Generated content and backup files
+Backup Docs/
+validation_results_*.txt
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Package manager files
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Generated documentation
+docs/generated/
+
+# Test coverage reports
+coverage/
+*.lcov

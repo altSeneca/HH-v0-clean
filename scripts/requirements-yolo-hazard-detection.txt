@@ -1,0 +1,24 @@
+# HazardHawk - YOLOv8 Construction Hazard Detection Requirements
+# Install with: pip install -r requirements-yolo-hazard-detection.txt
+
+# YOLOv8 and Ultralytics (compatible with Python 3.13)
+ultralytics
+torch>=2.0.0
+torchvision>=0.15.0
+numpy>=1.21.0
+
+# ONNX Export (skip problematic simplifier for now)  
+onnx>=1.15.0
+onnxruntime>=1.16.0
+
+# Image Processing and Computer Vision
+opencv-python>=4.8.0
+Pillow>=10.0.0
+
+# Data Processing
+pandas>=2.0.0
+matplotlib>=3.7.0
+
+# Deployment
+tqdm>=4.66.0
+pyyaml>=6.0

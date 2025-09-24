@@ -1,0 +1,37 @@
+# HazardHawk - Gemma Model Conversion Requirements
+# Install with: pip install -r requirements-gemma-conversion.txt
+
+# Core ML and Model Conversion
+torch>=2.1.0,<3.0.0
+transformers>=4.35.0
+accelerate>=0.24.0
+
+# ONNX Runtime and Conversion
+onnx>=1.15.0
+onnxruntime>=1.19.2
+onnxruntime-tools>=1.7.0
+
+# Model Optimization
+optimum>=1.15.0
+# onnx-optimizer>=0.3.0  # Package not available, using built-in ONNX optimizations
+
+# Hugging Face Hub
+huggingface-hub>=0.17.0
+
+# Image Processing (for future vision capabilities)
+Pillow>=10.0.0
+opencv-python>=4.8.0
+
+# Utility Libraries
+numpy>=1.24.0
+scipy>=1.11.0
+matplotlib>=3.7.0
+
+# Development and Debugging
+tqdm>=4.66.0
+psutil>=5.9.0
+memory-profiler>=0.61.0
+
+# Optional GPU Support (uncomment if CUDA available)
+# torch>=2.1.0+cu118 --index-url https://download.pytorch.org/whl/cu118
+# onnxruntime-gpu>=1.19.2

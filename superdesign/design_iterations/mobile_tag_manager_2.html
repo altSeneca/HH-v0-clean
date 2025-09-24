@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mobile Tag Manager - Option 2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Construction safety palette */
+        .safety-primary { background: linear-gradient(135deg, #EA580C 0%, #C2410C 100%); }
+        .safety-accent { background-color: #FB923C; }
+        .safety-border { border-color: #EA580C; }
+        
+        /* Mobile touch sizing */
+        .touch-56 { min-height: 56px; }
+        
+        /* Severity indicators with pulsing animation */
+        .severity-critical { 
+            background: #DC2626; 
+            animation: pulse-critical 2s infinite;
+        }
+        .severity-high { background: #EA580C; }
+        .severity-medium { background: #F59E0B; }
+        .severity-low { background: #3B82F6; }
+        .severity-info { background: #8B5CF6; }
+        
+        @keyframes pulse-critical {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        /* Safe area handling */
+        .safe-top { padding-top: env(safe-area-inset-top); }
+        .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+        
+        /* Swipe gesture indicator */
+        .swipe-indicator {
+            width: 36px;
+            height: 4px;
+            background: #CBD5E1;
+            border-radius: 2px;
+            margin: 8px auto;
+        }
+        
+        /* Tab indicator */
+        .tab-indicator {
+            position: absolute;
+            bottom: 0;
+            height: 3px;
+            background: #EA580C;
+            transition: all 0.3s ease;
+        }
+        
+        /* Prevent overscroll */
+        body {
+            overscroll-behavior-y: contain;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* Quick action button animations */
+        .quick-action {
+            transition: all 0.2s ease;
+        }
+        .quick-action:active {
+            transform: scale(0.95);
+        }
+        
+        /* Floating panel shadow */
+        .panel-shadow {
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Custom scrollbar for webkit */
+        .custom-scroll::-webkit-scrollbar {
+            width: 3px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #CBD5E1;
+            border-radius: 1.5px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen safe-top safe-bottom">
+    
+    <!-- Fixed Header with Tabs -->
+    <div class="fixed top-0 left-0 right-0 z-40 safe-top bg-white">
+        
+        <!-- Main Header -->
+        <div class="safety-primary text-white px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <button class="p-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+                <div>
+                    <h1 class="text-lg font-bold">Tag Manager</h1>
+                    <p class="text-xs text-orange-100">24 active tags</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button class="p-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </button>
+                <button class="p-2">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                        <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Tab Navigation -->
+        <div class="bg-white border-b border-gray-200 relative">
+            <div class="flex">
+                <button class="flex-1 py-3 text-sm font-semibold text-gray-900">
+                    All Tags
+                </button>
+                <button class="flex-1 py-3 text-sm font-medium text-gray-500">
+                    Recent
+                </button>
+                <button class="flex-1 py-3 text-sm font-medium text-gray-500">
+                    Critical
+                </button>
+            </div>
+            <div class="tab-indicator" style="width: 33.33%; left: 0;"></div>
+        </div>
+        
+        <!-- Filter Chips -->
+        <div class="bg-white px-4 py-2 flex gap-2 overflow-x-auto">
+            <button class="px-4 py-1.5 bg-orange-100 text-orange-700 rounded-full text-sm font-medium whitespace-nowrap">
+                Physical
+            </button>
+            <button class="px-4 py-1.5 bg-gray-100 text-gray-600 rounded-full text-sm font-medium whitespace-nowrap">
+                Electrical
+            </button>
+            <button class="px-4 py-1.5 bg-gray-100 text-gray-600 rounded-full text-sm font-medium whitespace-nowrap">
+                Chemical
+            </button>
+            <button class="px-4 py-1.5 bg-gray-100 text-gray-600 rounded-full text-sm font-medium whitespace-nowrap">
+                Equipment
+            </button>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="pt-40 pb-48 px-4 custom-scroll">
+        
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-3 gap-3 mb-4">
+            <div class="bg-white rounded-xl p-3 text-center">
+                <div class="text-2xl font-bold text-gray-900">47</div>
+                <div class="text-xs text-gray-500">Today</div>
+            </div>
+            <div class="bg-white rounded-xl p-3 text-center">
+                <div class="text-2xl font-bold text-orange-600">12</div>
+                <div class="text-xs text-gray-500">Critical</div>
+            </div>
+            <div class="bg-white rounded-xl p-3 text-center">
+                <div class="text-2xl font-bold text-green-600">89%</div>
+                <div class="text-xs text-gray-500">Resolved</div>
+            </div>
+        </div>
+        
+        <!-- Tag Grid -->
+        <div class="grid grid-cols-2 gap-3">
+            
+            <!-- Tag Tile 1 -->
+            <div class="bg-white rounded-xl p-4 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-2 h-full severity-critical"></div>
+                <div class="flex items-start justify-between mb-2">
+                    <div class="w-10 h-10 rounded-lg severity-critical flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                    <input type="checkbox" class="w-4 h-4">
+                </div>
+                <h3 class="font-bold text-gray-900 mb-1">Fall Hazard</h3>
+                <p class="text-xs text-gray-500">47 incidents</p>
+                <p class="text-xs text-gray-400">2 hrs ago</p>
+            </div>
+            
+            <!-- Tag Tile 2 -->
+            <div class="bg-white rounded-xl p-4 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-2 h-full severity-high"></div>
+                <div class="flex items-start justify-between mb-2">
+                    <div class="w-10 h-10 rounded-lg severity-high flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 01.894 1.79l-1.233.616 1.738 5.42a1 1 0 01-.285 1.05A3.989 3.989 0 0115 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.715-5.349L11 6.477V16h2a1 1 0 110 2H7a1 1 0 110-2h2V6.477L6.237 7.582l1.715 5.349a1 1 0 01-.285 1.05A3.989 3.989 0 015 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.738-5.42-1.233-.617a1 1 0 01.894-1.788l1.599.799L9 4.323V3a1 1 0 011-1z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                    <input type="checkbox" class="w-4 h-4">
+                </div>
+                <h3 class="font-bold text-gray-900 mb-1">PPE Required</h3>
+                <p class="text-xs text-gray-500">89 incidents</p>
+                <p class="text-xs text-gray-400">30 min ago</p>
+            </div>
+            
+            <!-- Tag Tile 3 -->
+            <div class="bg-white rounded-xl p-4 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-2 h-full severity-low"></div>
+                <div class="flex items-start justify-between mb-2">
+                    <div class="w-10 h-10 rounded-lg severity-low flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                    <input type="checkbox" class="w-4 h-4">
+                </div>
+                <h3 class="font-bold text-gray-900 mb-1">Electrical</h3>
+                <p class="text-xs text-gray-500">23 incidents</p>
+                <p class="text-xs text-gray-400">1 day ago</p>
+            </div>
+            
+            <!-- Tag Tile 4 -->
+            <div class="bg-white rounded-xl p-4 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-2 h-full severity-medium"></div>
+                <div class="flex items-start justify-between mb-2">
+                    <div class="w-10 h-10 rounded-lg severity-medium flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M8 5a1 1 0 011-1h3.586a1 1 0 01.707.293l4.414 4.414a1 1 0 010 1.414l-3.586 3.586a1 1 0 01-1.414 0l-4.414-4.414A1 1 0 018 8.586V5z"/>
+                            <path d="M6 9a1 1 0 00-1 1v5a1 1 0 001 1h5a1 1 0 001-1v-3a1 1 0 00-2 0v2H7v-4h2a1 1 0 000-2H6z"/>
+                        </svg>
+                    </div>
+                    <input type="checkbox" class="w-4 h-4">
+                </div>
+                <h3 class="font-bold text-gray-900 mb-1">Equipment</h3>
+                <p class="text-xs text-gray-500">56 incidents</p>
+                <p class="text-xs text-gray-400">4 hrs ago</p>
+            </div>
+            
+            <!-- Tag Tile 5 -->
+            <div class="bg-white rounded-xl p-4 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-2 h-full severity-info"></div>
+                <div class="flex items-start justify-between mb-2">
+                    <div class="w-10 h-10 rounded-lg severity-info flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                    <input type="checkbox" class="w-4 h-4">
+                </div>
+                <h3 class="font-bold text-gray-900 mb-1">Confined</h3>
+                <p class="text-xs text-gray-500">12 incidents</p>
+                <p class="text-xs text-gray-400">3 days ago</p>
+            </div>
+            
+            <!-- Tag Tile 6 -->
+            <div class="bg-white rounded-xl p-4 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-2 h-full severity-high"></div>
+                <div class="flex items-start justify-between mb-2">
+                    <div class="w-10 h-10 rounded-lg severity-high flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                    <input type="checkbox" class="w-4 h-4">
+                </div>
+                <h3 class="font-bold text-gray-900 mb-1">Fire Hazard</h3>
+                <p class="text-xs text-gray-500">28 incidents</p>
+                <p class="text-xs text-gray-400">6 hrs ago</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Floating Quick Actions Panel -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl panel-shadow safe-bottom z-30">
+        <div class="swipe-indicator"></div>
+        
+        <!-- Action Buttons -->
+        <div class="px-4 pb-4">
+            <div class="grid grid-cols-4 gap-2 mb-3">
+                <button class="quick-action flex flex-col items-center p-3 rounded-xl bg-orange-50">
+                    <div class="safety-accent w-10 h-10 rounded-lg flex items-center justify-center mb-1">
+                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                    <span class="text-xs font-medium text-gray-700">Add</span>
+                </button>
+                <button class="quick-action flex flex-col items-center p-3 rounded-xl bg-blue-50">
+                    <div class="bg-blue-500 w-10 h-10 rounded-lg flex items-center justify-center mb-1">
+                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
+                        </svg>
+                    </div>
+                    <span class="text-xs font-medium text-gray-700">Edit</span>
+                </button>
+                <button class="quick-action flex flex-col items-center p-3 rounded-xl bg-red-50">
+                    <div class="bg-red-500 w-10 h-10 rounded-lg flex items-center justify-center mb-1">
+                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                    <span class="text-xs font-medium text-gray-700">Delete</span>
+                </button>
+                <button class="quick-action flex flex-col items-center p-3 rounded-xl bg-green-50">
+                    <div class="bg-green-500 w-10 h-10 rounded-lg flex items-center justify-center mb-1">
+                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M8 2a1 1 0 000 2h2a1 1 0 100-2H8z"/>
+                            <path d="M3 5a2 2 0 012-2 1 1 0 000 2H5a2 2 0 100 4h2a2 2 0 100-4h-.5a1 1 0 000-2H7a2 2 0 012 2v1h2V5a2 2 0 012-2h.5a1 1 0 000-2H13a2 2 0 00-2 2v1H9V5a2 2 0 00-2-2H6.5a1 1 0 000-2H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2h-.5a1 1 0 000 2H14a2 2 0 100 4h-2a2 2 0 100 4h.5a1 1 0 000 2H12a2 2 0 01-2-2v-1H8v1z"/>
+                        </svg>
+                    </div>
+                    <span class="text-xs font-medium text-gray-700">Merge</span>
+                </button>
+            </div>
+            
+            <!-- Apply Button -->
+            <button class="w-full touch-56 safety-primary text-white rounded-xl font-bold text-base shadow-lg">
+                Apply Changes (2 Selected)
+            </button>
+        </div>
+    </div>
+    
+    <!-- Create Tag Modal (hidden) -->
+    <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end hidden">
+        <div class="bg-white rounded-t-3xl w-full safe-bottom">
+            <div class="swipe-indicator"></div>
+            <div class="p-6">
+                <h2 class="text-xl font-bold mb-4">Quick Add Tag</h2>
+                
+                <input type="text" 
+                       placeholder="Tag name..." 
+                       class="w-full touch-56 px-4 bg-gray-100 rounded-xl text-base mb-4 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                
+                <div class="flex justify-around mb-6">
+                    <button class="w-14 h-14 rounded-xl severity-critical"></button>
+                    <button class="w-14 h-14 rounded-xl severity-high border-4 border-orange-500"></button>
+                    <button class="w-14 h-14 rounded-xl severity-medium"></button>
+                    <button class="w-14 h-14 rounded-xl severity-low"></button>
+                    <button class="w-14 h-14 rounded-xl severity-info"></button>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button class="flex-1 touch-56 bg-gray-200 text-gray-700 rounded-xl font-semibold">
+                        Cancel
+                    </button>
+                    <button class="flex-1 touch-56 safety-primary text-white rounded-xl font-semibold">
+                        Add Tag
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</body>
+</html>

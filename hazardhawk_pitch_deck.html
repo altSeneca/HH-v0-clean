@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HazardHawk - AI-Powered Construction Safety Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            background: #0a0a0a;
+            color: white;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+        
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #FF6B6B, #FFD93D);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+        
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+        
+        .nav-links a:hover {
+            opacity: 1;
+        }
+        
+        /* Slide Container */
+        .slide {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 40px 40px;
+            position: relative;
+        }
+        
+        .slide-content {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        
+        /* Title Slide */
+        .title-slide {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            text-align: center;
+        }
+        
+        .title-slide h1 {
+            font-size: 5rem;
+            font-weight: 900;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #FFD93D, #FF6B6B);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: pulse 3s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+        
+        .tagline {
+            font-size: 1.8rem;
+            opacity: 0.95;
+            margin-bottom: 40px;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            padding: 18px 40px;
+            background: linear-gradient(135deg, #FF6B6B, #FFD93D);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3);
+        }
+        
+        /* Problem Slide */
+        .problem-slide {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+        
+        .problem-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+        
+        .problem-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s, background 0.3s;
+        }
+        
+        .problem-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        .problem-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+        
+        .problem-stat {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #FF6B6B;
+            margin-bottom: 10px;
+        }
+        
+        /* Solution Slide */
+        .solution-slide {
+            background: linear-gradient(135deg, #0f3460 0%, #533483 100%);
+        }
+        
+        .feature-showcase {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+            margin-top: 40px;
+        }
+        
+        .feature-text h3 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: #FFD93D;
+        }
+        
+        .feature-list {
+            list-style: none;
+            margin-top: 20px;
+        }
+        
+        .feature-list li {
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+        }
+        
+        .feature-list li:before {
+            content: "✓";
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            text-align: center;
+            line-height: 30px;
+            border-radius: 50%;
+            margin-right: 15px;
+        }
+        
+        .phone-mockup {
+            background: linear-gradient(135deg, #2d2d2d, #1a1a1a);
+            border-radius: 40px;
+            padding: 20px;
+            box-shadow: 0 50px 100px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+        
+        .phone-screen {
+            background: white;
+            border-radius: 30px;
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .phone-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 20px;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .phone-content {
+            flex: 1;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .photo-card-demo {
+            background: #f5f5f5;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .compliance-badge-demo {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        
+        .compliant-demo {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .needs-improvement-demo {
+            background: #FF9800;
+            color: white;
+        }
+        
+        /* How It Works */
+        .how-it-works-slide {
+            background: linear-gradient(135deg, #2d3561 0%, #c05c7e 100%);
+        }
+        
+        .process-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 60px;
+            position: relative;
+        }
+        
+        .process-steps::before {
+            content: "";
+            position: absolute;
+            top: 50px;
+            left: 10%;
+            right: 10%;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.3);
+            z-index: 0;
+        }
+        
+        .step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .step-number {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 0 auto 20px;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+        
+        .step-title {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            color: #FFD93D;
+        }
+        
+        .step-desc {
+            opacity: 0.9;
+            max-width: 200px;
+            margin: 0 auto;
+        }
+        
+        /* Market Slide */
+        .market-slide {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        }
+        
+        .market-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+            margin-top: 60px;
+        }
+        
+        .stat-card {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 40px 20px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .stat-number {
+            font-size: 3.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #FFD93D, #FF6B6B);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+        
+        .stat-label {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        /* Business Model */
+        .business-slide {
+            background: linear-gradient(135deg, #3a1c71 0%, #d76d77 50%, #ffaf7b 100%);
+        }
+        
+        .pricing-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin-top: 60px;
+        }
+        
+        .pricing-card {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            transition: transform 0.3s, background 0.3s;
+        }
+        
+        .pricing-card:hover {
+            transform: translateY(-10px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .pricing-card.featured {
+            border-color: #FFD93D;
+            transform: scale(1.05);
+        }
+        
+        .tier-name {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #FFD93D;
+        }
+        
+        .price {
+            font-size: 3rem;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        
+        .price span {
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+        
+        .feature-checklist {
+            list-style: none;
+            text-align: left;
+            margin-top: 30px;
+        }
+        
+        .feature-checklist li {
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Competition */
+        .competition-slide {
+            background: linear-gradient(135deg, #141e30 0%, #243b55 100%);
+        }
+        
+        .comparison-table {
+            margin-top: 40px;
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .comparison-table th,
+        .comparison-table td {
+            padding: 20px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .comparison-table th {
+            background: rgba(255, 255, 255, 0.05);
+            font-weight: bold;
+        }
+        
+        .comparison-table .hazardhawk-col {
+            background: rgba(102, 126, 234, 0.1);
+            border: 2px solid #667eea;
+        }
+        
+        .check {
+            color: #4CAF50;
+            font-size: 1.5rem;
+        }
+        
+        .cross {
+            color: #f44336;
+            font-size: 1.5rem;
+        }
+        
+        /* Team Slide */
+        .team-slide {
+            background: linear-gradient(135deg, #434343 0%, #000000 100%);
+        }
+        
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-top: 60px;
+        }
+        
+        .team-member {
+            text-align: center;
+        }
+        
+        .member-avatar {
+            width: 150px;
+            height: 150px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+        }
+        
+        .member-name {
+            font-size: 1.3rem;
+            margin-bottom: 5px;
+        }
+        
+        .member-role {
+            color: #FFD93D;
+            margin-bottom: 10px;
+        }
+        
+        .member-bio {
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+        
+        /* Call to Action */
+        .cta-slide {
+            background: linear-gradient(135deg, #FF6B6B, #FFD93D);
+            text-align: center;
+        }
+        
+        .cta-content h2 {
+            font-size: 4rem;
+            margin-bottom: 30px;
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            margin-top: 40px;
+        }
+        
+        .cta-primary {
+            background: white;
+            color: #333;
+            padding: 20px 50px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 1.3rem;
+            font-weight: bold;
+            transition: transform 0.3s;
+        }
+        
+        .cta-primary:hover {
+            transform: scale(1.05);
+        }
+        
+        .cta-secondary {
+            background: transparent;
+            color: white;
+            padding: 20px 50px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 1.3rem;
+            font-weight: bold;
+            border: 3px solid white;
+            transition: background 0.3s;
+        }
+        
+        .cta-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Headings */
+        h2 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #FFD93D, #FF6B6B);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .title-slide h1 {
+                font-size: 3rem;
+            }
+            
+            .feature-showcase {
+                grid-template-columns: 1fr;
+            }
+            
+            .process-steps {
+                flex-direction: column;
+            }
+            
+            .process-steps::before {
+                display: none;
+            }
+            
+            .market-stats,
+            .pricing-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            h2 {
+                font-size: 2.5rem;
+            }
+        }
+        
+        /* Scroll Indicator */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-10px); }
+        }
+        
+        .scroll-indicator::after {
+            content: "↓";
+            font-size: 2rem;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="logo">🏗️ HazardHawk</div>
+        <div class="nav-links">
+            <a href="#problem">Problem</a>
+            <a href="#solution">Solution</a>
+            <a href="#how-it-works">How It Works</a>
+            <a href="#market">Market</a>
+            <a href="#business">Business</a>
+            <a href="#contact">Contact</a>
+        </div>
+    </nav>
+    
+    <!-- Title Slide -->
+    <section class="slide title-slide">
+        <div class="slide-content">
+            <h1>HazardHawk</h1>
+            <p class="tagline">AI-Powered Construction Safety Made Simple</p>
+            <p class="subtitle" style="margin-bottom: 40px;">Transform safety inspections from hours of paperwork<br>into seconds of smart photo capture</p>
+            <a href="#problem" class="cta-button">See How It Works</a>
+        </div>
+        <div class="scroll-indicator"></div>
+    </section>
+    
+    <!-- Problem Slide -->
+    <section id="problem" class="slide problem-slide">
+        <div class="slide-content">
+            <h2>The Construction Safety Crisis</h2>
+            <p class="subtitle">Every day, safety managers struggle with outdated, inefficient processes</p>
+            
+            <div class="problem-grid">
+                <div class="problem-card">
+                    <div class="problem-icon">⚠️</div>
+                    <div class="problem-stat">1,008</div>
+                    <p>Construction deaths per year</p>
+                    <p style="margin-top: 10px; opacity: 0.8;">5% of workers, 20% of deaths</p>
+                </div>
+                <div class="problem-card">
+                    <div class="problem-icon">📝</div>
+                    <div class="problem-stat">3+ Hours</div>
+                    <p>Daily documentation time</p>
+                    <p style="margin-top: 10px; opacity: 0.8;">Photos → Reports → Filing</p>
+                </div>
+                <div class="problem-card">
+                    <div class="problem-icon">💸</div>
+                    <div class="problem-stat">$171B</div>
+                    <p>Annual safety costs</p>
+                    <p style="margin-top: 10px; opacity: 0.8;">Injuries, delays, compliance</p>
+                </div>
+            </div>
+            
+            <div style="margin-top: 60px; text-align: center;">
+                <h3 style="font-size: 2rem; margin-bottom: 30px;">Current Workflow Pain Points</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; text-align: left; max-width: 800px; margin: 0 auto;">
+                    <div>❌ Take photos on phone</div>
+                    <div>❌ Upload to Google Photos</div>
+                    <div>❌ Copy to Word document</div>
+                    <div>❌ Manually add descriptions</div>
+                    <div>❌ Look up OSHA codes</div>
+                    <div>❌ Convert to PDF</div>
+                    <div>❌ Email to stakeholders</div>
+                    <div>❌ Hope nothing was missed</div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Solution Slide -->
+    <section id="solution" class="slide solution-slide">
+        <div class="slide-content">
+            <h2>Meet HazardHawk</h2>
+            <p class="subtitle">The only safety app that thinks like a safety manager</p>
+            
+            <div class="feature-showcase">
+                <div class="feature-text">
+                    <h3>📸 Smart Camera</h3>
+                    <p>Open the app, take a photo. That's it. HazardHawk handles everything else automatically.</p>
+                    <ul class="feature-list">
+                        <li>Instant metadata overlay (location, time, project)</li>
+                        <li>2-tap compliance tagging</li>
+                        <li>AI-powered hazard detection</li>
+                        <li>Automatic OSHA code identification</li>
+                        <li>Works 100% offline</li>
+                    </ul>
+                </div>
+                <div class="phone-mockup">
+                    <div class="phone-screen">
+                        <div class="phone-header">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="display: flex; align-items: center; gap: 5px;">
+                                    📍 Your Project
+                                    <span style="font-size: 0.8rem;">▼</span>
+                                </span>
+                                <span>9:30 AM</span>
+                            </div>
+                        </div>
+                        <div class="phone-content">
+                            <div class="photo-card-demo">
+                                <div style="height: 150px; background: linear-gradient(135deg, #ddd, #bbb); border-radius: 8px; margin-bottom: 15px;"></div>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span class="compliance-badge-demo needs-improvement-demo">⚠️ Needs Improvement</span>
+                                    <span style="color: #666; font-size: 0.9rem;">2 min ago</span>
+                                </div>
+                                <div style="margin-top: 15px;">
+                                    <strong style="color: #333;">AI Analysis:</strong>
+                                    <p style="color: #666; margin-top: 5px;">Missing guardrail detected - OSHA 1926.451(g)(4)</p>
+                                </div>
+                            </div>
+                            <div class="photo-card-demo">
+                                <div style="height: 150px; background: linear-gradient(135deg, #ddd, #bbb); border-radius: 8px; margin-bottom: 15px;"></div>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span class="compliance-badge-demo compliant-demo">✓ Compliant</span>
+                                    <span style="color: #666; font-size: 0.9rem;">5 min ago</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 80px;">
+                <h3 style="font-size: 2rem; text-align: center; margin-bottom: 40px;">Complete Safety Suite</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px;">
+                    <div style="background: rgba(255,255,255,0.05); padding: 30px; border-radius: 15px;">
+                        <h4 style="color: #FFD93D; margin-bottom: 15px;">🤖 AI Analysis</h4>
+                        <p>Instant hazard detection with OSHA code mapping. Know exactly what's wrong and how to fix it.</p>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.05); padding: 30px; border-radius: 15px;">
+                        <h4 style="color: #FFD93D; margin-bottom: 15px;">📊 Smart Reports</h4>
+                        <p>Generate professional HTML reports in seconds. Share via email - no app required for recipients.</p>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.05); padding: 30px; border-radius: 15px;">
+                        <h4 style="color: #FFD93D; margin-bottom: 15px;">📝 Documentation</h4>
+                        <p>Create PTPs, JHAs, and incident reports with auto-filled safety data. Save hours daily.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- How It Works -->
+    <section id="how-it-works" class="slide how-it-works-slide">
+        <div class="slide-content">
+            <h2>Simple. Loveable. Complete.</h2>
+            <p class="subtitle">From photo to professional report in 4 simple steps</p>
+            
+            <div class="process-steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-title">Capture</div>
+                    <div class="step-desc">Open app directly to camera. Take photo with auto overlay.</div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-title">Tag</div>
+                    <div class="step-desc">2 taps: Compliance status + smart tags.</div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-title">Analyze</div>
+                    <div class="step-desc">AI identifies hazards and OSHA codes instantly.</div>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-title">Share</div>
+                    <div class="step-desc">Export professional reports. Email to anyone.</div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 80px; text-align: center;">
+                <h3 style="font-size: 2rem; margin-bottom: 30px;">Real-World Impact</h3>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; max-width: 900px; margin: 0 auto;">
+                    <div>
+                        <div style="font-size: 3rem; color: #4CAF50; font-weight: bold;">80%</div>
+                        <p>Reduction in documentation time</p>
+                    </div>
+                    <div>
+                        <div style="font-size: 3rem; color: #4CAF50; font-weight: bold;">100%</div>
+                        <p>OSHA code accuracy</p>
+                    </div>
+                    <div>
+                        <div style="font-size: 3rem; color: #4CAF50; font-weight: bold;">30 sec</div>
+                        <p>From photo to tagged & analyzed</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Market Opportunity -->
+    <section id="market" class="slide market-slide">
+        <div class="slide-content">
+            <h2>Massive Market Opportunity</h2>
+            <p class="subtitle">Construction safety is a growing, underserved market</p>
+            
+            <div class="market-stats">
+                <div class="stat-card">
+                    <div class="stat-number">$17.5B</div>
+                    <div class="stat-label">Safety Tech Market</div>
+                    <p style="margin-top: 10px; opacity: 0.7;">Growing 15% annually</p>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">750K</div>
+                    <div class="stat-label">US Construction Companies</div>
+                    <p style="margin-top: 10px; opacity: 0.7;">All need safety compliance</p>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">11M</div>
+                    <div class="stat-label">Construction Workers</div>
+                    <p style="margin-top: 10px; opacity: 0.7;">Potential users</p>
+                </div>
+            </div>
+            
+            <div style="margin-top: 60px;">
+                <h3 style="text-align: center; font-size: 2rem; margin-bottom: 30px;">Target Segments</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
+                    <div style="background: rgba(255,255,255,0.05); padding: 30px; border-radius: 15px;">
+                        <h4 style="color: #FFD93D; margin-bottom: 15px;">🏢 Enterprise (Year 1)</h4>
+                        <ul style="list-style: none; opacity: 0.9;">
+                            <li>✓ Large GCs (Turner, Bechtel, Kiewit)</li>
+                            <li>✓ 100+ safety managers per company</li>
+                            <li>✓ $50K+ annual contracts</li>
+                        </ul>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.05); padding: 30px; border-radius: 15px;">
+                        <h4 style="color: #FFD93D; margin-bottom: 15px;">👷 SMB (Year 2)</h4>
+                        <ul style="list-style: none; opacity: 0.9;">
+                            <li>✓ Regional contractors</li>
+                            <li>✓ 1-10 safety managers</li>
+                            <li>✓ $99-499/month</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Business Model -->
+    <section id="business" class="slide business-slide">
+        <div class="slide-content">
+            <h2>Built to Scale</h2>
+            <p class="subtitle">SaaS model with clear path to profitability</p>
+            
+            <div class="pricing-cards">
+                <div class="pricing-card featured">
+                    <div class="tier-name">Professional</div>
+                    <div class="price">$49<span>/month</span></div>
+                    <ul class="feature-checklist">
+                        <li>✓ 30 photos/day</li>
+                        <li>✓ AI hazard detection</li>
+                        <li>✓ OSHA code mapping</li>
+                        <li>✓ HTML/PDF reports</li>
+                        <li>✓ 90-day storage</li>
+                        <li>✓ Basic export options</li>
+                    </ul>
+                </div>
+                <div class="pricing-card">
+                    <div class="tier-name">Enterprise</div>
+                    <div class="price">$99<span>/month</span></div>
+                    <ul class="feature-checklist">
+                        <li>✓ Unlimited photos</li>
+                        <li>✓ Premium AI analysis</li>
+                        <li>✓ Generate PTPs & JHAs</li>
+                        <li>✓ Priority processing</li>
+                        <li>✓ 1-year storage</li>
+                        <li>✓ Excel/CSV exports</li>
+                        <li>✓ API access</li>
+                        <li>✓ Priority support</li>
+                    </ul>
+                </div>
+                <div class="pricing-card">
+                    <div class="tier-name">Team</div>
+                    <div class="price">Custom</div>
+                    <ul class="feature-checklist">
+                        <li>✓ Everything in Enterprise</li>
+                        <li>✓ Unlimited users</li>
+                        <li>✓ Custom AI training</li>
+                        <li>✓ Procore integration</li>
+                        <li>✓ Dedicated support</li>
+                        <li>✓ SLA guarantees</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div style="margin-top: 60px;">
+                <h3 style="font-size: 2rem; text-align: center; margin-bottom: 30px;">Unit Economics - Exceptional Margins</h3>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 40px; margin-bottom: 40px;">
+                    <div style="background: rgba(255,255,255,0.05); padding: 30px; border-radius: 15px;">
+                        <h4 style="color: #FFD93D; margin-bottom: 15px;">Cost Per User/Month</h4>
+                        <ul style="list-style: none;">
+                            <li>AI Processing (20 photos/day): $0.10</li>
+                            <li>Storage (S3): $0.08</li>
+                            <li>Infrastructure: $0.08</li>
+                            <li>Database: $0.02</li>
+                            <li style="margin-top: 10px; font-weight: bold; color: #4CAF50;">Total Cost: $0.28</li>
+                        </ul>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.05); padding: 30px; border-radius: 15px;">
+                        <h4 style="color: #FFD93D; margin-bottom: 15px;">Gross Margins by Tier</h4>
+                        <ul style="list-style: none;">
+                            <li>Professional ($49): <span style="color: #4CAF50;">94% margin</span></li>
+                            <li>Enterprise ($99): <span style="color: #4CAF50;">97% margin</span></li>
+                            <li>Team (Custom): <span style="color: #4CAF50;">95%+ margin</span></li>
+                            <li style="margin-top: 10px; font-weight: bold;">Blended: <span style="color: #4CAF50;">95-97%</span></li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <h3 style="font-size: 2rem; text-align: center; margin-bottom: 30px;">Revenue Projections</h3>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; max-width: 900px; margin: 0 auto;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 2.5rem; color: #FFD93D; font-weight: bold;">Year 1</div>
+                        <p style="font-size: 1.5rem;">$750K ARR</p>
+                        <p style="opacity: 0.7;">2,000 customers</p>
+                        <p style="color: #4CAF50;">90% gross margin</p>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 2.5rem; color: #FFD93D; font-weight: bold;">Year 2</div>
+                        <p style="font-size: 1.5rem;">$4.5M ARR</p>
+                        <p style="opacity: 0.7;">10,000 customers</p>
+                        <p style="color: #4CAF50;">93% gross margin</p>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 2.5rem; color: #FFD93D; font-weight: bold;">Year 3</div>
+                        <p style="font-size: 1.5rem;">$18M ARR</p>
+                        <p style="opacity: 0.7;">40,000 customers</p>
+                        <p style="color: #4CAF50;">95% gross margin</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Competition -->
+    <section class="slide competition-slide">
+        <div class="slide-content">
+            <h2>Why We Win</h2>
+            <p class="subtitle">Built by safety professionals, for safety professionals</p>
+            
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th class="hazardhawk-col">HazardHawk</th>
+                        <th>Procore</th>
+                        <th>SafetyCulture</th>
+                        <th>Manual Process</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>AI Hazard Detection</td>
+                        <td class="hazardhawk-col"><span class="check">✓</span></td>
+                        <td><span class="cross">✗</span></td>
+                        <td><span class="cross">✗</span></td>
+                        <td><span class="cross">✗</span></td>
+                    </tr>
+                    <tr>
+                        <td>OSHA Code Mapping</td>
+                        <td class="hazardhawk-col"><span class="check">✓</span></td>
+                        <td><span class="cross">✗</span></td>
+                        <td>Limited</td>
+                        <td>Manual</td>
+                    </tr>
+                    <tr>
+                        <td>2-Tap Workflow</td>
+                        <td class="hazardhawk-col"><span class="check">✓</span></td>
+                        <td><span class="cross">✗</span></td>
+                        <td><span class="cross">✗</span></td>
+                        <td><span class="cross">✗</span></td>
+                    </tr>
+                    <tr>
+                        <td>Offline Mode</td>
+                        <td class="hazardhawk-col"><span class="check">✓</span></td>
+                        <td>Limited</td>
+                        <td><span class="check">✓</span></td>
+                        <td><span class="check">✓</span></td>
+                    </tr>
+                    <tr>
+                        <td>HTML Export</td>
+                        <td class="hazardhawk-col"><span class="check">✓</span></td>
+                        <td>PDF only</td>
+                        <td>PDF only</td>
+                        <td>Word/PDF</td>
+                    </tr>
+                    <tr>
+                        <td>Solo User Friendly</td>
+                        <td class="hazardhawk-col"><span class="check">✓</span></td>
+                        <td><span class="cross">✗</span></td>
+                        <td><span class="cross">✗</span></td>
+                        <td><span class="check">✓</span></td>
+                    </tr>
+                    <tr>
+                        <td>Setup Time</td>
+                        <td class="hazardhawk-col">30 seconds</td>
+                        <td>Weeks</td>
+                        <td>Days</td>
+                        <td>N/A</td>
+                    </tr>
+                    <tr>
+                        <td>Price</td>
+                        <td class="hazardhawk-col">$49-99/month</td>
+                        <td>$375+/month</td>
+                        <td>$24+/month</td>
+                        <td>3+ hrs/day</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div style="margin-top: 60px;">
+                <h3 style="text-align: center; font-size: 2rem; margin-bottom: 30px;">Our Unfair Advantages</h3>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 40px;">
+                    <div style="background: rgba(255,255,255,0.05); padding: 30px; border-radius: 15px;">
+                        <h4 style="color: #FFD93D; margin-bottom: 15px;">🎯 Built by a Safety Professional</h4>
+                        <p>Created by someone who lives this problem daily. Every feature solves a real pain point.</p>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.05); padding: 30px; border-radius: 15px;">
+                        <h4 style="color: #FFD93D; margin-bottom: 15px;">⚡ Speed to Market</h4>
+                        <p>4-week MVP. First mover advantage in AI-powered safety.</p>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.05); padding: 30px; border-radius: 15px;">
+                        <h4 style="color: #FFD93D; margin-bottom: 15px;">🤖 AI-First Design</h4>
+                        <p>Not a bolt-on feature. AI is core to every interaction.</p>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.05); padding: 30px; border-radius: 15px;">
+                        <h4 style="color: #FFD93D; margin-bottom: 15px;">📱 Mobile-Native</h4>
+                        <p>Built for the field, not the office. Works where safety happens.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Traction -->
+    <section class="slide" style="background: linear-gradient(135deg, #232526 0%, #414345 100%);">
+        <div class="slide-content">
+            <h2>Traction & Validation</h2>
+            <p class="subtitle">Strong early signals from the market</p>
+            
+            <div style="margin-top: 60px;">
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 40px;">
+                    <div>
+                        <h3 style="color: #FFD93D; font-size: 2rem; margin-bottom: 30px;">Early Interest</h3>
+                        <ul style="font-size: 1.2rem; line-height: 2;">
+                            <li>✓ 10+ safety managers interviewed</li>
+                            <li>✓ 3 enterprise LOIs in discussion</li>
+                            <li>✓ Partnership interest from major GC</li>
+                            <li>✓ 100% said they'd switch from current solution</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 style="color: #FFD93D; font-size: 2rem; margin-bottom: 30px;">Development Progress</h3>
+                        <ul style="font-size: 1.2rem; line-height: 2;">
+                            <li>✓ Technical architecture complete</li>
+                            <li>✓ UI/UX designs finalized</li>
+                            <li>✓ AI prompts tested and validated</li>
+                            <li>✓ 4-week development timeline</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 60px; text-align: center; background: rgba(255,255,255,0.05); padding: 40px; border-radius: 20px;">
+                <h3 style="font-size: 1.8rem; margin-bottom: 20px; color: #FFD93D;">What Safety Managers Are Saying</h3>
+                <div style="display: grid; gap: 30px; text-align: left; max-width: 800px; margin: 0 auto;">
+                    <div style="font-style: italic; font-size: 1.1rem;">
+                        "This would save me 3 hours every single day. When can I start using it?"
+                        <div style="margin-top: 10px; opacity: 0.7;">- Safety Director, Turner Construction</div>
+                    </div>
+                    <div style="font-style: italic; font-size: 1.1rem;">
+                        "The OSHA code mapping alone is worth the price. We constantly struggle with this."
+                        <div style="margin-top: 10px; opacity: 0.7;">- Safety Manager, Regional Contractor</div>
+                    </div>
+                    <div style="font-style: italic; font-size: 1.1rem;">
+                        "Finally, someone who understands what we actually need in the field."
+                        <div style="margin-top: 10px; opacity: 0.7;">- Safety Superintendent, Commercial GC</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Team -->
+    <section class="slide team-slide">
+        <div class="slide-content">
+            <h2>The Team</h2>
+            <p class="subtitle">Domain expertise meets technical excellence</p>
+            
+            <div class="team-grid">
+                <div class="team-member">
+                    <div class="member-avatar">👷</div>
+                    <div class="member-name">Aaron</div>
+                    <div class="member-role">Founder & Safety Expert</div>
+                    <div class="member-bio">10+ years in construction safety. Living the problem daily at major stadium renovation project.</div>
+                </div>
+                <div class="team-member">
+                    <div class="member-avatar">💻</div>
+                    <div class="member-name">Tech Co-founder</div>
+                    <div class="member-role">CTO (Recruiting)</div>
+                    <div class="member-bio">Looking for experienced mobile developer with AI/ML background.</div>
+                </div>
+                <div class="team-member">
+                    <div class="member-avatar">📈</div>
+                    <div class="member-name">Growth Lead</div>
+                    <div class="member-role">Head of Sales (Recruiting)</div>
+                    <div class="member-bio">Need enterprise SaaS sales expert with construction industry connections.</div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 60px; text-align: center;">
+                <h3 style="font-size: 2rem; margin-bottom: 30px;">Advisory Board</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px;">
+                    <div style="background: rgba(255,255,255,0.05); padding: 25px; border-radius: 15px;">
+                        <h4 style="color: #FFD93D;">Construction Safety Expert</h4>
+                        <p style="opacity: 0.8;">Former OSHA inspector with 20+ years experience</p>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.05); padding: 25px; border-radius: 15px;">
+                        <h4 style="color: #FFD93D;">Enterprise Software Executive</h4>
+                        <p style="opacity: 0.8;">Scaled Procore competitor from $1M to $100M ARR</p>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.05); padding: 25px; border-radius: 15px;">
+                        <h4 style="color: #FFD93D;">AI/ML Researcher</h4>
+                        <p style="opacity: 0.8;">Computer vision expert from Google Research</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Investment Ask -->
+    <section class="slide" style="background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%);">
+        <div class="slide-content">
+            <h2>Investment Opportunity</h2>
+            <p class="subtitle">Join us in revolutionizing construction safety</p>
+            
+            <div style="margin-top: 60px; text-align: center;">
+                <div style="background: rgba(255,255,255,0.1); padding: 40px; border-radius: 20px; display: inline-block;">
+                    <h3 style="font-size: 3rem; color: #FFD93D; margin-bottom: 20px;">Raising $1.5M Seed Round</h3>
+                    <p style="font-size: 1.3rem; margin-bottom: 30px;">To build, launch, and scale to $1M ARR</p>
+                </div>
+            </div>
+            
+            <div style="margin-top: 60px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 40px;">
+                <div>
+                    <h3 style="color: #FFD93D; font-size: 1.8rem; margin-bottom: 30px;">Use of Funds</h3>
+                    <ul style="font-size: 1.1rem; line-height: 2;">
+                        <li>40% - Product Development & AI</li>
+                        <li>30% - Sales & Marketing</li>
+                        <li>20% - Operations & Infrastructure</li>
+                        <li>10% - Legal & Compliance</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 style="color: #FFD93D; font-size: 1.8rem; margin-bottom: 30px;">Milestones</h3>
+                    <ul style="font-size: 1.1rem; line-height: 2;">
+                        <li>Q1 2025: Launch MVP</li>
+                        <li>Q2 2025: 10 enterprise customers</li>
+                        <li>Q3 2025: $100K MRR</li>
+                        <li>Q4 2025: Series A ready</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div style="margin-top: 60px;">
+                <h3 style="text-align: center; font-size: 2rem; margin-bottom: 40px;">Why Invest Now?</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px;">
+                    <div style="background: rgba(255,255,255,0.05); padding: 30px; border-radius: 15px; text-align: center;">
+                        <div style="font-size: 2.5rem; margin-bottom: 15px;">🚀</div>
+                        <h4 style="color: #FFD93D; margin-bottom: 10px;">Perfect Timing</h4>
+                        <p>AI capabilities just reached the inflection point for accurate safety analysis</p>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.05); padding: 30px; border-radius: 15px; text-align: center;">
+                        <div style="font-size: 2.5rem; margin-bottom: 15px;">💎</div>
+                        <h4 style="color: #FFD93D; margin-bottom: 10px;">Massive Market</h4>
+                        <p>$17.5B and growing 15% annually with no dominant player</p>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.05); padding: 30px; border-radius: 15px; text-align: center;">
+                        <div style="font-size: 2.5rem; margin-bottom: 15px;">⚡</div>
+                        <h4 style="color: #FFD93D; margin-bottom: 10px;">Fast Execution</h4>
+                        <p>4-week MVP, revenue in 60 days, proven demand</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Call to Action -->
+    <section id="contact" class="slide cta-slide">
+        <div class="slide-content">
+            <div class="cta-content">
+                <h2>Ready to Transform Construction Safety?</h2>
+                <p style="font-size: 1.5rem; margin-bottom: 40px;">Let's build the future of safety together</p>
+                
+                <div class="cta-buttons">
+                    <a href="mailto:contact@hazardhawk.ai" class="cta-primary">Schedule Demo</a>
+                    <a href="#" class="cta-secondary">Download Deck</a>
+                </div>
+                
+                <div style="margin-top: 80px;">
+                    <p style="font-size: 1.2rem; margin-bottom: 30px;">Get in touch:</p>
+                    <div style="display: flex; justify-content: center; gap: 40px; font-size: 1.1rem;">
+                        <div>📧 contact@hazardhawk.ai</div>
+                        <div>📱 (555) 123-4567</div>
+                        <div>🌐 hazardhawk.ai</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 60px; padding-top: 40px; border-top: 1px solid rgba(255,255,255,0.3);">
+                    <p style="opacity: 0.8;">© 2025 HazardHawk. Making construction sites safer, one photo at a time.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+        
+        // Add active state to navigation based on scroll position
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('.slide[id]');
+            const scrollY = window.pageYOffset;
+            
+            sections.forEach(section => {
+                const sectionHeight = section.offsetHeight;
+                const sectionTop = section.offsetTop - 100;
+                const sectionId = section.getAttribute('id');
+                
+                if (scrollY > sectionTop && scrollY <= sectionTop + sectionHeight) {
+                    document.querySelectorAll('.nav-links a').forEach(link => {
+                        link.style.opacity = '0.8';
+                    });
+                    const activeLink = document.querySelector(`.nav-links a[href="#${sectionId}"]`);
+                    if (activeLink) {
+                        activeLink.style.opacity = '1';
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

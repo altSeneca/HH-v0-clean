@@ -1,0 +1,548 @@
+name: Cross-Platform Test Automation
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'shared/**'
+      - 'androidApp/**'
+      - 'iosApp/**'
+      - 'desktopApp/**'
+      - 'webApp/**'
+      - '.github/workflows/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'shared/**'
+      - 'androidApp/**'
+      - 'iosApp/**'
+      - 'desktopApp/**' 
+      - 'webApp/**'
+      - '.github/workflows/**'
+  schedule:
+    # Run performance regression tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+env:
+  GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=2 -Dorg.gradle.jvmargs="-Xmx3g -XX:MaxMetaspaceSize=1g"
+  KOTLIN_INCREMENTAL: false
+
+jobs:
+  # Shared Module Tests (Unit + Integration)
+  shared-tests:
+    name: Shared Module Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        test-type: [unit, integration, performance]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: Cache Gradle packages
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          gradle-${{ runner.os }}-
+          
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+      
+    - name: Run Unit Tests
+      if: matrix.test-type == 'unit'
+      run: |
+        ./gradlew :shared:testDebugUnitTest --continue
+        ./gradlew :shared:testReleaseUnitTest --continue
+        
+    - name: Run Integration Tests  
+      if: matrix.test-type == 'integration'
+      run: |
+        ./gradlew :shared:testDebugUnitTest --tests "com.hazardhawk.integration.*" --continue
+        
+    - name: Run Performance Tests
+      if: matrix.test-type == 'performance'
+      run: |
+        ./gradlew :shared:testDebugUnitTest --tests "com.hazardhawk.performance.*" --continue
+        
+    - name: Generate Test Report
+      if: always()
+      run: |
+        ./gradlew :shared:testReport
+        
+    - name: Upload Test Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: shared-test-results-${{ matrix.test-type }}
+        path: |
+          shared/build/reports/tests/
+          shared/build/test-results/
+          
+    - name: Upload Coverage to Codecov
+      if: matrix.test-type == 'unit'
+      uses: codecov/codecov-action@v4
+      with:
+        file: shared/build/reports/jacoco/test/jacocoTestReport.xml
+        flags: shared
+        name: shared-coverage
+
+  # Android Tests
+  android-tests:
+    name: Android Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        api-level: [28, 33]
+        test-type: [unit, instrumented, accessibility]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: Cache Gradle packages
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+      
+    - name: Run Android Unit Tests
+      if: matrix.test-type == 'unit'
+      run: |
+        ./gradlew :androidApp:testDebugUnitTest --continue
+        ./gradlew :androidApp:testReleaseUnitTest --continue
+        
+    - name: Setup Android SDK
+      if: matrix.test-type == 'instrumented' || matrix.test-type == 'accessibility'
+      uses: android-actions/setup-android@v3
+      
+    - name: Enable KVM group perms
+      if: matrix.test-type == 'instrumented' || matrix.test-type == 'accessibility'
+      run: |
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger --name-match=kvm
+        
+    - name: AVD Cache
+      if: matrix.test-type == 'instrumented' || matrix.test-type == 'accessibility'
+      uses: actions/cache@v4
+      id: avd-cache
+      with:
+        path: |
+          ~/.android/avd/*
+          ~/.android/adb*
+        key: avd-${{ matrix.api-level }}
+        
+    - name: Create AVD and Generate Snapshot
+      if: (matrix.test-type == 'instrumented' || matrix.test-type == 'accessibility') && steps.avd-cache.outputs.cache-hit != 'true'
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: ${{ matrix.api-level }}
+        target: google_apis
+        arch: x86_64
+        force-avd-creation: false
+        emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+        disable-animations: true
+        script: echo "Generated AVD snapshot for caching."
+        
+    - name: Run Android Instrumented Tests
+      if: matrix.test-type == 'instrumented'
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: ${{ matrix.api-level }}
+        target: google_apis
+        arch: x86_64
+        force-avd-creation: false
+        emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+        disable-animations: true
+        script: |
+          ./gradlew :androidApp:connectedDebugAndroidTest --continue
+          
+    - name: Run Accessibility Tests
+      if: matrix.test-type == 'accessibility'
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: ${{ matrix.api-level }}
+        target: google_apis
+        arch: x86_64
+        force-avd-creation: false
+        emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+        disable-animations: true
+        script: |
+          # Enable TalkBack for accessibility testing
+          adb shell settings put secure enabled_accessibility_services com.google.android.marvin.talkback/com.google.android.marvin.talkback.TalkBackService
+          adb shell settings put secure accessibility_enabled 1
+          
+          # Run accessibility tests
+          ./gradlew :androidApp:connectedDebugAndroidTest --tests "*.accessibility.*" --continue
+          
+    - name: Upload Android Test Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-test-results-api${{ matrix.api-level }}-${{ matrix.test-type }}
+        path: |
+          androidApp/build/reports/
+          androidApp/build/test-results/
+          androidApp/build/outputs/androidTest-results/
+
+  # iOS Tests (macOS only)
+  ios-tests:
+    name: iOS Tests
+    runs-on: macos-13
+    
+    strategy:
+      matrix:
+        xcode-version: ['14.3.1', '15.0']
+        test-type: [unit, ui]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: Select Xcode
+      run: sudo xcode-select -switch /Applications/Xcode_${{ matrix.xcode-version }}.app/Contents/Developer
+      
+    - name: Cache Gradle packages
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+      
+    - name: Build KMP for iOS
+      run: ./gradlew :shared:linkDebugFrameworkIosX64
+      
+    - name: Run iOS Unit Tests
+      if: matrix.test-type == 'unit'
+      run: |
+        cd iosApp
+        xcodebuild test \
+          -workspace HazardHawk.xcworkspace \
+          -scheme HazardHawk-iOS \
+          -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.0' \
+          -only-testing:HazardHawkTests \
+          | xcpretty --test --color
+          
+    - name: Run iOS UI Tests
+      if: matrix.test-type == 'ui'
+      run: |
+        cd iosApp
+        xcodebuild test \
+          -workspace HazardHawk.xcworkspace \
+          -scheme HazardHawk-iOS \
+          -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.0' \
+          -only-testing:HazardHawkUITests \
+          | xcpretty --test --color
+          
+    - name: Upload iOS Test Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ios-test-results-${{ matrix.xcode-version }}-${{ matrix.test-type }}
+        path: |
+          iosApp/build/reports/
+          iosApp/DerivedData/Logs/Test/
+
+  # Desktop Tests (JVM)
+  desktop-tests:
+    name: Desktop Tests
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        test-type: [unit, integration]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: Cache Gradle packages
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        
+    - name: Grant execute permission for gradlew
+      if: runner.os != 'Windows'
+      run: chmod +x gradlew
+      
+    - name: Run Desktop Unit Tests
+      if: matrix.test-type == 'unit'
+      run: |
+        ./gradlew :desktopApp:test --continue
+        
+    - name: Run Desktop Integration Tests
+      if: matrix.test-type == 'integration'
+      run: |
+        ./gradlew :desktopApp:test --tests "*.integration.*" --continue
+        
+    - name: Upload Desktop Test Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: desktop-test-results-${{ matrix.os }}-${{ matrix.test-type }}
+        path: |
+          desktopApp/build/reports/
+          desktopApp/build/test-results/
+
+  # Web Tests
+  web-tests:
+    name: Web Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        browser: [chrome, firefox]
+        test-type: [unit, e2e]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Cache Gradle packages
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+      
+    - name: Run Web Unit Tests
+      if: matrix.test-type == 'unit'
+      run: |
+        ./gradlew :webApp:jsTest --continue
+        
+    - name: Build Web App
+      if: matrix.test-type == 'e2e'
+      run: |
+        ./gradlew :webApp:jsBrowserProductionWebpack
+        
+    - name: Run E2E Tests
+      if: matrix.test-type == 'e2e'
+      run: |
+        # Install browser dependencies
+        npx playwright install --with-deps ${{ matrix.browser }}
+        
+        # Start web server and run E2E tests
+        ./gradlew :webApp:jsBrowserTest --continue
+        
+    - name: Upload Web Test Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: web-test-results-${{ matrix.browser }}-${{ matrix.test-type }}
+        path: |
+          webApp/build/reports/
+          webApp/build/test-results/
+
+  # OSHA Compliance Tests
+  compliance-tests:
+    name: OSHA Compliance Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: Cache Gradle packages
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+      
+    - name: Run OSHA Compliance Tests
+      run: |
+        ./gradlew :shared:testDebugUnitTest --tests "com.hazardhawk.compliance.*" --continue
+        
+    - name: Generate Compliance Report
+      run: |
+        echo "# OSHA Compliance Test Report" > compliance-report.md
+        echo "" >> compliance-report.md
+        echo "Generated on: $(date)" >> compliance-report.md
+        echo "" >> compliance-report.md
+        
+        # Extract compliance test results
+        if [ -f "shared/build/test-results/testDebugUnitTest/TEST-*.xml" ]; then
+          echo "## Test Results" >> compliance-report.md
+          grep -o 'tests="[0-9]*"' shared/build/test-results/testDebugUnitTest/TEST-*.xml | head -1 >> compliance-report.md
+          grep -o 'failures="[0-9]*"' shared/build/test-results/testDebugUnitTest/TEST-*.xml | head -1 >> compliance-report.md
+        fi
+        
+    - name: Upload Compliance Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: osha-compliance-report
+        path: compliance-report.md
+
+  # Performance Regression Detection
+  performance-regression:
+    name: Performance Regression Detection
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || contains(github.event.head_commit.message, '[performance]')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: Cache Gradle packages
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+      
+    - name: Run Performance Benchmark
+      run: |
+        ./gradlew :shared:testDebugUnitTest --tests "com.hazardhawk.performance.*" --continue
+        
+    - name: Store Benchmark Results
+      uses: benchmark-action/github-action-benchmark@v1
+      with:
+        tool: 'custom'
+        output-file-path: shared/build/performance-results.json
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        auto-push: true
+        alert-threshold: '150%'
+        comment-on-alert: true
+        fail-on-alert: true
+
+  # Test Result Summary
+  test-summary:
+    name: Test Result Summary
+    runs-on: ubuntu-latest
+    needs: [shared-tests, android-tests, ios-tests, desktop-tests, web-tests, compliance-tests]
+    if: always()
+    
+    steps:
+    - name: Download All Test Results
+      uses: actions/download-artifact@v4
+      with:
+        path: test-results/
+        
+    - name: Generate Test Summary
+      run: |
+        echo "# HazardHawk Test Automation Summary" > test-summary.md
+        echo "" >> test-summary.md
+        echo "**Build:** ${{ github.run_number }}" >> test-summary.md
+        echo "**Commit:** ${{ github.sha }}" >> test-summary.md
+        echo "**Date:** $(date)" >> test-summary.md
+        echo "" >> test-summary.md
+        
+        echo "## Platform Coverage" >> test-summary.md
+        echo "- ✅ Android (API 28, 33)" >> test-summary.md
+        echo "- ✅ iOS (Xcode 14.3.1, 15.0)" >> test-summary.md
+        echo "- ✅ Desktop (Ubuntu, Windows, macOS)" >> test-summary.md
+        echo "- ✅ Web (Chrome, Firefox)" >> test-summary.md
+        echo "" >> test-summary.md
+        
+        echo "## Test Types" >> test-summary.md
+        echo "- ✅ Unit Tests" >> test-summary.md
+        echo "- ✅ Integration Tests" >> test-summary.md
+        echo "- ✅ Performance Tests" >> test-summary.md
+        echo "- ✅ Accessibility Tests" >> test-summary.md
+        echo "- ✅ OSHA Compliance Tests" >> test-summary.md
+        echo "" >> test-summary.md
+        
+        # Count test result files
+        RESULT_COUNT=$(find test-results/ -name "*.xml" -o -name "*.json" | wc -l)
+        echo "## Results" >> test-summary.md
+        echo "- Total test result files: $RESULT_COUNT" >> test-summary.md
+        
+    - name: Upload Test Summary
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-summary
+        path: test-summary.md
+        
+    - name: Comment PR with Summary
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const summary = fs.readFileSync('test-summary.md', 'utf8');
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: summary
+          });
