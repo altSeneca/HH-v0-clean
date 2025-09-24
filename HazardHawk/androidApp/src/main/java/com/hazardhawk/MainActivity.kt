@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.android.ext.android.inject
 import org.koin.androidx.compose.get
 
@@ -45,6 +46,9 @@ import com.hazardhawk.domain.repositories.PhotoRepository
 import com.hazardhawk.data.PhotoRepositoryCompat
 import com.hazardhawk.database.HazardHawkDatabase
 import com.hazardhawk.background.OSHASyncManager
+import com.hazardhawk.camera.AppStateManager
+import com.hazardhawk.camera.MetadataSettingsManager
+import com.hazardhawk.data.ProjectManager
 
 class MainActivity : ComponentActivity() {
     // Volume button capture trigger state
@@ -110,21 +114,48 @@ fun HazardHawkNavigation(
 ) {
     val navController = rememberNavController()
     val context = LocalContext.current
-    
-    
+
+    // Setup state managers
+    val projectManager = remember { ProjectManager(context) }
+    val metadataSettingsManager = remember { MetadataSettingsManager(context, projectManager) }
+    val appStateManager = remember { AppStateManager(context, metadataSettingsManager) }
+
+    // Collect app settings
+    val appSettings by metadataSettingsManager.appSettings.collectAsStateWithLifecycle()
+    val userProfile by metadataSettingsManager.userProfile.collectAsStateWithLifecycle()
+    val currentProject by metadataSettingsManager.currentProject.collectAsStateWithLifecycle()
+
+    // Calculate dynamic start destination
+    val startDestination = remember(appSettings, userProfile, currentProject) {
+        val hasData = userProfile.company.isNotBlank() && currentProject.projectName.isNotBlank()
+        val showOnLaunch = appSettings.startup.showCompanyProjectOnLaunch
+        val firstToday = appStateManager.isFirstLaunchToday()
+
+        when {
+            !hasData -> "company_project_entry"  // First time setup
+            !showOnLaunch -> "camera"            // Setting disabled
+            firstToday -> "company_project_entry" // First launch today
+            else -> "camera"                     // Subsequent launches
+        }.also {
+            Log.d("HazardHawk", "Navigation decision: hasData=$hasData, showOnLaunch=$showOnLaunch, firstToday=$firstToday -> $it")
+        }
+    }
+
     // TODO: Replace with proper dependency injection (Koin)
     val mockDatabase: HazardHawkDatabase? = null // This will be properly injected
     val photoRepository: PhotoRepository = PhotoRepositoryCompat(context)
-    
+
     NavHost(
         navController = navController,
-        startDestination = "company_project_entry"
+        startDestination = startDestination
     ) {
         // Company/Project entry screen - new starting point
         composable("company_project_entry") {
             CompanyProjectEntryScreen(
                 onNavigateToCamera = { company, project ->
                     Log.d("HazardHawk", "Navigating to camera with Company: $company, Project: $project")
+                    // Update last launch date to prevent showing this screen again today
+                    appStateManager.updateLastLaunchDate()
                     navController.navigate("camera") {
                         popUpTo("company_project_entry") { inclusive = true }
                     }

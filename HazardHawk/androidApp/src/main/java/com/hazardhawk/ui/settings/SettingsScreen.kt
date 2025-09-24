@@ -35,6 +35,8 @@ import com.hazardhawk.security.SecureKeyManager
 import com.hazardhawk.ui.components.APIKeySetupCard
 import com.hazardhawk.ui.components.validateAPIKey
 import com.hazardhawk.data.repositories.UISettingsRepository
+import com.hazardhawk.camera.MetadataSettingsManager
+import com.hazardhawk.data.ProjectManager
 import org.koin.compose.koinInject
 
 /**
@@ -57,10 +59,13 @@ fun SettingsScreen(
     val context = LocalContext.current
     val secureKeyManager = remember { SecureKeyManager.getInstance(context) }
     val uiSettingsRepository: UISettingsRepository = koinInject()
+    val projectManager = remember { ProjectManager(context) }
+    val metadataSettingsManager = remember { MetadataSettingsManager(context, projectManager) }
     val coroutineScope = rememberCoroutineScope()
 
     // Load settings from repository
     val uiSettings by uiSettingsRepository.getSettingsFlow().collectAsStateWithLifecycle()
+    val appSettings by metadataSettingsManager.appSettings.collectAsStateWithLifecycle()
 
     // Initialize repository on first composition
     LaunchedEffect(Unit) {
@@ -191,7 +196,27 @@ fun SettingsScreen(
                     )
                 }
             }
-            
+
+            // Startup Settings
+            SettingsSection(title = "Startup Settings") {
+                SettingsToggleItem(
+                    title = "Show Company/Project on Daily Launch",
+                    subtitle = "Display company and project selection on first app launch each day",
+                    icon = Icons.Default.BusinessCenter,
+                    checked = appSettings.startup.showCompanyProjectOnLaunch,
+                    onCheckedChange = { enabled ->
+                        coroutineScope.launch {
+                            val updatedSettings = appSettings.copy(
+                                startup = appSettings.startup.copy(
+                                    showCompanyProjectOnLaunch = enabled
+                                )
+                            )
+                            metadataSettingsManager.updateAppSettings(updatedSettings)
+                        }
+                    }
+                )
+            }
+
             // Safety & Accessibility Settings
             SettingsSection(title = "Safety & Accessibility") {
                 SettingsToggleItem(

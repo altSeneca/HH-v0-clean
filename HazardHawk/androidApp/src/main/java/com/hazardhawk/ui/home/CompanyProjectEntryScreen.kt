@@ -67,12 +67,6 @@ fun CompanyProjectEntryScreen(
             companyName = userProfile.company
             projectName = currentProject.projectName
             dataLoaded = true
-
-            // Auto-navigate if both company and project are already saved
-            if (userProfile.company.isNotBlank() && currentProject.projectName.isNotBlank()) {
-                delay(500) // Brief delay to show the screen before navigating
-                onNavigateToCamera(userProfile.company, currentProject.projectName)
-            }
         }
     }
 
@@ -651,7 +645,7 @@ private fun StartDocumentationButton(
                 modifier = Modifier.size(24.dp)
             )
             Text(
-                text = if (enabled) "Start Safety Documentation" else "Enter Company & Project Details",
+                text = if (enabled) "Start" else "Enter Details",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White

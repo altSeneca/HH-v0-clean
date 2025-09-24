@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import android.util.Log
+import java.text.SimpleDateFormat
+import java.util.*
 
 /**
  * AppStateManager - Lifecycle-aware state persistence system
@@ -28,6 +30,7 @@ class AppStateManager(
         private const val PREFS_NAME = "hazardhawk_app_state"
         private const val KEY_IS_FIRST_LAUNCH = "is_first_launch"
         private const val KEY_STATE_VERSION = "state_version"
+        private const val KEY_LAST_LAUNCH_DATE = "last_launch_date"
         private const val CURRENT_STATE_VERSION = 1
     }
 
@@ -130,6 +133,27 @@ class AppStateManager(
 
         // Re-validate state to transition to Ready
         validatePersistedState()
+    }
+
+    /**
+     * Check if this is the first launch of the current day
+     */
+    fun isFirstLaunchToday(): Boolean {
+        val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        val lastLaunchDate = sharedPrefs.getString(KEY_LAST_LAUNCH_DATE, "")
+
+        return lastLaunchDate != today
+    }
+
+    /**
+     * Update the last launch date to today
+     */
+    fun updateLastLaunchDate() {
+        val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        sharedPrefs.edit()
+            .putString(KEY_LAST_LAUNCH_DATE, today)
+            .apply()
+        Log.d(TAG, "Updated last launch date to: $today")
     }
 
     /**

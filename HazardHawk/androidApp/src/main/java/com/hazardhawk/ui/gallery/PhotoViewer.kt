@@ -12,11 +12,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -25,6 +27,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.tween
+import androidx.compose.material3.BottomSheetScaffold
+import androidx.compose.material3.rememberBottomSheetScaffoldState
+import androidx.compose.material3.rememberStandardBottomSheetState
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.ImageLoader
@@ -151,6 +160,21 @@ fun PhotoViewerScreen(
     var currentIndex by remember { mutableIntStateOf(initialPhotoIndex.coerceIn(0, photos.size - 1)) }
     val hapticFeedback = LocalHapticFeedback.current
 
+    // UI visibility state for immersive photo viewing
+    var isUiVisible by remember { mutableStateOf(true) }
+    var lastInteractionTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
+
+    // Auto-fade UI after 3 seconds of inactivity
+    LaunchedEffect(lastInteractionTime, isUiVisible) {
+        if (isUiVisible) {
+            delay(3000) // 3 second delay
+            val currentTime = System.currentTimeMillis()
+            if (currentTime - lastInteractionTime >= 3000) {
+                isUiVisible = false
+            }
+        }
+    }
+
     // Track PhotoViewer launch performance
     val launchTracker = remember { performanceTracker.trackPhotoLoad("initial_load") }
     LaunchedEffect(Unit) {
@@ -216,35 +240,64 @@ fun PhotoViewerScreen(
 
     // Wrap entire PhotoViewer with performance monitoring
     TouchPerformanceWrapper(enabled = true) {
-        Column(
+        val bottomSheetState = rememberStandardBottomSheetState()
+        val scaffoldState = rememberBottomSheetScaffoldState(
+            bottomSheetState = bottomSheetState
+        )
+
+        BottomSheetScaffold(
+            scaffoldState = scaffoldState,
+            sheetContent = {
+                // Photo info section as bottom sheet content with fixed height
+                PhotoInfoSection(
+                    photo = currentPhoto,
+                    navigationState = navigationState,
+                    onTagsUpdated = onTagsUpdated,
+                    performanceTracker = performanceTracker,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(480.dp) // Fixed height for consistent expanded position
+                )
+            },
+            sheetPeekHeight = 120.dp,
             modifier = modifier
-                .fillMaxSize()
-                .background(ConstructionBlack)
         ) {
-        // Top half: Photo viewer with controls
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-        ) {
-            // Photo viewer
+            // Full-screen photo viewer with controls
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(ConstructionBlack)
+            ) {
+            // Photo viewer with tap-to-toggle UI
             ConstructionPhotoViewer(
                 photo = currentPhoto,
+                onPhotoTap = {
+                    isUiVisible = !isUiVisible
+                    lastInteractionTime = System.currentTimeMillis()
+                },
                 modifier = Modifier.fillMaxSize()
             )
 
-            // Top controls bar with performance-optimized navigation
+            // Top controls bar with animated visibility
             TopControlsBar(
                 navigationState = navigationState,
                 currentPhoto = currentPhoto,
+                isVisible = isUiVisible,
                 onBack = onNavigateBack,
-                onShare = { onShare(currentPhoto) },
-                onDelete = { onDelete(currentPhoto) },
+                onShare = {
+                    onShare(currentPhoto)
+                    lastInteractionTime = System.currentTimeMillis()
+                },
+                onDelete = {
+                    onDelete(currentPhoto)
+                    lastInteractionTime = System.currentTimeMillis()
+                },
                 onPrevious = {
                     if (navigationState.canNavigatePrevious) {
                         val navTracker = performanceTracker.trackTabSwitch("photo_${currentIndex}", "photo_${currentIndex - 1}")
                         currentIndex--
                         hapticFeedback.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
+                        lastInteractionTime = System.currentTimeMillis()
                         navTracker.complete()
                     }
                 },
@@ -253,22 +306,13 @@ fun PhotoViewerScreen(
                         val navTracker = performanceTracker.trackTabSwitch("photo_${currentIndex}", "photo_${currentIndex + 1}")
                         currentIndex++
                         hapticFeedback.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
+                        lastInteractionTime = System.currentTimeMillis()
                         navTracker.complete()
                     }
                 },
                 modifier = Modifier.align(Alignment.TopCenter)
             )
-        }
-
-        // Bottom half: Tag management and AI analysis with performance tracking
-        PhotoInfoSection(
-            photo = currentPhoto,
-            onTagsUpdated = onTagsUpdated,
-            performanceTracker = performanceTracker,
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-        )
+            }
         }
     }
 }
@@ -276,13 +320,14 @@ fun PhotoViewerScreen(
 @Composable
 private fun ConstructionPhotoViewer(
     photo: Photo,
+    onPhotoTap: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val imageLoader: ImageLoader = koinInject()
     val memoryManager: ConstructionPhotoMemoryManager = koinInject()
 
-    // Performance-optimized image loading for construction photography
+    // Performance-optimized image loading for construction photography with tap support
     AsyncImage(
         model = ImageRequest.Builder(context)
             .data(photo.filePath)
@@ -292,7 +337,14 @@ private fun ConstructionPhotoViewer(
             .build(),
         imageLoader = imageLoader,
         contentDescription = "Construction Photo: ${photo.fileName}",
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() }
+            ) {
+                onPhotoTap()
+            },
         contentScale = ContentScale.Fit,
         onSuccess = {
             Log.d("ConstructionPhotoViewer", "Successfully loaded photo: ${photo.fileName}")
@@ -314,6 +366,7 @@ private fun ConstructionPhotoViewer(
 private fun TopControlsBar(
     navigationState: PhotoNavigationState,
     currentPhoto: Photo,
+    isVisible: Boolean,
     onBack: () -> Unit,
     onShare: () -> Unit,
     onDelete: () -> Unit,
@@ -321,110 +374,103 @@ private fun TopControlsBar(
     onNext: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        color = Color.Black.copy(alpha = 0.8f),
-        shape = RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp)
+    // Clean floating controls without background clutter with visibility animation
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .graphicsLayer {
+                alpha = if (isVisible) 1f else 0f
+            }
     ) {
-        Column {
-            // Status bar spacing
-            Spacer(modifier = Modifier.height(40.dp))
+        // Status bar spacing
+        Spacer(modifier = Modifier.height(40.dp))
 
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Back button - left aligned
+            FloatingIconButton(
+                onClick = onBack,
+                backgroundColor = SafetyOrange,
+                contentColor = Color.White
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "Back to gallery",
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            // Navigation controls - center
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Back button - glove-friendly size
-                ConstructionIconButton(
-                    onClick = onBack,
-                    backgroundColor = SafetyOrange,
-                    contentColor = Color.White
+                // Previous button
+                FloatingIconButton(
+                    onClick = onPrevious,
+                    enabled = navigationState.canNavigatePrevious,
+                    backgroundColor = if (navigationState.canNavigatePrevious) SafetyOrange else Color.Gray.copy(alpha = 0.3f),
+                    contentColor = Color.White,
+                    size = 48.dp
                 ) {
                     Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "Back to gallery",
+                        imageVector = Icons.Default.NavigateBefore,
+                        contentDescription = "Previous photo",
                         modifier = Modifier.size(24.dp)
                     )
                 }
 
-                // Navigation controls
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                // Next button
+                FloatingIconButton(
+                    onClick = onNext,
+                    enabled = navigationState.canNavigateNext,
+                    backgroundColor = if (navigationState.canNavigateNext) SafetyOrange else Color.Gray.copy(alpha = 0.3f),
+                    contentColor = Color.White,
+                    size = 48.dp
                 ) {
-                    // Previous button with stable state
-                    ConstructionIconButton(
-                        onClick = onPrevious,
-                        enabled = navigationState.canNavigatePrevious,
-                        backgroundColor = if (navigationState.canNavigatePrevious) SafetyOrange else Color.Gray.copy(alpha = 0.5f),
-                        contentColor = Color.White,
-                        size = 48.dp
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.NavigateBefore,
-                            contentDescription = "Previous photo",
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-
-                    // Photo counter with stable text
-                    Text(
-                        text = navigationState.progressText,
-                        color = Color.White,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                    Icon(
+                        imageVector = Icons.Default.NavigateNext,
+                        contentDescription = "Next photo",
+                        modifier = Modifier.size(24.dp)
                     )
+                }
+            }
 
-                    // Next button with stable state
-                    ConstructionIconButton(
-                        onClick = onNext,
-                        enabled = navigationState.canNavigateNext,
-                        backgroundColor = if (navigationState.canNavigateNext) SafetyOrange else Color.Gray.copy(alpha = 0.5f),
-                        contentColor = Color.White,
-                        size = 48.dp
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.NavigateNext,
-                            contentDescription = "Next photo",
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
+            // Action buttons - right aligned
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FloatingIconButton(
+                    onClick = {
+                        // PRIVACY SECURITY: Show sharing consent dialog before sharing
+                        // In production, this would integrate with PhotoSharingSecurityManager
+                        onShare()
+                    },
+                    backgroundColor = SafetyGreen,
+                    contentColor = Color.White
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Share,
+                        contentDescription = "Share photo",
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
 
-                // Action buttons
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                FloatingIconButton(
+                    onClick = onDelete,
+                    backgroundColor = DangerRed,
+                    contentColor = Color.White
                 ) {
-                    ConstructionIconButton(
-                        onClick = {
-                            // PRIVACY SECURITY: Show sharing consent dialog before sharing
-                            // In production, this would integrate with PhotoSharingSecurityManager
-                            onShare()
-                        },
-                        backgroundColor = SafetyGreen,
-                        contentColor = Color.White
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Share,
-                            contentDescription = "Share photo",
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-
-                    ConstructionIconButton(
-                        onClick = onDelete,
-                        backgroundColor = DangerRed,
-                        contentColor = Color.White
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = "Delete photo",
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete photo",
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             }
         }
@@ -434,6 +480,7 @@ private fun TopControlsBar(
 @Composable
 private fun PhotoInfoSection(
     photo: Photo,
+    navigationState: PhotoNavigationState,
     onTagsUpdated: (String, List<String>) -> Unit,
     performanceTracker: PhotoViewerPerformanceTracker,
     modifier: Modifier = Modifier
@@ -480,26 +527,35 @@ private fun PhotoInfoSection(
                 }
             }
 
-            // Tab content
+            // Tab content with fixed height to prevent bottom sheet movement
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .height(360.dp) // Fixed content height for consistent positioning
                     .padding(16.dp)
             ) {
                 when (selectedTab) {
-                    0 -> PhotoMetadataPanel(photo = photo)
+                    0 -> PhotoMetadataPanel(
+                        photo = photo,
+                        modifier = Modifier.fillMaxSize()
+                    )
                     1 -> PhotoTagsPanel(
                         photo = photo,
-                        onTagsUpdated = onTagsUpdated
+                        onTagsUpdated = onTagsUpdated,
+                        modifier = Modifier.fillMaxSize()
                     )
                     2 -> AIAnalysisPanel(
                         photo = photo,
                         analysisResult = aiAnalysisResult,
                         onAnalysisResult = { result -> aiAnalysisResult = result },
                         onTagsUpdated = onTagsUpdated,
-                        performanceTracker = performanceTracker
+                        performanceTracker = performanceTracker,
+                        modifier = Modifier.fillMaxSize()
                     )
-                    3 -> OSHACodesPanel(photo = photo)
+                    3 -> OSHACodesPanel(
+                        photo = photo,
+                        modifier = Modifier.fillMaxSize()
+                    )
                 }
             }
         }
@@ -519,7 +575,10 @@ private fun PhotoMetadataPanel(
 
     // Get settings for GPS display preference
     val metadataSettingsManager = remember { MetadataSettingsManager(context) }
-    val showGPSCoordinates = remember { mutableStateOf(false) }.value
+    val appSettings by metadataSettingsManager.appSettings.collectAsStateWithLifecycle()
+    val showGPSCoordinates by remember(appSettings) {
+        mutableStateOf(appSettings.dataPrivacy.showGPSCoordinates)
+    }
 
     // Extract metadata when component loads
     LaunchedEffect(photo.id) {
@@ -584,7 +643,7 @@ private fun PhotoMetadataPanel(
                     MetadataRow(label = "Photo ID", value = photo.id)
                     MetadataRow(label = "File Name", value = photo.fileName)
 
-                    // Dynamic project info - prioritize EXIF metadata, then photo.projectId lookup
+                    // Dynamic project info - prioritize EXIF metadata, then photo.projectId lookup, then current project
                     val projectName = when {
                         // First, try project name from EXIF metadata
                         extractedMetadata?.projectName?.isNotBlank() == true ->
@@ -603,8 +662,20 @@ private fun PhotoMetadataPanel(
                             }
                         }
 
-                        // Last resort
-                        else -> "No project assigned"
+                        // Third, try to use current project from MetadataSettingsManager if no project info found
+                        else -> {
+                            try {
+                                val metadataSettings = MetadataSettingsManager(context)
+                                val currentProject = metadataSettings.currentProject.value
+                                if (currentProject.projectName.isNotBlank()) {
+                                    currentProject.projectName
+                                } else {
+                                    "No project assigned"
+                                }
+                            } catch (e: Exception) {
+                                "No project assigned"
+                            }
+                        }
                     }
                     MetadataRow(label = "Project", value = projectName)
 
@@ -1470,4 +1541,51 @@ private fun formatTimestamp(timestamp: Long): String {
     val date = java.util.Date(timestamp)
     val format = java.text.SimpleDateFormat("MMM dd, yyyy 'at' HH:mm", java.util.Locale.getDefault())
     return format.format(date)
+}
+
+/**
+ * Floating icon button with subtle shadow for visibility over photos
+ */
+@Composable
+private fun FloatingIconButton(
+    onClick: () -> Unit,
+    backgroundColor: Color,
+    contentColor: Color,
+    enabled: Boolean = true,
+    size: androidx.compose.ui.unit.Dp = 56.dp,
+    content: @Composable () -> Unit
+) {
+    val hapticFeedback = LocalHapticFeedback.current
+    
+    Surface(
+        onClick = {
+            if (enabled) {
+                hapticFeedback.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
+                onClick()
+            }
+        },
+        modifier = Modifier
+            .size(size)
+            .graphicsLayer {
+                // Add subtle shadow for visibility over bright photos
+                shadowElevation = 12.0f
+                shape = CircleShape
+                clip = true
+            },
+        enabled = enabled,
+        shape = CircleShape,
+        color = backgroundColor.copy(alpha = if (enabled) 0.9f else 0.5f),
+        shadowElevation = if (enabled) 12.dp else 4.dp
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CompositionLocalProvider(
+                LocalContentColor provides contentColor
+            ) {
+                content()
+            }
+        }
+    }
 }

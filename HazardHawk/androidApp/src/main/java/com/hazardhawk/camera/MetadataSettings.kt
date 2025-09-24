@@ -33,7 +33,8 @@ data class AppSettings(
     val metadataDisplay: MetadataDisplaySettings = MetadataDisplaySettings(),
     val cameraSettings: CameraSettings = CameraSettings(),
     val dataPrivacy: DataPrivacySettings = DataPrivacySettings(),
-    val notifications: NotificationSettings = NotificationSettings()
+    val notifications: NotificationSettings = NotificationSettings(),
+    val startup: StartupSettings = StartupSettings()
 )
 
 data class CameraSettings(
@@ -66,6 +67,10 @@ data class NotificationSettings(
     val enableLocationAlerts: Boolean = true,
     val quietHoursStart: String = "22:00",
     val quietHoursEnd: String = "06:00"
+)
+
+data class StartupSettings(
+    val showCompanyProjectOnLaunch: Boolean = true // Show company/project selection on first daily launch
 )
 
 class MetadataSettingsManager(
@@ -169,6 +174,8 @@ class MetadataSettingsManager(
         private const val KEY_ENABLE_LOCATION_ALERTS = "enable_location_alerts"
         private const val KEY_QUIET_HOURS_START = "quiet_hours_start"
         private const val KEY_QUIET_HOURS_END = "quiet_hours_end"
+
+        private const val KEY_SHOW_COMPANY_PROJECT_ON_LAUNCH = "show_company_project_on_launch"
 
         private const val KEY_PROJECTS_LIST = "projects_list"
     }
@@ -280,7 +287,10 @@ class MetadataSettingsManager(
             putBoolean(KEY_ENABLE_LOCATION_ALERTS, settings.notifications.enableLocationAlerts)
             putString(KEY_QUIET_HOURS_START, settings.notifications.quietHoursStart)
             putString(KEY_QUIET_HOURS_END, settings.notifications.quietHoursEnd)
-            
+
+            // Startup settings
+            putBoolean(KEY_SHOW_COMPANY_PROJECT_ON_LAUNCH, settings.startup.showCompanyProjectOnLaunch)
+
             apply()
         }
         _appSettings.value = settings
@@ -333,12 +343,17 @@ class MetadataSettingsManager(
             quietHoursStart = sharedPrefs.getString(KEY_QUIET_HOURS_START, "22:00") ?: "22:00",
             quietHoursEnd = sharedPrefs.getString(KEY_QUIET_HOURS_END, "06:00") ?: "06:00"
         )
-        
+
+        val startup = StartupSettings(
+            showCompanyProjectOnLaunch = sharedPrefs.getBoolean(KEY_SHOW_COMPANY_PROJECT_ON_LAUNCH, true)
+        )
+
         return AppSettings(
             metadataDisplay = metadataDisplay,
             cameraSettings = cameraSettings,
             dataPrivacy = dataPrivacy,
-            notifications = notifications
+            notifications = notifications,
+            startup = startup
         )
     }
     

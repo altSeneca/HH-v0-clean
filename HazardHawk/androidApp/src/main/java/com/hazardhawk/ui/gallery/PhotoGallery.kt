@@ -396,12 +396,39 @@ fun PhotoGallery(
             initialPhotoIndex = state.currentPhotoIndex,
             onDismiss = viewModel::hidePhotoViewer,
             onShare = { photo ->
-                // TODO: Implement photo sharing
-                android.widget.Toast.makeText(
-                    context,
-                    "Sharing ${File(photo.filePath).name}",
-                    android.widget.Toast.LENGTH_SHORT
-                ).show()
+                // Create Android share intent for photo
+                try {
+                    val photoFile = File(photo.filePath)
+                    if (photoFile.exists()) {
+                        val photoUri = androidx.core.content.FileProvider.getUriForFile(
+                            context,
+                            "${context.packageName}.fileprovider",
+                            photoFile
+                        )
+
+                        val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                            type = "image/*"
+                            putExtra(android.content.Intent.EXTRA_STREAM, photoUri)
+                            putExtra(android.content.Intent.EXTRA_TEXT, "Construction Safety Photo - ${photo.fileName}")
+                            addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+
+                        val chooserIntent = android.content.Intent.createChooser(shareIntent, "Share Photo")
+                        context.startActivity(chooserIntent)
+                    } else {
+                        android.widget.Toast.makeText(
+                            context,
+                            "Photo file not found",
+                            android.widget.Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                } catch (e: Exception) {
+                    android.widget.Toast.makeText(
+                        context,
+                        "Failed to share photo: ${e.message}",
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                }
             },
             onDelete = { photo ->
                 viewModel.selectPhoto(photo.id)
