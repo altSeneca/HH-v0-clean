@@ -130,7 +130,7 @@ class GalleryViewModel(
                     currentState.copy(
                         photos = currentState.photos.filterNot { selectedIds.contains(it.id) },
                         selectedPhotos = emptySet(),
-                        isSelectionMode = false,
+                        isSelectionMode = true, // Keep selection mode active so user can select more photos
                         recentlyDeleted = currentState.recentlyDeleted + deletedGroup,
                         showUndoSnackbar = true,
                         undoMessage = "${photosToDelete.size} photo${if (photosToDelete.size > 1) "s" else ""} deleted"
@@ -165,8 +165,8 @@ class GalleryViewModel(
                 _state.update { currentState ->
                     currentState.copy(
                         photos = currentState.photos + photosToDelete,
-                        selectedPhotos = emptySet(),
-                        isSelectionMode = false,
+                        selectedPhotos = selectedIds, // Restore the previous selection
+                        isSelectionMode = true, // Keep selection mode active
                         showUndoSnackbar = false,
                         undoMessage = null,
                         error = "Failed to delete photos: ${e.message}"
@@ -261,7 +261,7 @@ class GalleryViewModel(
     }
     
     companion object {
-        private const val UNDO_TIMEOUT_MS = 5000L // 5 seconds for construction-friendly timing
+        private const val UNDO_TIMEOUT_MS = 500L // 0.5 seconds for immediate deletion experience
     }
     
     fun showPhotoViewer(photoIndex: Int) {
