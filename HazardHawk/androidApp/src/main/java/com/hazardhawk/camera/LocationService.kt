@@ -287,7 +287,7 @@ class LocationService(private val context: Context) {
      */
     fun formatLocationForDisplay(locationData: LocationData): String {
         return if (locationData.isAvailable) {
-            "📍 ${locationData.address}\n🎯 ${String.format("%.6f", locationData.latitude)}, ${String.format("%.6f", locationData.longitude)}"
+            "${locationData.address}\n${String.format("%.6f", locationData.latitude)}, ${String.format("%.6f", locationData.longitude)}"
         } else {
             "📍 Location unavailable"
         }

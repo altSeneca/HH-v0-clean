@@ -12,6 +12,9 @@ import android.util.Log
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.Dispatchers
 import java.io.File
 
 /**
@@ -116,41 +119,80 @@ class GalleryViewModel(
     
     fun deleteSelectedPhotos() {
         val selectedIds = _state.value.selectedPhotos
-        if (selectedIds.isEmpty()) return
-        
+        if (selectedIds.isEmpty()) {
+            Log.w("GalleryViewModel", "⚠️ No photos selected for deletion")
+            return
+        }
+
         val photosToDelete = _state.value.photos.filter { selectedIds.contains(it.id) }
-        
+        Log.d("GalleryViewModel", "🗑️ Starting deletion of ${photosToDelete.size} photos")
+
         viewModelScope.launch {
             try {
                 // Create deleted photo group for undo functionality
                 val deletedGroup = DeletedPhotoGroup(photosToDelete)
-                
+
                 // Update state immediately (optimistic update)
                 _state.update { currentState ->
                     currentState.copy(
                         photos = currentState.photos.filterNot { selectedIds.contains(it.id) },
                         selectedPhotos = emptySet(),
-                        isSelectionMode = true, // Keep selection mode active so user can select more photos
+                        isSelectionMode = false, // Exit selection mode after deletion
                         recentlyDeleted = currentState.recentlyDeleted + deletedGroup,
                         showUndoSnackbar = true,
-                        undoMessage = "${photosToDelete.size} photo${if (photosToDelete.size > 1) "s" else ""} deleted"
+                        undoMessage = "${photosToDelete.size} photo${if (photosToDelete.size > 1) "s" else ""} deleted",
+                        error = null // Clear any previous errors
                     )
                 }
-                
-                // Schedule permanent deletion after UNDO_TIMEOUT
+
+                Log.d("GalleryViewModel", "✅ Optimistic UI update completed")
+
+                // Perform actual deletion in parallel for better performance
+                val deleteJobs = photosToDelete.map { photo ->
+                    async(Dispatchers.IO) {
+                        val result = photoRepository.deletePhoto(photo.id)
+                        if (result.isFailure) {
+                            Log.e("GalleryViewModel", "❌ Failed to delete photo: ${photo.fileName} - ${result.exceptionOrNull()?.message}")
+                        } else {
+                            Log.d("GalleryViewModel", "✅ Successfully deleted photo: ${photo.fileName}")
+                        }
+                        result
+                    }
+                }
+
+                // Wait for all deletions to complete
+                val results = deleteJobs.awaitAll()
+                val failedDeletions = results.count { it.isFailure }
+                val successfulDeletions = results.count { it.isSuccess }
+
+                Log.d("GalleryViewModel", "🗑️ Deletion results: $successfulDeletions successful, $failedDeletions failed")
+
+                if (failedDeletions > 0) {
+                    // Some deletions failed - show error and potentially rollback
+                    val errorMessage = "Failed to delete $failedDeletions photo${if (failedDeletions > 1) "s" else ""}"
+
+                    _state.update { currentState ->
+                        currentState.copy(
+                            error = errorMessage,
+                            undoMessage = "$successfulDeletions photo${if (successfulDeletions > 1) "s" else ""} deleted",
+                            selectedPhotos = emptySet(), // Ensure selection is cleared even on partial failure
+                            isSelectionMode = false // Ensure selection mode is exited even on partial failure
+                        )
+                    }
+                } else {
+                    // All deletions successful
+                    Log.d("GalleryViewModel", "🎉 All photos deleted successfully")
+                }
+
+                // Schedule cleanup of undo data after timeout
                 kotlinx.coroutines.delay(UNDO_TIMEOUT_MS)
-                
+
                 // Check if this group hasn't been restored
                 val currentState = _state.value
                 val stillDeleted = currentState.recentlyDeleted.contains(deletedGroup)
-                
+
                 if (stillDeleted) {
-                    // Permanently delete from repository
-                    photosToDelete.forEach { photo ->
-                        photoRepository.deletePhoto(photo.id)
-                    }
-                    
-                    // Remove from undo list
+                    // Remove from undo list (actual deletion already completed above)
                     _state.update { state ->
                         state.copy(
                             recentlyDeleted = state.recentlyDeleted - deletedGroup,
@@ -158,18 +200,22 @@ class GalleryViewModel(
                             undoMessage = null
                         )
                     }
+                    Log.d("GalleryViewModel", "🧹 Cleanup completed - removed from undo list")
                 }
-                
+
             } catch (e: Exception) {
+                Log.e("GalleryViewModel", "❌ Exception during photo deletion", e)
+
                 // Rollback on error
                 _state.update { currentState ->
                     currentState.copy(
-                        photos = currentState.photos + photosToDelete,
-                        selectedPhotos = selectedIds, // Restore the previous selection
-                        isSelectionMode = true, // Keep selection mode active
+                        photos = (currentState.photos + photosToDelete).sortedByDescending { it.timestamp },
+                        selectedPhotos = emptySet(), // Don't restore selection to avoid confusion
+                        isSelectionMode = false,
+                        recentlyDeleted = currentState.recentlyDeleted.filterNot { it.photos == photosToDelete },
                         showUndoSnackbar = false,
                         undoMessage = null,
-                        error = "Failed to delete photos: ${e.message}"
+                        error = "Deletion failed: ${e.message}"
                     )
                 }
             }

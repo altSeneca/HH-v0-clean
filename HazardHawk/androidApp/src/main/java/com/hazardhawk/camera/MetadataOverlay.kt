@@ -133,7 +133,7 @@ fun MetadataOverlay(
                     if (settings.showCoordinates) {
                         // User prefers raw GPS coordinates
                         MetadataItem(
-                            icon = "🎯",
+                            icon = "",
                             label = "Location",
                             value = "${String.format("%.6f", metadata.locationData.latitude)}, ${String.format("%.6f", metadata.locationData.longitude)}",
                             maxLines = 1
@@ -153,7 +153,7 @@ fun MetadataOverlay(
                     // Location accuracy
                     if (metadata.locationData.accuracy > 0) {
                         MetadataItem(
-                            icon = "📊",
+                            icon = "",
                             label = "Accuracy",
                             value = "±${String.format("%.1f", metadata.locationData.accuracy)}m",
                             textSize = 11.sp

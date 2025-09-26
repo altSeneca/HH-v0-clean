@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -176,16 +177,18 @@ private fun PhotoThumbnail(
             .pointerInput(Unit) {
                 detectTapGestures(
                     onTap = { onClick() },
-                    onLongPress = { 
+                    onLongPress = {
                         hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onLongPress() 
+                        onLongPress()
                     }
                 )
             },
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) SafetyOrange.copy(alpha = 0.2f) 
-                           else MaterialTheme.colorScheme.surface
-        )
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        border = if (isSelected) {
+            BorderStroke(4.dp, SafetyOrange)
+        } else null
     ) {
         Box {
             // Load actual thumbnail using AsyncImage
@@ -194,25 +197,76 @@ private fun PhotoThumbnail(
                     .data(photo.filePath)
                     .build(),
                 contentDescription = "Photo: ${photo.fileName}",
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .let { mod ->
+                        if (isSelected) {
+                            mod.alpha(0.7f) // Dim selected photos slightly
+                        } else mod
+                    },
                 contentScale = ContentScale.Crop
             )
-            
-            // Selection indicator
-            if (isSelectionMode && isSelected) {
+
+            // Selection overlay for better visibility
+            if (isSelected) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(SafetyOrange.copy(alpha = 0.3f))
+                )
+            }
+
+            // Always show selection indicator in selection mode
+            if (isSelectionMode) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
+                        .padding(8.dp)
+                        .size(32.dp)
+                        .background(
+                            if (isSelected) SafetyOrange else Color.White.copy(alpha = 0.8f),
+                            CircleShape
+                        )
+                        .border(
+                            2.dp,
+                            if (isSelected) Color.White else SafetyOrange,
+                            CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isSelected) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    } else {
+                        // Empty circle for unselected items in selection mode
+                        Box(
+                            modifier = Modifier
+                                .size(16.dp)
+                                .background(Color.Transparent, CircleShape)
+                        )
+                    }
+                }
+            }
+
+            // Selection count badge for better multi-select feedback
+            if (isSelected && isSelectionMode) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
                         .padding(8.dp)
                         .size(24.dp)
                         .background(SafetyOrange, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(16.dp)
+                    Text(
+                        text = "✓",
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }

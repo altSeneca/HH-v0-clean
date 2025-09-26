@@ -30,6 +30,7 @@ import java.io.File
 import com.hazardhawk.ui.gallery.components.*
 import com.hazardhawk.ui.gallery.state.*
 import com.hazardhawk.ui.gallery.PhotoNavigationState
+import org.koin.androidx.compose.koinViewModel
 
 // Domain and business logic
 import com.hazardhawk.domain.entities.Photo
@@ -77,17 +78,19 @@ fun PhotoViewerScreenRefactored(
     val memoryManager: ConstructionPhotoMemoryManager = koinInject()
     val imageLoader: ImageLoader = koinInject()
     val analysisRepository: AnalysisRepository = koinInject()
-    
+
+    // Analysis workflow ViewModel
+    val analysisViewModel: AnalysisWorkflowViewModel = koinViewModel()
+    val safetyAnalysisState by analysisViewModel.state.collectAsStateWithLifecycle()
+    val analysisProgress by analysisViewModel.analysisProgress.collectAsStateWithLifecycle()
+
     // UI state
     var currentIndex by remember { mutableIntStateOf(initialPhotoIndex.coerceIn(0, photos.size - 1)) }
     var isUiVisible by remember { mutableStateOf(true) }
     var lastInteractionTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
-    
-    // Safety analysis state with reducer pattern
-    var safetyAnalysisState by remember { mutableStateOf(SafetyAnalysisState()) }
-    
+
     val dispatch: (SafetyAnalysisAction) -> Unit = { action ->
-        safetyAnalysisState = safetyAnalysisReducer(safetyAnalysisState, action)
+        analysisViewModel.dispatch(action)
     }
     
     val currentPhoto = photos.getOrNull(currentIndex)
@@ -104,19 +107,10 @@ fun PhotoViewerScreenRefactored(
         }
     }
     
-    // Load existing analysis when photo changes
+    // Initialize analysis when photo changes
     LaunchedEffect(currentPhoto?.id) {
-        dispatch(SafetyAnalysisAction.Reset)
         currentPhoto?.let { photo ->
-            try {
-                analysisRepository.getAnalysis(photo.id)?.let { savedAnalysis ->
-                    // Convert database analysis to PhotoAnalysisWithTags
-                    val analysisResult = convertSafetyAnalysisToPhotoAnalysis(savedAnalysis)
-                    dispatch(SafetyAnalysisAction.SetAIResult(analysisResult))
-                }
-            } catch (e: Exception) {
-                Log.e("PhotoViewer", "Failed to load analysis", e)
-            }
+            analysisViewModel.initializeAnalysis(photo)
         }
     }
     
@@ -153,6 +147,7 @@ fun PhotoViewerScreenRefactored(
                 safetyAnalysisState = safetyAnalysisState,
                 onAnalysisAction = dispatch,
                 onTagsUpdated = onTagsUpdated,
+                analysisProgress = analysisProgress,
                 performanceTracker = performanceTracker,
                 modifier = Modifier.fillMaxSize()
             )
@@ -265,6 +260,7 @@ private fun PhotoInfoBottomSheet(
     safetyAnalysisState: SafetyAnalysisState,
     onAnalysisAction: (SafetyAnalysisAction) -> Unit,
     onTagsUpdated: (String, List<String>) -> Unit,
+    analysisProgress: AnalysisProgress?,
     performanceTracker: PhotoViewerPerformanceTracker,
     modifier: Modifier = Modifier
 ) {
@@ -317,6 +313,7 @@ private fun PhotoInfoBottomSheet(
                         safetyAnalysisState = safetyAnalysisState,
                         onAnalysisAction = onAnalysisAction,
                         onTagsUpdated = onTagsUpdated,
+                        analysisProgress = analysisProgress,
                         modifier = Modifier.fillMaxSize()
                     )
                     1 -> PhotoMetadataSection(
@@ -335,128 +332,68 @@ private fun SafetyAnalysisTab(
     safetyAnalysisState: SafetyAnalysisState,
     onAnalysisAction: (SafetyAnalysisAction) -> Unit,
     onTagsUpdated: (String, List<String>) -> Unit,
+    analysisProgress: AnalysisProgress? = null,
     modifier: Modifier = Modifier
 ) {
-    val coroutineScope = rememberCoroutineScope()
-    val aiService: GeminiVisionAnalyzer = koinInject()
-    val oshaRepository: OSHARegulationRepository = koinInject()
-    val analysisRepository: AnalysisRepository = koinInject()
-    
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // AI Analysis Results Card
-        AIAnalysisResultsCard(
-            photo = photo,
-            analysisResult = safetyAnalysisState.aiAnalysis,
-            isAnalyzing = safetyAnalysisState.isAnalyzingAI,
-            analysisError = safetyAnalysisState.aiError,
-            showBoundingBoxes = safetyAnalysisState.showBoundingBoxes,
-            onAnalyze = {
-                coroutineScope.launch {
-                    performAIAnalysis(
-                        photo = photo,
-                        aiService = aiService,
-                        analysisRepository = analysisRepository,
-                        onAction = onAnalysisAction
-                    )
-                }
-            },
-            onBoundingBoxToggle = { visible ->
-                onAnalysisAction(SafetyAnalysisAction.SetBoundingBoxesVisible(visible))
-            },
-            onTagClick = { tag ->
-                val updatedTags = photo.tags + tag
-                onTagsUpdated(photo.id, updatedTags)
-            }
-        )
-        
-        // OSHA Compliance Card
-        OSHAComplianceCard(
-            oshaAnalysis = safetyAnalysisState.oshaAnalysis,
-            isLoadingOSHA = safetyAnalysisState.isAnalyzingOSHA,
-            onAnalyze = {
-                coroutineScope.launch {
-                    performOSHAAnalysis(
-                        photo = photo,
-                        onAction = onAnalysisAction
-                    )
-                }
-            }
-        )
-        
-        // Manual Safety Tag Selector
-        SafetyTagSelector(
-            photo = photo,
-            onTagClick = { tag ->
-                val updatedTags = photo.tags + tag
-                onTagsUpdated(photo.id, updatedTags)
-            }
-        )
-    }
-}
-
-// Analysis helper functions
-private suspend fun performAIAnalysis(
-    photo: Photo,
-    aiService: GeminiVisionAnalyzer,
-    analysisRepository: AnalysisRepository,
-    onAction: (SafetyAnalysisAction) -> Unit
-) {
-    onAction(SafetyAnalysisAction.StartAIAnalysis)
-    
-    try {
-        aiService.initialize()
-        val photoFile = File(photo.filePath)
-        
-        if (photoFile.exists()) {
-            val photoBytes = photoFile.readBytes()
-            val result = aiService.analyzePhotoWithTags(
-                data = photoBytes,
-                width = 1920,
-                height = 1080,
-                workType = WorkType.GENERAL_CONSTRUCTION
+        // Show analysis progress if active
+        analysisProgress?.let { progress ->
+            AnalysisProgressIndicator(
+                progress = progress,
+                modifier = Modifier.fillMaxWidth()
             )
-            
-            onAction(SafetyAnalysisAction.SetAIResult(result))
-            
-            // Save to database
-            try {
-                val safetyAnalysis = convertPhotoAnalysisToSafetyAnalysis(result, photo.id)
-                analysisRepository.saveAnalysis(safetyAnalysis)
-            } catch (e: Exception) {
-                Log.e("PhotoViewer", "Failed to save analysis", e)
-            }
-        } else {
-            onAction(SafetyAnalysisAction.SetAIError("Photo file not found"))
         }
-    } catch (e: Exception) {
-        onAction(SafetyAnalysisAction.SetAIError(e.message ?: "Analysis failed"))
+
+        // Conditional rendering based on analysis phase
+        when (safetyAnalysisState.currentPhase) {
+            AnalysisPhase.PRE_ANALYSIS -> {
+                PreAnalysisView(
+                    photo = photo,
+                    manualTags = safetyAnalysisState.manualTags,
+                    availableCategories = safetyAnalysisState.availableTagCategories,
+                    isAddingTag = safetyAnalysisState.isAddingManualTag,
+                    onAddTag = { name, category, note ->
+                        val tag = createManualHazardTag(name, category, note)
+                        onAnalysisAction(SafetyAnalysisAction.AddManualTag(tag))
+                    },
+                    onRemoveTag = { tagId ->
+                        onAnalysisAction(SafetyAnalysisAction.RemoveManualTag(tagId))
+                    },
+                    onStartAnalysis = {
+                        onAnalysisAction(SafetyAnalysisAction.StartAIAnalysis)
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+
+            AnalysisPhase.POST_ANALYSIS -> {
+                PostAnalysisView(
+                    photo = photo,
+                    safetyAnalysisState = safetyAnalysisState,
+                    onAnalysisAction = onAnalysisAction,
+                    onTagsUpdated = onTagsUpdated,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+        }
+
+        // Phase transition controls
+        PhaseTransitionControls(
+            currentPhase = safetyAnalysisState.currentPhase,
+            canTransitionToAI = safetyAnalysisState.canProceedToAIAnalysis,
+            hasAIResults = safetyAnalysisState.aiAnalysis != null,
+            onTransitionToPreAnalysis = {
+                onAnalysisAction(SafetyAnalysisAction.TransitionToPreAnalysis)
+            },
+            onTransitionToPostAnalysis = {
+                onAnalysisAction(SafetyAnalysisAction.StartAIAnalysis)
+            },
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 
-private suspend fun performOSHAAnalysis(
-    photo: Photo,
-    onAction: (SafetyAnalysisAction) -> Unit
-) {
-    onAction(SafetyAnalysisAction.StartOSHAAnalysis)
-    
-    try {
-        // Determine work type from tags
-        val workType = when {
-            photo.tags.any { it.contains("electrical", ignoreCase = true) } -> WorkType.ELECTRICAL
-            photo.tags.any { it.contains("steel", ignoreCase = true) } -> WorkType.STEEL_WORK
-            else -> WorkType.GENERAL_CONSTRUCTION
-        }
-        
-        val simpleAnalyzer = com.hazardhawk.ai.impl.SimpleOSHAAnalyzer()
-        simpleAnalyzer.configure()
-        val result = simpleAnalyzer.analyzeForOSHACompliance(ByteArray(0), workType)
-        
-        onAction(SafetyAnalysisAction.SetOSHAResult(result.getOrNull()))
-    } catch (e: Exception) {
-        onAction(SafetyAnalysisAction.SetOSHAError(e.message ?: "OSHA analysis failed"))
-    }
-}
 

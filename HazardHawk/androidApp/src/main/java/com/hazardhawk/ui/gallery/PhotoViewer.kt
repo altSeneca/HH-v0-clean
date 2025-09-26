@@ -918,7 +918,7 @@ private fun AIAnalysisPanel(
 
                         analysisError != null -> {
                             Text(
-                                text = "⚠️ Analysis failed: $analysisError",
+                                text = "Analysis failed: $analysisError",
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = DangerRed
                             )
@@ -1194,7 +1194,7 @@ private fun OSHACodesPanel(
                             )
 
                             Text(
-                                text = "💡 Tap 'Analyze' to get relevant OSHA standards for this photo",
+                                text = "Tap 'Analyze' to get relevant OSHA standards for this photo",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontStyle = androidx.compose.ui.text.font.FontStyle.Italic

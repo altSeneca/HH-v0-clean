@@ -90,7 +90,7 @@ val androidModule = module {
     }
     
     // Settings storage and repositories
-    single<SecureStorage> { AndroidSecureStorage(androidContext()) }
+    single<SecureStorage> { AndroidSecureStorage(androidContext(), get()) }
     single<CameraSettingsRepository> { CameraSettingsRepositoryImpl(get()) }
     single<UISettingsRepository> { UISettingsRepositoryImpl(get()) }
     

@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -147,7 +148,15 @@ fun GeminiAIAnalysisDemo(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Analyzing with Gemini AI...")
             } else {
-                Text("🔍 Demo AI Safety Analysis")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Analysis",
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Demo AI Safety Analysis")
+                }
             }
         }
         
@@ -174,7 +183,7 @@ fun GeminiAIAnalysisDemo(
                     modifier = Modifier.padding(16.dp)
                 ) {
                     Text(
-                        text = "📊 Enhanced AI Analysis Results",
+                        text = "Enhanced AI Analysis Results",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -207,7 +216,7 @@ fun GeminiAIAnalysisDemo(
                     // Hazards List
                     if (analysis.hazardDetections.isNotEmpty()) {
                         Text(
-                            text = "⚠️ Detected Hazards with Coordinates:",
+                            text = "Detected Hazards with Coordinates:",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Medium
                         )
@@ -283,7 +292,7 @@ fun GeminiAIAnalysisDemo(
                     if (recommendations.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = "💡 AI Recommendations:",
+                            text = "AI Recommendations:",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Medium
                         )
@@ -309,7 +318,7 @@ fun GeminiAIAnalysisDemo(
                     if (analysis.recommendedTags.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = "🏷️ Analysis Tags (${analysis.recommendedTags.size}):",
+                            text = "Analysis Tags (${analysis.recommendedTags.size}):",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Medium
                         )

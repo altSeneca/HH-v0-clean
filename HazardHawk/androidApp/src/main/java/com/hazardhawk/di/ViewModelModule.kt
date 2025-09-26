@@ -1,6 +1,7 @@
 package com.hazardhawk.di
 
 import com.hazardhawk.gallery.GalleryViewModel
+import com.hazardhawk.ui.gallery.state.AnalysisWorkflowViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
@@ -28,13 +29,14 @@ val viewModelModule = module {
     //     )
     // }
     
-    // Analysis ViewModel for AI processing results
-    // viewModel<AnalysisViewModel> {
-    //     AnalysisViewModel(
-    //         analyzePhotoUseCase = get(),
-    //         getAnalysisResultsUseCase = get()
-    //     )
-    // }
+    // Analysis Workflow ViewModel for two-state analysis workflow
+    viewModel<AnalysisWorkflowViewModel> {
+        AnalysisWorkflowViewModel(
+            aiService = get(),
+            oshaRepository = get(),
+            analysisRepository = get()
+        )
+    }
     
     // Tag ViewModel for safety tag management
     // viewModel<TagViewModel> {

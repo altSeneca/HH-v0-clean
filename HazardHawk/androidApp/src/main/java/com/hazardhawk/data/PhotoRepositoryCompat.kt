@@ -10,9 +10,21 @@ import com.hazardhawk.domain.entities.DuplicatePhotoGroup
 import com.hazardhawk.domain.entities.StorageStats
 import com.hazardhawk.domain.repositories.PhotoRepository
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import java.io.File
 import android.content.Context
+import android.content.ContentUris
+import android.database.Cursor
+import android.provider.MediaStore
+import android.net.Uri
+import android.os.Build
 import com.hazardhawk.camera.MetadataEmbedder
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Compatibility PhotoRepository that works with the existing File-based photo system
@@ -23,43 +35,30 @@ import com.hazardhawk.camera.MetadataEmbedder
 class PhotoRepositoryCompat(
     private val context: Context
 ) : PhotoRepository {
+
+    // Metadata cache to avoid re-processing
+    private val metadataCache = ConcurrentHashMap<String, com.hazardhawk.camera.CaptureMetadata?>()
+    private val metadataEmbedder = MetadataEmbedder(context)
     
     private fun getAllPhotoFiles(): List<File> {
         return PhotoStorageManagerCompat.getAllPhotos(context)
     }
     
-    private fun File.toPhoto(): Photo {
-        // Extract metadata from EXIF data if available
-        val metadataEmbedder = MetadataEmbedder(context)
-        val extractedMetadata = try {
-            android.util.Log.d("PhotoRepositoryCompat", "Extracting metadata from: ${this.name}")
-            kotlinx.coroutines.runBlocking {
-                val metadata = metadataEmbedder.extractMetadataFromPhoto(this@toPhoto)
-                android.util.Log.d("PhotoRepositoryCompat", "Extracted metadata: projectName='${metadata?.projectName}', projectId='${metadata?.projectId}'")
-                metadata
-            }
-        } catch (e: Exception) {
-            android.util.Log.e("PhotoRepositoryCompat", "Failed to extract metadata from ${this.name}", e)
-            null
-        }
-
+    /**
+     * PERFORMANCE OPTIMIZED: Fast photo creation without metadata extraction
+     * Used for gallery listing - metadata loaded lazily when needed
+     */
+    private fun File.toPhotoFast(): Photo {
+        android.util.Log.v("PhotoRepositoryCompat", "🚀 Fast loading photo: ${this.name}")
         return Photo(
             id = this.absolutePath, // Use file path as ID for simplicity
             fileName = this.name,
             filePath = this.absolutePath,
             capturedAt = kotlinx.datetime.Instant.fromEpochMilliseconds(this.lastModified()),
             timestamp = this.lastModified(),
-            location = extractedMetadata?.locationData?.let { loc ->
-                if (loc.isAvailable) {
-                    com.hazardhawk.domain.entities.GpsCoordinates(
-                        latitude = loc.latitude,
-                        longitude = loc.longitude,
-                        timestamp = loc.timestamp
-                    )
-                } else null
-            },
-            projectId = extractedMetadata?.projectId?.takeIf { it.isNotBlank() },
-            userId = extractedMetadata?.userId?.takeIf { it.isNotBlank() },
+            location = null, // Loaded lazily
+            projectId = null, // Loaded lazily
+            userId = null, // Loaded lazily
             complianceStatus = com.hazardhawk.domain.entities.ComplianceStatus.Unknown,
             syncStatus = SyncStatus.Pending,
             s3Url = null,
@@ -74,19 +73,73 @@ class PhotoRepositoryCompat(
             updatedAt = this.lastModified()
         )
     }
+
+    /**
+     * Extract metadata in background with caching
+     */
+    private suspend fun extractMetadataAsync(file: File): com.hazardhawk.camera.CaptureMetadata? = withContext(Dispatchers.IO) {
+        val cacheKey = "${file.absolutePath}:${file.lastModified()}"
+
+        // Check cache first
+        metadataCache[cacheKey]?.let { cached ->
+            android.util.Log.v("PhotoRepositoryCompat", "📋 Cache hit for metadata: ${file.name}")
+            return@withContext cached
+        }
+
+        // Extract metadata in background
+        try {
+            android.util.Log.d("PhotoRepositoryCompat", "🔍 Extracting metadata async: ${file.name}")
+            val metadata = metadataEmbedder.extractMetadataFromPhoto(file)
+            android.util.Log.d("PhotoRepositoryCompat", "✅ Metadata extracted: projectName='${metadata?.projectName}', projectId='${metadata?.projectId}'")
+
+            // Cache the result
+            metadataCache[cacheKey] = metadata
+            metadata
+        } catch (e: Exception) {
+            android.util.Log.e("PhotoRepositoryCompat", "❌ Failed to extract metadata from ${file.name}", e)
+            // Cache the failure to avoid retrying
+            metadataCache[cacheKey] = null
+            null
+        }
+    }
+
+    /**
+     * Get detailed photo with metadata - used when viewing individual photos
+     */
+    suspend fun getPhotoWithMetadata(photoId: String): Photo? {
+        val file = File(photoId)
+        if (!file.exists()) return null
+
+        val basePhoto = file.toPhotoFast()
+        val metadata = extractMetadataAsync(file)
+
+        return basePhoto.copy(
+            location = metadata?.locationData?.let { loc ->
+                if (loc.isAvailable) {
+                    com.hazardhawk.domain.entities.GpsCoordinates(
+                        latitude = loc.latitude,
+                        longitude = loc.longitude,
+                        timestamp = loc.timestamp
+                    )
+                } else null
+            },
+            projectId = metadata?.projectId?.takeIf { it.isNotBlank() },
+            userId = metadata?.userId?.takeIf { it.isNotBlank() }
+        )
+    }
     
     override suspend fun savePhoto(photo: Photo): Result<Photo> {
         return Result.success(photo)
     }
     
-    suspend fun savePhoto(filePath: String, metadata: PhotoMetadata): Photo {
+    suspend fun savePhoto(filePath: String, metadata: com.hazardhawk.camera.CaptureMetadata): Photo {
         val file = File(filePath)
-        return file.toPhoto()
+        return file.toPhotoFast()
     }
     
     override suspend fun getPhoto(photoId: String): Photo? {
         val file = File(photoId)
-        return if (file.exists()) file.toPhoto() else null
+        return if (file.exists()) file.toPhotoFast() else null
     }
     
     suspend fun getPhotoById(id: String): Photo? {
@@ -102,30 +155,177 @@ class PhotoRepositoryCompat(
     }
     
     override suspend fun deletePhoto(photoId: String): Result<Unit> {
-        val file = File(photoId)
-        return if (file.exists() && file.delete()) {
-            Result.success(Unit)
-        } else {
-            Result.failure(Exception("Failed to delete photo: $photoId"))
+        return withContext(Dispatchers.IO) {
+            try {
+                android.util.Log.d("PhotoRepositoryCompat", "🗑️ Attempting to delete photo: $photoId")
+
+                val success = deletePhotoFromSystem(photoId)
+
+                if (success) {
+                    // Clear metadata cache for deleted photo
+                    clearMetadataCacheForPhoto(photoId)
+                    android.util.Log.d("PhotoRepositoryCompat", "✅ Successfully deleted photo: $photoId")
+                    Result.success(Unit)
+                } else {
+                    android.util.Log.e("PhotoRepositoryCompat", "❌ Failed to delete photo: $photoId")
+                    Result.failure(Exception("Failed to delete photo: $photoId"))
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("PhotoRepositoryCompat", "❌ Exception deleting photo: $photoId", e)
+                Result.failure(e)
+            }
         }
     }
-    
-    suspend fun deletePhotoCompat(id: String): Boolean {
-        val file = File(id)
-        return if (file.exists()) {
-            file.delete()
-        } else {
+
+    /**
+     * Enhanced photo deletion that handles both file system and MediaStore
+     */
+    private suspend fun deletePhotoFromSystem(photoPath: String): Boolean {
+        val file = File(photoPath)
+
+        // Method 1: Try MediaStore deletion first (for scoped storage)
+        val mediaStoreDeleted = deleteFromMediaStore(file)
+        if (mediaStoreDeleted) {
+            android.util.Log.d("PhotoRepositoryCompat", "📱 Deleted from MediaStore: ${file.name}")
+            return true
+        }
+
+        // Method 2: Direct file deletion (fallback)
+        val fileDeleted = try {
+            if (file.exists()) {
+                val deleted = file.delete()
+                android.util.Log.d("PhotoRepositoryCompat", "📁 Direct file deletion result: $deleted for ${file.name}")
+                deleted
+            } else {
+                android.util.Log.w("PhotoRepositoryCompat", "⚠️ File doesn't exist: $photoPath")
+                false
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("PhotoRepositoryCompat", "❌ Direct file deletion failed for ${file.name}", e)
+            false
+        }
+
+        return fileDeleted
+    }
+
+    /**
+     * Delete photo from Android MediaStore using content resolver
+     */
+    private suspend fun deleteFromMediaStore(file: File): Boolean {
+        return try {
+            android.util.Log.d("PhotoRepositoryCompat", "🗑️ Starting MediaStore deletion for: ${file.absolutePath}")
+
+            val projection = arrayOf(MediaStore.Images.Media._ID, MediaStore.Images.Media.DATA, MediaStore.Images.Media.DISPLAY_NAME)
+            val selection = "${MediaStore.Images.Media.DATA} = ?"
+            val selectionArgs = arrayOf(file.absolutePath)
+
+            android.util.Log.d("PhotoRepositoryCompat", "🔍 Querying MediaStore with path: ${file.absolutePath}")
+
+            context.contentResolver.query(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                projection,
+                selection,
+                selectionArgs,
+                null
+            )?.use { cursor ->
+                android.util.Log.d("PhotoRepositoryCompat", "📊 MediaStore query returned ${cursor.count} results")
+
+                if (cursor.moveToFirst()) {
+                    val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID)
+                    val id = cursor.getLong(idColumn)
+                    val displayName = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DISPLAY_NAME))
+                    val uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id)
+
+                    android.util.Log.d("PhotoRepositoryCompat", "📱 Found in MediaStore: ID=$id, Name=$displayName, URI=$uri")
+
+                    val deletedRows = context.contentResolver.delete(uri, null, null)
+                    android.util.Log.d("PhotoRepositoryCompat", "🗑️ MediaStore deletion: $deletedRows rows affected for ${file.name}")
+
+                    if (deletedRows > 0) {
+                        android.util.Log.d("PhotoRepositoryCompat", "✅ Successfully deleted from MediaStore: ${file.name}")
+                        true
+                    } else {
+                        android.util.Log.w("PhotoRepositoryCompat", "⚠️ MediaStore deletion returned 0 rows for: ${file.name}")
+                        false
+                    }
+                } else {
+                    android.util.Log.w("PhotoRepositoryCompat", "📱 Photo not found in MediaStore query: ${file.name}")
+
+                    // Try alternative search by display name
+                    val alternativeSelection = "${MediaStore.Images.Media.DISPLAY_NAME} = ?"
+                    val alternativeArgs = arrayOf(file.name)
+
+                    android.util.Log.d("PhotoRepositoryCompat", "🔍 Trying alternative query by display name: ${file.name}")
+
+                    context.contentResolver.query(
+                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                        projection,
+                        alternativeSelection,
+                        alternativeArgs,
+                        null
+                    )?.use { altCursor ->
+                        android.util.Log.d("PhotoRepositoryCompat", "📊 Alternative query returned ${altCursor.count} results")
+
+                        if (altCursor.moveToFirst()) {
+                            val idColumn = altCursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID)
+                            val id = altCursor.getLong(idColumn)
+                            val storedPath = altCursor.getString(altCursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA))
+                            val uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id)
+
+                            android.util.Log.d("PhotoRepositoryCompat", "📱 Found via display name: ID=$id, StoredPath=$storedPath, URI=$uri")
+
+                            val deletedRows = context.contentResolver.delete(uri, null, null)
+                            android.util.Log.d("PhotoRepositoryCompat", "🗑️ Alternative MediaStore deletion: $deletedRows rows affected")
+
+                            if (deletedRows > 0) {
+                                android.util.Log.d("PhotoRepositoryCompat", "✅ Successfully deleted via alternative query: ${file.name}")
+                                true
+                            } else {
+                                android.util.Log.w("PhotoRepositoryCompat", "⚠️ Alternative deletion also returned 0 rows")
+                                false
+                            }
+                        } else {
+                            android.util.Log.w("PhotoRepositoryCompat", "❌ Photo not found in either MediaStore query")
+                            false
+                        }
+                    } ?: false
+                }
+            } ?: false
+        } catch (e: Exception) {
+            android.util.Log.e("PhotoRepositoryCompat", "❌ MediaStore deletion failed for ${file.name}", e)
             false
         }
     }
-    
+
+    /**
+     * Clear metadata cache entries for a deleted photo
+     */
+    private fun clearMetadataCacheForPhoto(photoPath: String) {
+        val file = File(photoPath)
+        val keysToRemove = metadataCache.keys.filter { key ->
+            key.startsWith("${file.absolutePath}:")
+        }
+        keysToRemove.forEach { key ->
+            metadataCache.remove(key)
+            android.util.Log.v("PhotoRepositoryCompat", "🧹 Cleared cache for key: $key")
+        }
+    }
+
+    suspend fun deletePhotoCompat(id: String): Boolean {
+        return deletePhoto(id).isSuccess
+    }
+
     suspend fun deleteMultiplePhotos(ids: List<String>): Int {
+        android.util.Log.d("PhotoRepositoryCompat", "🗑️ Batch deleting ${ids.size} photos")
         var deletedCount = 0
+
         ids.forEach { id ->
             if (deletePhotoCompat(id)) {
                 deletedCount++
             }
         }
+
+        android.util.Log.d("PhotoRepositoryCompat", "✅ Batch deletion completed: $deletedCount/${ids.size} photos deleted")
         return deletedCount
     }
     
@@ -134,7 +334,7 @@ class PhotoRepositoryCompat(
             val photos = getAllPhotoFiles()
                 .sortedByDescending { it.lastModified() }
                 .take(limit)
-                .map { it.toPhoto() }
+                .map { it.toPhotoFast() }
             emit(photos)
         }
     }
@@ -149,15 +349,80 @@ class PhotoRepositoryCompat(
     
     override suspend fun getPhotos(): Flow<List<Photo>> {
         return flow {
-            val photos = getAllPhotos()
+            android.util.Log.d("PhotoRepositoryCompat", "🚀 PERFORMANCE OPTIMIZED: Starting fast photo loading...")
+            val startTime = System.currentTimeMillis()
+
+            val photos = getAllPhotosOptimized()
+
+            val loadTime = System.currentTimeMillis() - startTime
+            android.util.Log.d("PhotoRepositoryCompat", "⚡ Fast loading completed: ${photos.size} photos in ${loadTime}ms")
+
             emit(photos)
         }
     }
-    
+
     override suspend fun getAllPhotos(): List<Photo> {
-        return getAllPhotoFiles()
+        return getAllPhotosOptimized()
+    }
+
+    /**
+     * PERFORMANCE OPTIMIZED: Fast photo loading without metadata extraction
+     * Uses concurrent processing for large galleries
+     */
+    private suspend fun getAllPhotosOptimized(): List<Photo> = withContext(Dispatchers.IO) {
+        val photoFiles = getAllPhotoFiles()
             .sortedByDescending { it.lastModified() }
-            .map { it.toPhoto() }
+
+        android.util.Log.d("PhotoRepositoryCompat", "🔄 Processing ${photoFiles.size} photo files concurrently...")
+
+        // Process photos concurrently in batches to avoid overwhelming the system
+        val batchSize = 20 // Process 20 photos at a time
+        val photos = mutableListOf<Photo>()
+
+        photoFiles.chunked(batchSize).forEach { batch ->
+            val batchPhotos = batch.map { file ->
+                async(Dispatchers.IO) {
+                    file.toPhotoFast()
+                }
+            }.awaitAll()
+
+            photos.addAll(batchPhotos)
+            android.util.Log.v("PhotoRepositoryCompat", "✅ Processed batch of ${batchPhotos.size} photos")
+        }
+
+        android.util.Log.d("PhotoRepositoryCompat", "🎯 Total photos loaded: ${photos.size}")
+
+        // Preload metadata for recently taken photos in background (non-blocking)
+        launchMetadataPreloading(photos.take(10))
+
+        photos
+    }
+
+    /**
+     * Background metadata preloading for better user experience
+     * Loads metadata for recently taken photos without blocking gallery display
+     */
+    private fun launchMetadataPreloading(recentPhotos: List<Photo>) {
+        kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
+            try {
+                android.util.Log.d("PhotoRepositoryCompat", "🔄 Background metadata preloading started for ${recentPhotos.size} recent photos")
+
+                recentPhotos.forEach { photo ->
+                    try {
+                        val file = File(photo.filePath)
+                        if (file.exists()) {
+                            extractMetadataAsync(file) // This will cache the metadata
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.w("PhotoRepositoryCompat", "Failed to preload metadata for ${photo.fileName}", e)
+                    }
+                }
+
+                android.util.Log.d("PhotoRepositoryCompat", "✅ Background metadata preloading completed")
+            } catch (e: Exception) {
+                android.util.Log.e("PhotoRepositoryCompat", "Background metadata preloading failed", e)
+            }
+        }
     }
     
     fun getAllPhotosFlow(): Flow<List<Photo>> {
@@ -172,7 +437,7 @@ class PhotoRepositoryCompat(
             val photos = getAllPhotoFiles()
                 .filter { it.lastModified() in startTime..endTime }
                 .sortedByDescending { it.lastModified() }
-                .map { it.toPhoto() }
+                .map { it.toPhotoFast() }
             emit(photos)
         }
     }
@@ -187,7 +452,7 @@ class PhotoRepositoryCompat(
             .sortedByDescending { it.lastModified() }
             .drop(offset)
             .take(limit)
-            .map { it.toPhoto() }
+            .map { it.toPhotoFast() }
     }
     
     suspend fun getPhotoThumbnails(photoIds: List<String>): Map<String, String> {
@@ -205,7 +470,7 @@ class PhotoRepositoryCompat(
             .sortedByDescending { it.lastModified() }
             .drop(offset)
             .take(limit)
-            .map { it.toPhoto() }
+            .map { it.toPhotoFast() }
     }
     
     suspend fun getPhotosFilteredByDate(startDate: Long, endDate: Long, offset: Int, limit: Int): List<Photo> {
@@ -214,7 +479,7 @@ class PhotoRepositoryCompat(
             .sortedByDescending { it.lastModified() }
             .drop(offset)
             .take(limit)
-            .map { it.toPhoto() }
+            .map { it.toPhotoFast() }
     }
     
     suspend fun getPhotosFilteredByCompliance(status: com.hazardhawk.domain.entities.ComplianceStatus, offset: Int, limit: Int): List<Photo> {
@@ -277,7 +542,7 @@ class PhotoRepositoryCompat(
         return getAllPhotoFiles()
             .filter { it.lastModified() < timestampMillis }
             .take(limit)
-            .map { it.toPhoto() }
+            .map { it.toPhotoFast() }
     }
     
     suspend fun cleanupOldPhotos(olderThanDays: Int): Int {

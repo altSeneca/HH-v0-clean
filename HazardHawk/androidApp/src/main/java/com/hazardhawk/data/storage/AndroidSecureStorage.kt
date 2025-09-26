@@ -11,12 +11,9 @@ import kotlinx.coroutines.withContext
  * Provides encrypted storage for camera settings and other sensitive data
  */
 class AndroidSecureStorage(
-    private val context: Context
+    private val context: Context,
+    private val secureKeyManager: SecureKeyManager = SecureKeyManager.getInstance(context)
 ) : SecureStorage {
-    
-    private val secureKeyManager by lazy {
-        SecureKeyManager.getInstance(context)
-    }
     
     override suspend fun putString(key: String, value: String) = withContext(Dispatchers.IO) {
         try {
