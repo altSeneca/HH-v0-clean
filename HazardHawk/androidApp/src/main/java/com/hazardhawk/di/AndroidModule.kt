@@ -51,6 +51,7 @@ import com.hazardhawk.performance.ConstructionImageLoader
 import com.hazardhawk.performance.ConstructionPerformanceMonitor
 import com.hazardhawk.performance.PhotoViewerPerformanceTracker
 import com.hazardhawk.performance.ConstructionPhotoMemoryManager
+import com.hazardhawk.camera.MetadataEmbedder
 
 /**
  * Android-specific dependency injection module.
@@ -82,6 +83,11 @@ val androidModule = module {
     // Security services
     single<SecureStorageService> { AndroidSecureStorageService(androidContext()) }
     single<PhotoEncryptionService> { AndroidPhotoEncryptionService() }
+
+    // SecureKeyManager - provide singleton instance for compatibility
+    single<com.hazardhawk.security.SecureKeyManager> {
+        com.hazardhawk.security.SecureKeyManager.getInstance(androidContext())
+    }
     
     // Settings storage and repositories
     single<SecureStorage> { AndroidSecureStorage(androidContext()) }
@@ -98,6 +104,9 @@ val androidModule = module {
     single<ConstructionPerformanceMonitor> { ConstructionPerformanceMonitor() }
     single<PhotoViewerPerformanceTracker> { PhotoViewerPerformanceTracker(get()) }
     single<ConstructionPhotoMemoryManager> { ConstructionPhotoMemoryManager() }
+
+    // Metadata and camera components
+    single<MetadataEmbedder> { MetadataEmbedder(androidContext()) }
 
     // Optimized image loading for construction photography
     single<ConstructionImageLoader> { ConstructionImageLoader(androidContext()) }
@@ -199,6 +208,11 @@ val androidModule = module {
             androidContext(),
             "hazard_hawk.db"
         )
+    }
+
+    // HazardHawk Database instance for AnalysisRepository
+    single<com.hazardhawk.database.HazardHawkDatabase> {
+        com.hazardhawk.database.createHazardHawkDatabase(androidContext())
     }
 }
 

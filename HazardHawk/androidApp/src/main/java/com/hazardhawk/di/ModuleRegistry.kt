@@ -24,7 +24,7 @@ object ModuleRegistry {
             // com.hazardhawk.di.aiModule,  // AI module with GeminiVisionAnalyzer - temporarily disabled, handled by androidModule instead
             // com.hazardhawk.di.sharedModule,
             // com.hazardhawk.di.databaseModule,
-            // com.hazardhawk.di.repositoryModule,
+            com.hazardhawk.di.repositoryModule,  // Enable repository module for AnalysisRepository
             // com.hazardhawk.di.domainModule,
             // com.hazardhawk.di.networkModule
         )

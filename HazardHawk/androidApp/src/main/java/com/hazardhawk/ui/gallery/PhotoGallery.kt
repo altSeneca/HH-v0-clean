@@ -16,6 +16,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import android.Manifest
+import android.os.Build
+import android.content.pm.PackageManager
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
@@ -224,15 +230,13 @@ private fun PhotoViewer(
     onTagsUpdated: (String, List<String>) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
 ) {
-    PhotoViewerScreen(
+    // Use the refactored PhotoViewer for better performance and maintainability
+    PhotoViewerScreenRefactored(
         photos = photos,
         initialPhotoIndex = initialPhotoIndex,
         onNavigateBack = onDismiss,
         onShare = onShare,
         onDelete = onDelete,
-        onEditTags = { photo ->
-            // Tag editing is handled within PhotoViewerScreen
-        },
         onTagsUpdated = onTagsUpdated,
         modifier = modifier
     )
@@ -258,10 +262,86 @@ fun PhotoGallery(
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val viewModel = rememberGalleryState(photoRepository, reportGenerationManager)
-    val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    
+
+    // Determine required permission based on Android version
+    val mediaPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        Manifest.permission.READ_MEDIA_IMAGES
+    } else {
+        Manifest.permission.READ_EXTERNAL_STORAGE
+    }
+
+    var hasPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, mediaPermission) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+
+    val viewModel = rememberGalleryState(photoRepository, reportGenerationManager)
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        hasPermission = isGranted
+        if (isGranted) {
+            Log.d("PhotoGallery", "Media permission granted, refreshing photos...")
+            // Trigger photo reload when permission is granted
+            viewModel.loadPhotos()
+        } else {
+            Log.w("PhotoGallery", "Media permission denied")
+        }
+    }
+
+    // Request permission when gallery opens if not granted
+    LaunchedEffect(Unit) {
+        if (!hasPermission) {
+            Log.d("PhotoGallery", "Requesting media permission: $mediaPermission")
+            permissionLauncher.launch(mediaPermission)
+        }
+    }
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
+    // Show permission required message if permission denied
+    if (!hasPermission) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.PhotoLibrary,
+                contentDescription = null,
+                modifier = Modifier.size(64.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Photo Access Required",
+                style = MaterialTheme.typography.headlineSmall,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "This app needs permission to access photos to display your existing HazardHawk photos.",
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = {
+                    Log.d("PhotoGallery", "User clicked Grant Permission button")
+                    permissionLauncher.launch(mediaPermission)
+                }
+            ) {
+                Text("Grant Permission")
+            }
+        }
+        return
+    }
+
     // Handle error display
     LaunchedEffect(state.error) {
         if (state.error != null) {
