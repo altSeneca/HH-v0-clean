@@ -113,7 +113,7 @@ fun OSHAComplianceCard(
 }
 
 @Composable
-private fun OSHAAnalysisResults(
+fun OSHAAnalysisResults(
     analysis: OSHAAnalysisResult,
     displayState: OSHADisplayState,
     onExpandStandard: (String, Boolean) -> Unit
@@ -386,7 +386,7 @@ fun HazardCategorySelector(
 /**
  * Get icon for hazard category
  */
-private fun getCategoryIcon(category: HazardTagCategory) = when (category) {
+fun getCategoryIcon(category: HazardTagCategory) = when (category) {
     HazardTagCategory.PPE_VIOLATION -> Icons.Default.Security
     HazardTagCategory.FALL_HAZARD -> Icons.Default.Height
     HazardTagCategory.ELECTRICAL -> Icons.Default.Bolt
@@ -541,7 +541,7 @@ fun WorkflowSummaryCard(
 }
 
 @Composable
-private fun SummaryMetric(
+fun SummaryMetric(
     value: String,
     label: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,

@@ -670,17 +670,3 @@ private fun AnalysisComparisonCard(
     }
 }
 
-/**
- * Get Material Design icon for hazard category
- */
-private fun getCategoryIcon(category: HazardTagCategory) = when (category) {
-    HazardTagCategory.PPE_VIOLATION -> Icons.Default.Security
-    HazardTagCategory.FALL_HAZARD -> Icons.Default.Height
-    HazardTagCategory.ELECTRICAL -> Icons.Default.Bolt
-    HazardTagCategory.MACHINERY -> Icons.Default.Settings
-    HazardTagCategory.CHEMICAL -> Icons.Default.Science
-    HazardTagCategory.STRUCTURAL -> Icons.Default.Foundation
-    HazardTagCategory.ENVIRONMENTAL -> Icons.Default.Cloud
-    HazardTagCategory.GENERAL_SAFETY -> Icons.Default.Shield
-    HazardTagCategory.CUSTOM -> Icons.Default.Add
-}

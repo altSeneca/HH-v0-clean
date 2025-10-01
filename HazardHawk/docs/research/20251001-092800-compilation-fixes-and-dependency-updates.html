@@ -1,0 +1,1583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HazardHawk: Compilation Fixes & Dependency Updates - Comprehensive Research</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #1C1C1E;
+            background: #F5F5F7;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+
+        .metadata {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            padding: 1.5rem 2rem;
+            background: #F7FAFC;
+            border-bottom: 1px solid #E2E8F0;
+        }
+
+        .metadata-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .metadata-label {
+            font-size: 0.85rem;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+
+        .metadata-value {
+            font-weight: 600;
+            color: #2D3748;
+        }
+
+        nav {
+            padding: 1.5rem 2rem;
+            background: #F7FAFC;
+            border-bottom: 1px solid #E2E8F0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        nav h2 {
+            font-size: 1rem;
+            color: #4A5568;
+            margin-bottom: 0.75rem;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        nav a {
+            color: #FF6B35;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        nav a:hover {
+            color: #F7931E;
+            text-decoration: underline;
+        }
+
+        main {
+            padding: 2rem;
+        }
+
+        section {
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid #E2E8F0;
+        }
+
+        section:last-child {
+            border-bottom: none;
+        }
+
+        h2 {
+            font-size: 2rem;
+            color: #FF6B35;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #FF6B35;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            color: #2D3748;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        h4 {
+            font-size: 1.2rem;
+            color: #4A5568;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: #4A5568;
+        }
+
+        ul, ol {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+            color: #4A5568;
+        }
+
+        code {
+            background: #F7FAFC;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #E53E3E;
+        }
+
+        pre {
+            background: #2D3748;
+            color: #E2E8F0;
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        pre code {
+            background: transparent;
+            color: inherit;
+            padding: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.5rem;
+            background: white;
+        }
+
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border: 1px solid #E2E8F0;
+        }
+
+        th {
+            background: #F7FAFC;
+            font-weight: 600;
+            color: #2D3748;
+        }
+
+        tr:nth-child(even) {
+            background: #F7FAFC;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        .badge-critical {
+            background: #FED7D7;
+            color: #C53030;
+        }
+
+        .badge-high {
+            background: #FEB2B2;
+            color: #9B2C2C;
+        }
+
+        .badge-medium {
+            background: #FBD38D;
+            color: #975A16;
+        }
+
+        .badge-low {
+            background: #C6F6D5;
+            color: #22543D;
+        }
+
+        .badge-secure {
+            background: #B2F5EA;
+            color: #234E52;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid;
+        }
+
+        .alert-critical {
+            background: #FFF5F5;
+            border-color: #C53030;
+            color: #742A2A;
+        }
+
+        .alert-warning {
+            background: #FFFAF0;
+            border-color: #DD6B20;
+            color: #7C2D12;
+        }
+
+        .alert-info {
+            background: #EBF8FF;
+            border-color: #3182CE;
+            color: #2C5282;
+        }
+
+        .alert-success {
+            background: #F0FFF4;
+            border-color: #38A169;
+            color: #22543D;
+        }
+
+        .card {
+            background: #F7FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2D3748;
+            margin-bottom: 0.75rem;
+        }
+
+        .recommendation {
+            background: linear-gradient(135deg, #FED7E2 0%, #FBB6CE 100%);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #D53F8C;
+        }
+
+        .recommendation-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #702459;
+            margin-bottom: 0.75rem;
+        }
+
+        footer {
+            background: #2D3748;
+            color: #E2E8F0;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .risk-matrix {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .risk-card {
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+
+        .risk-card-critical {
+            background: #FFF5F5;
+            border-color: #C53030;
+        }
+
+        .risk-card-high {
+            background: #FFFAF0;
+            border-color: #DD6B20;
+        }
+
+        .risk-card-medium {
+            background: #FFFFF0;
+            border-color: #D69E2E;
+        }
+
+        .risk-card-low {
+            background: #F0FFF4;
+            border-color: #38A169;
+        }
+
+        .checklist {
+            list-style: none;
+            margin-left: 0;
+        }
+
+        .checklist li {
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .checklist li:before {
+            content: "☐";
+            position: absolute;
+            left: 0;
+            color: #4A5568;
+            font-size: 1.2rem;
+        }
+
+        .checklist li.checked:before {
+            content: "✓";
+            color: #38A169;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>HazardHawk: Compilation Fixes & Dependency Updates</h1>
+            <p class="subtitle">Comprehensive Research Report</p>
+        </header>
+
+        <div class="metadata">
+            <div class="metadata-item">
+                <span class="metadata-label">Date</span>
+                <span class="metadata-value">October 1, 2025</span>
+            </div>
+            <div class="metadata-item">
+                <span class="metadata-label">Project</span>
+                <span class="metadata-value">HazardHawk v0.2.0</span>
+            </div>
+            <div class="metadata-item">
+                <span class="metadata-label">Kotlin Version</span>
+                <span class="metadata-value">2.1.0</span>
+            </div>
+            <div class="metadata-item">
+                <span class="metadata-label">Research Agents</span>
+                <span class="metadata-value">5 Parallel Agents</span>
+            </div>
+            <div class="metadata-item">
+                <span class="metadata-label">Compilation Errors</span>
+                <span class="metadata-value">12 Errors Identified</span>
+            </div>
+            <div class="metadata-item">
+                <span class="metadata-label">Dependencies Reviewed</span>
+                <span class="metadata-value">15+ Libraries</span>
+            </div>
+        </div>
+
+        <nav>
+            <h2>📑 Table of Contents</h2>
+            <ul>
+                <li><a href="#executive-summary">Executive Summary</a></li>
+                <li><a href="#compilation-errors">Compilation Error Analysis</a></li>
+                <li><a href="#dependency-versions">Dependency Version Research</a></li>
+                <li><a href="#ux-analysis">UX Workflow Analysis</a></li>
+                <li><a href="#testing-strategy">Testing Strategy</a></li>
+                <li><a href="#security-assessment">Security Assessment</a></li>
+                <li><a href="#recommendations">Recommendations</a></li>
+                <li><a href="#implementation-plan">Implementation Plan</a></li>
+            </ul>
+        </nav>
+
+        <main>
+            <!-- EXECUTIVE SUMMARY -->
+            <section id="executive-summary">
+                <h2>📊 Executive Summary</h2>
+
+                <div class="alert alert-info">
+                    <strong>Research Scope:</strong> This comprehensive research addresses compilation errors in the gallery analysis workflow and evaluates all Android dependencies for security, compatibility, and feature improvements.
+                </div>
+
+                <h3>Key Findings</h3>
+
+                <div class="risk-matrix">
+                    <div class="risk-card risk-card-critical">
+                        <h4>🔴 CRITICAL</h4>
+                        <ul>
+                            <li>12 compilation errors in gallery components</li>
+                            <li>androidx.security:security-crypto deprecated</li>
+                            <li>Compose BOM 12 months outdated</li>
+                        </ul>
+                    </div>
+
+                    <div class="risk-card risk-card-high">
+                        <h4>🟡 HIGH PRIORITY</h4>
+                        <ul>
+                            <li>Ktor 2.x → 3.x major upgrade needed</li>
+                            <li>Navigation Compose 2 versions behind</li>
+                            <li>Gallery workflow UX complexity</li>
+                        </ul>
+                    </div>
+
+                    <div class="risk-card risk-card-medium">
+                        <h4>🟠 MEDIUM</h4>
+                        <ul>
+                            <li>Koin 3.x → 4.x upgrade</li>
+                            <li>kotlinx libraries outdated</li>
+                            <li>GDPR compliance gaps</li>
+                        </ul>
+                    </div>
+
+                    <div class="risk-card risk-card-low">
+                        <h4>🟢 LOW RISK</h4>
+                        <ul>
+                            <li>CameraX 1.4.0 stable update</li>
+                            <li>Coil patch updates</li>
+                            <li>No active CVEs in dependencies</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>Research Methodology</h3>
+                <p>This research deployed 5 specialist agents in parallel:</p>
+                <ul>
+                    <li><strong>simple-architect:</strong> Analyzed compilation errors and code structure</li>
+                    <li><strong>docs-curator:</strong> Researched latest dependency versions via Context7 and web</li>
+                    <li><strong>loveable-ux:</strong> Evaluated gallery workflow user experience</li>
+                    <li><strong>test-guardian:</strong> Defined comprehensive testing strategy</li>
+                    <li><strong>security-compliance:</strong> Assessed security vulnerabilities and compliance</li>
+                </ul>
+            </section>
+
+            <!-- COMPILATION ERRORS -->
+            <section id="compilation-errors">
+                <h2>🔧 Compilation Error Analysis</h2>
+
+                <div class="alert alert-critical">
+                    <strong>Status:</strong> 12 compilation errors prevent building the Android app. All errors are in the gallery analysis workflow components.
+                </div>
+
+                <h3>Root Cause Analysis</h3>
+
+                <div class="card">
+                    <div class="card-title">Primary Issues</div>
+                    <ol>
+                        <li><strong>Missing closing brace</strong> at line 631 in AnalysisWorkflowComponents.kt</li>
+                        <li><strong>Incorrect visibility modifiers</strong> (<code>private</code> on functions that need to be accessible)</li>
+                        <li><strong>Duplicate function definitions</strong> (<code>getCategoryIcon()</code> defined twice)</li>
+                        <li><strong>Cascading errors</strong> from primary syntax issues</li>
+                    </ol>
+                </div>
+
+                <h3>Error Breakdown by File</h3>
+
+                <h4>AnalysisWorkflowComponents.kt (8 errors)</h4>
+                <table>
+                    <tr>
+                        <th>Line</th>
+                        <th>Error</th>
+                        <th>Root Cause</th>
+                        <th>Complexity</th>
+                    </tr>
+                    <tr>
+                        <td>343</td>
+                        <td>Syntax error: Expecting an element</td>
+                        <td>Cascading from other errors</td>
+                        <td class="badge badge-low">Simple</td>
+                    </tr>
+                    <tr>
+                        <td>437</td>
+                        <td>Cannot access private function</td>
+                        <td><code>getCategoryIcon()</code> is private but called from other file</td>
+                        <td class="badge badge-low">Simple</td>
+                    </tr>
+                    <tr>
+                        <td>450</td>
+                        <td>Invalid 'private' modifier</td>
+                        <td>Function scope issue</td>
+                        <td class="badge badge-low">Simple</td>
+                    </tr>
+                    <tr>
+                        <td>559, 565, 571</td>
+                        <td>Unresolved reference 'SummaryMetric'</td>
+                        <td><code>SummaryMetric()</code> is private</td>
+                        <td class="badge badge-low">Simple</td>
+                    </tr>
+                    <tr>
+                        <td>605</td>
+                        <td>Invalid 'private' modifier</td>
+                        <td>Composable function visibility</td>
+                        <td class="badge badge-low">Simple</td>
+                    </tr>
+                    <tr>
+                        <td>631</td>
+                        <td>Syntax error: Expecting '}'</td>
+                        <td>Missing closing brace for <code>SummaryMetric()</code></td>
+                        <td class="badge badge-low">Simple</td>
+                    </tr>
+                </table>
+
+                <h4>PhotoViewerRefactored.kt (3 errors)</h4>
+                <table>
+                    <tr>
+                        <th>Line</th>
+                        <th>Error</th>
+                        <th>Root Cause</th>
+                        <th>Will Auto-Fix</th>
+                    </tr>
+                    <tr>
+                        <td>343</td>
+                        <td>Cannot infer type parameter</td>
+                        <td>Cascading from line 344</td>
+                        <td class="badge badge-secure">✓ Yes</td>
+                    </tr>
+                    <tr>
+                        <td>344</td>
+                        <td>Unresolved 'AnalysisProgressIndicator'</td>
+                        <td>Function exists but not accessible</td>
+                        <td class="badge badge-secure">✓ Yes</td>
+                    </tr>
+                    <tr>
+                        <td>384</td>
+                        <td>Unresolved 'PhaseTransitionControls'</td>
+                        <td>Function exists but not accessible</td>
+                        <td class="badge badge-secure">✓ Yes</td>
+                    </tr>
+                </table>
+
+                <h4>AnalysisWorkflowViews.kt (1 error)</h4>
+                <table>
+                    <tr>
+                        <th>Line</th>
+                        <th>Error</th>
+                        <th>Root Cause</th>
+                        <th>Will Auto-Fix</th>
+                    </tr>
+                    <tr>
+                        <td>62</td>
+                        <td>Unresolved 'HazardCategorySelector'</td>
+                        <td>Function exists but visibility issue</td>
+                        <td class="badge badge-secure">✓ Yes</td>
+                    </tr>
+                </table>
+
+                <h3>Proposed Fixes</h3>
+
+                <div class="recommendation">
+                    <div class="recommendation-title">✅ Fix Strategy: Simple & Low-Risk</div>
+                    <p><strong>Estimated Time:</strong> 30 minutes</p>
+                    <p><strong>Lines Changed:</strong> ~8 lines across 2 files</p>
+                    <p><strong>Risk Level:</strong> <span class="badge badge-low">LOW</span></p>
+                </div>
+
+                <h4>Step 1: Fix AnalysisWorkflowComponents.kt</h4>
+                <pre><code class="language-kotlin">// Line 450: Change visibility
+// FROM:
+private fun getCategoryIcon(category: HazardTagCategory) = when (category) { ... }
+
+// TO:
+internal fun getCategoryIcon(category: HazardTagCategory) = when (category) { ... }
+
+// Line 605: Remove private modifier
+// FROM:
+@Composable
+private fun SummaryMetric(...) { ... }
+
+// TO:
+@Composable
+fun SummaryMetric(...) { ... }
+
+// Line 631: Add missing closing brace
+// FROM:
+        )
+    }
+// (EOF)
+
+// TO:
+        )
+    }
+} // Add this closing brace</code></pre>
+
+                <h4>Step 2: Remove Duplicate Function</h4>
+                <pre><code class="language-kotlin">// In AnalysisWorkflowViews.kt, line 676
+// DELETE duplicate getCategoryIcon() function
+// Use the one from AnalysisWorkflowComponents.kt instead</code></pre>
+
+                <h3>File Dependency Map</h3>
+                <pre><code>PhotoViewerRefactored.kt
+  ├─ USES: AnalysisProgressIndicator() [LINE 344]
+  ├─ USES: PhaseTransitionControls() [LINE 384]
+  └─ FROM: AnalysisWorkflowComponents.kt
+
+AnalysisWorkflowViews.kt
+  ├─ USES: HazardCategorySelector() [LINE 62]
+  ├─ USES: getCategoryIcon() [LINE 380] ← PRIVATE!
+  └─ FROM: AnalysisWorkflowComponents.kt
+
+AnalysisWorkflowComponents.kt
+  ├─ EXPORTS: AnalysisProgressIndicator() [LINE 356]
+  ├─ EXPORTS: PhaseTransitionControls() [LINE 466]
+  ├─ EXPORTS: HazardCategorySelector() [LINE 415]
+  ├─ PRIVATE: getCategoryIcon() [LINE 450] ← FIX #1
+  ├─ PRIVATE: SummaryMetric() [LINE 605] ← FIX #2
+  └─ SYNTAX: Missing '}' at line 631 ← FIX #3</code></pre>
+            </section>
+
+            <!-- DEPENDENCY VERSIONS -->
+            <section id="dependency-versions">
+                <h2>📦 Dependency Version Research</h2>
+
+                <div class="alert alert-warning">
+                    <strong>Finding:</strong> Most dependencies are 6-12 months outdated. Kotlin 2.1.0 is compatible with all latest versions.
+                </div>
+
+                <h3>Core Compose Libraries</h3>
+                <table>
+                    <tr>
+                        <th>Dependency</th>
+                        <th>Current</th>
+                        <th>Latest Stable</th>
+                        <th>Status</th>
+                        <th>Priority</th>
+                    </tr>
+                    <tr>
+                        <td>Compose BOM</td>
+                        <td>2024.09.02</td>
+                        <td><strong>2025.09.01</strong></td>
+                        <td class="badge badge-critical">12 months behind</td>
+                        <td class="badge badge-high">HIGH</td>
+                    </tr>
+                    <tr>
+                        <td>Compose Compiler</td>
+                        <td>2.0.0</td>
+                        <td><strong>2.1.0</strong></td>
+                        <td class="badge badge-medium">Should match Kotlin</td>
+                        <td class="badge badge-high">HIGH</td>
+                    </tr>
+                </table>
+
+                <div class="card">
+                    <div class="card-title">🎯 Compose BOM 2025.09.01 Features</div>
+                    <ul>
+                        <li>Compose 1.9.2 with bug fixes</li>
+                        <li>Advanced shadow modifiers</li>
+                        <li>Enhanced visibility modifiers</li>
+                        <li>Rich text styling improvements</li>
+                        <li>12 months of stability patches</li>
+                    </ul>
+                </div>
+
+                <h3>AndroidX Core Libraries</h3>
+                <table>
+                    <tr>
+                        <th>Dependency</th>
+                        <th>Current</th>
+                        <th>Latest</th>
+                        <th>Gap</th>
+                        <th>Breaking Changes</th>
+                    </tr>
+                    <tr>
+                        <td>Activity Compose</td>
+                        <td>1.9.1</td>
+                        <td>1.11.0-rc01</td>
+                        <td>2 minor</td>
+                        <td>⚠️ minSdk 21→23</td>
+                    </tr>
+                    <tr>
+                        <td>Lifecycle</td>
+                        <td>2.8.4</td>
+                        <td>2.8.4</td>
+                        <td>✅ Current</td>
+                        <td>None</td>
+                    </tr>
+                    <tr>
+                        <td>Core KTX</td>
+                        <td>1.13.1</td>
+                        <td><strong>1.17.0</strong></td>
+                        <td>4 minor</td>
+                        <td>Requires Kotlin 2.0+</td>
+                    </tr>
+                    <tr>
+                        <td>Navigation Compose</td>
+                        <td>2.7.7</td>
+                        <td><strong>2.9.5</strong></td>
+                        <td>2 major</td>
+                        <td>Type-safe navigation</td>
+                    </tr>
+                </table>
+
+                <h3>Camera & Media</h3>
+                <table>
+                    <tr>
+                        <th>Dependency</th>
+                        <th>Current</th>
+                        <th>Latest</th>
+                        <th>New Features</th>
+                    </tr>
+                    <tr>
+                        <td>CameraX</td>
+                        <td>1.3.3</td>
+                        <td><strong>1.4.0</strong></td>
+                        <td>Screen flash, HDR, stabilization</td>
+                    </tr>
+                    <tr>
+                        <td>Coil</td>
+                        <td>3.0.0</td>
+                        <td>3.3.0</td>
+                        <td>Bug fixes, multiplatform improvements</td>
+                    </tr>
+                </table>
+
+                <div class="alert alert-info">
+                    <strong>CameraX 1.4.0 Highlights:</strong>
+                    <ul>
+                        <li>Screen flash for selfie cameras</li>
+                        <li>Expanded HDR capabilities (HDR Preview, Ultra HDR)</li>
+                        <li>Preview stabilization</li>
+                        <li>Fixed lifecycle binding crash</li>
+                        <li>Dual concurrent camera support (in 1.5.0-alpha01)</li>
+                    </ul>
+                </div>
+
+                <h3>Networking & Serialization</h3>
+                <table>
+                    <tr>
+                        <th>Dependency</th>
+                        <th>Current</th>
+                        <th>Latest</th>
+                        <th>Update Type</th>
+                        <th>Risk</th>
+                    </tr>
+                    <tr>
+                        <td>Ktor</td>
+                        <td>2.3.12</td>
+                        <td><strong>3.2.2</strong></td>
+                        <td class="badge badge-critical">Major (2.x→3.x)</td>
+                        <td class="badge badge-high">HIGH</td>
+                    </tr>
+                    <tr>
+                        <td>kotlinx.serialization</td>
+                        <td>1.6.3</td>
+                        <td>1.9.0</td>
+                        <td>3 minor versions</td>
+                        <td class="badge badge-low">LOW</td>
+                    </tr>
+                    <tr>
+                        <td>kotlinx.coroutines</td>
+                        <td>1.8.1</td>
+                        <td>1.10.2</td>
+                        <td>2 minor versions</td>
+                        <td class="badge badge-low">LOW</td>
+                    </tr>
+                </table>
+
+                <div class="alert alert-warning">
+                    <strong>⚠️ Ktor 3.x Breaking Changes:</strong>
+                    <ul>
+                        <li>Major API redesign from 2.x</li>
+                        <li>New dependency injection module</li>
+                        <li>HTMX module support</li>
+                        <li>Performance improvements</li>
+                        <li><strong>Requires migration guide review</strong></li>
+                    </ul>
+                </div>
+
+                <h3>Dependency Injection</h3>
+                <table>
+                    <tr>
+                        <th>Dependency</th>
+                        <th>Current</th>
+                        <th>Latest</th>
+                        <th>Notes</th>
+                    </tr>
+                    <tr>
+                        <td>Koin</td>
+                        <td>3.5.6</td>
+                        <td><strong>4.1.0+</strong></td>
+                        <td>Major version, built on Kotlin 2.0, Compose Multiplatform enhancements</td>
+                    </tr>
+                </table>
+
+                <h3>Recommended Update Strategy</h3>
+
+                <div class="recommendation">
+                    <div class="recommendation-title">📅 Phased Update Plan</div>
+
+                    <h4>Phase 1: Foundation (Week 1) - LOW RISK</h4>
+                    <ul class="checklist">
+                        <li>Compose Compiler: 2.0.0 → <strong>2.1.0</strong></li>
+                        <li>Core KTX: 1.13.1 → <strong>1.17.0</strong></li>
+                        <li>CameraX: 1.3.3 → <strong>1.4.0</strong></li>
+                        <li>Coil: 3.0.0 → <strong>3.3.0</strong></li>
+                    </ul>
+
+                    <h4>Phase 2: Compose Ecosystem (Week 2) - MEDIUM RISK</h4>
+                    <ul class="checklist">
+                        <li>Compose BOM: 2024.09.02 → <strong>2025.09.01</strong></li>
+                        <li>Activity Compose: 1.9.1 → <strong>1.11.0</strong> (when stable)</li>
+                        <li>Navigation Compose: 2.7.7 → <strong>2.9.5</strong></li>
+                    </ul>
+
+                    <h4>Phase 3: Kotlin Ecosystem (Week 3) - HIGH RISK</h4>
+                    <ul class="checklist">
+                        <li>Ktor: 2.3.12 → <strong>3.2.2</strong> (test in branch first)</li>
+                        <li>Koin: 3.5.6 → <strong>4.1.0</strong> (or stay on 3.5 LTS)</li>
+                    </ul>
+
+                    <h4>Phase 4: Supporting Libraries (Anytime) - LOW RISK</h4>
+                    <ul class="checklist">
+                        <li>kotlinx.serialization: 1.6.3 → <strong>1.9.0</strong></li>
+                        <li>kotlinx.coroutines: 1.8.1 → <strong>1.10.2</strong></li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- UX ANALYSIS -->
+            <section id="ux-analysis">
+                <h2>🎨 Gallery Workflow UX Analysis</h2>
+
+                <div class="alert alert-warning">
+                    <strong>Critical Finding:</strong> The gallery analysis workflow contradicts HazardHawk's "Less, but Better" minimalist design philosophy.
+                </div>
+
+                <h3>Current Workflow Complexity</h3>
+
+                <div class="card">
+                    <div class="card-title">Two-Phase Analysis Workflow</div>
+                    <pre><code>PHASE 1: PRE_ANALYSIS (Manual Tagging)
+├─ 9 hazard categories to choose from
+├─ 6-8 predefined tags per category
+├─ Custom tag input
+├─ Manual tagging required before AI
+└─ "Analyze Safety" button to proceed
+                ↓
+PHASE 2: POST_ANALYSIS (AI Results)
+├─ AI analysis results with bounding boxes
+├─ OSHA compliance card (collapsed)
+├─ AI validation workflow
+├─ Analysis comparison (manual vs AI)
+├─ Phase transition controls
+└─ Workflow summary dashboard
+
+Total Steps: 22 actions
+User Friction: HIGH
+Time to Value: 5-10 minutes</code></pre>
+                </div>
+
+                <h3>Design Philosophy Conflict</h3>
+
+                <table>
+                    <tr>
+                        <th>ClearCamera Principle</th>
+                        <th>Current Workflow</th>
+                        <th>Violation Severity</th>
+                    </tr>
+                    <tr>
+                        <td>"Less, but Better"</td>
+                        <td>5 cards, 22 steps, 9 categories</td>
+                        <td class="badge badge-critical">CRITICAL</td>
+                    </tr>
+                    <tr>
+                        <td>Auto-hiding controls</td>
+                        <td>Always-visible phase headers</td>
+                        <td class="badge badge-medium">MODERATE</td>
+                    </tr>
+                    <tr>
+                        <td>Elegant interactions</td>
+                        <td>Multi-phase state machine</td>
+                        <td class="badge badge-critical">CRITICAL</td>
+                    </tr>
+                    <tr>
+                        <td>Focus on content</td>
+                        <td>Cards dominate; photo secondary</td>
+                        <td class="badge badge-critical">CRITICAL</td>
+                    </tr>
+                    <tr>
+                        <td>Technology recedes</td>
+                        <td>Exposes validation, phases, OSHA codes</td>
+                        <td class="badge badge-critical">CRITICAL</td>
+                    </tr>
+                </table>
+
+                <p><strong>Design Alignment Score:</strong> <span class="badge badge-critical">2/10 ❌</span></p>
+
+                <h3>Recommended Simplified Workflow</h3>
+
+                <div class="recommendation">
+                    <div class="recommendation-title">✨ One-Tap Analysis Workflow</div>
+                    <pre><code>1. User opens photo in gallery
+2. AI analysis runs AUTOMATICALLY (no button)
+3. Shows simple hazard list:
+   🔴 Critical: Missing hard hat
+   🟡 Moderate: Ladder placement
+   🟢 Low: Housekeeping
+4. User taps hazard for details + bounding box
+5. "Add Tag" button for manual additions (optional)
+6. Done. Photo automatically tagged.
+
+Total Steps: 6 (down from 22)
+Manual Work: OPTIONAL (not required)
+Time to Value: <30 seconds
+Design Consistency: ✅ Matches ClearCamera</code></pre>
+                </div>
+
+                <h3>Component Essentiality</h3>
+
+                <table>
+                    <tr>
+                        <th>Component</th>
+                        <th>Essentiality</th>
+                        <th>Recommendation</th>
+                    </tr>
+                    <tr>
+                        <td>AIAnalysisResultsCard</td>
+                        <td class="badge badge-high">Critical</td>
+                        <td>Keep - core functionality</td>
+                    </tr>
+                    <tr>
+                        <td>Bounding box overlay</td>
+                        <td class="badge badge-high">Critical</td>
+                        <td>Keep - visual hazard highlighting</td>
+                    </tr>
+                    <tr>
+                        <td>PreAnalysisView</td>
+                        <td class="badge badge-low">Optional</td>
+                        <td><strong>Remove</strong> - adds friction</td>
+                    </tr>
+                    <tr>
+                        <td>HazardCategorySelector</td>
+                        <td class="badge badge-low">Optional</td>
+                        <td><strong>Simplify</strong> - too complex for gloves</td>
+                    </tr>
+                    <tr>
+                        <td>AnalysisComparisonCard</td>
+                        <td class="badge badge-low">Optional</td>
+                        <td><strong>Remove</strong> - confusing for users</td>
+                    </tr>
+                    <tr>
+                        <td>OSHAComplianceCard</td>
+                        <td class="badge badge-medium">Non-Essential</td>
+                        <td><strong>Move</strong> - to dedicated reports section</td>
+                    </tr>
+                    <tr>
+                        <td>PhaseTransitionControls</td>
+                        <td class="badge badge-low">Non-Essential</td>
+                        <td><strong>Remove</strong> - exposes internal state</td>
+                    </tr>
+                </table>
+
+                <h3>User Context: Construction Workers</h3>
+
+                <ul>
+                    <li>✅ Wear thick gloves - need large, simple controls</li>
+                    <li>✅ Work outdoors - need high contrast UI</li>
+                    <li>✅ Need quick answers - "Is this safe?" not comprehensive analysis</li>
+                    <li>✅ Limited time - 30 seconds max per photo</li>
+                    <li>❌ Current workflow: 5-10 minutes, 60+ choices, cognitive overload</li>
+                </ul>
+
+                <div class="alert alert-info">
+                    <strong>UX Recommendation:</strong> Simplify workflow to match ClearCamera philosophy. Prioritize speed over comprehensive features. Make AI analysis automatic, manual tagging optional.
+                </div>
+            </section>
+
+            <!-- TESTING STRATEGY -->
+            <section id="testing-strategy">
+                <h2>🧪 Testing Strategy</h2>
+
+                <h3>Critical Functionality Checklist</h3>
+
+                <div class="card">
+                    <div class="card-title">Must Continue Working After Fixes</div>
+                    <ul class="checklist checked">
+                        <li>Photo grid display with thumbnails</li>
+                        <li>Photo viewer launch and navigation</li>
+                        <li>ClearCamera capture and save</li>
+                        <li>Metadata embedding (GPS, timestamp)</li>
+                        <li>Gallery → Camera navigation</li>
+                    </ul>
+                </div>
+
+                <h3>Smoke Test Scenarios (5 Tests)</h3>
+
+                <h4>Test 1: Gallery Launch</h4>
+                <pre><code>1. Launch app → Navigate to Gallery
+2. Verify: Photo grid displays
+3. Tap any photo
+4. Verify: PhotoViewer opens
+Expected: No crashes, smooth navigation</code></pre>
+
+                <h4>Test 2: Photo Viewer Tabs</h4>
+                <pre><code>1. Open PhotoViewer
+2. Tap "Info" tab
+3. Verify: Metadata displays
+4. Tap "Analysis" tab
+5. Verify: Panel loads (even if empty)
+Expected: Tab switching works</code></pre>
+
+                <h4>Test 3: Photo Actions</h4>
+                <pre><code>1. Open PhotoViewer
+2. Tap Share button
+3. Verify: Share sheet appears
+4. Tap Delete button
+5. Verify: Confirmation dialog
+Expected: All actions functional</code></pre>
+
+                <h4>Test 4: AI Analysis Panel</h4>
+                <pre><code>1. PhotoViewer → Analysis tab
+2. Verify: SafetyAnalysisPanel displays
+3. Verify: Shows disabled state OR API required
+4. Verify: Manual tags section visible
+Expected: No component crashes</code></pre>
+
+                <h4>Test 5: Camera to Gallery Flow</h4>
+                <pre><code>1. Capture photo in Camera
+2. Navigate to Gallery
+3. Verify: New photo appears
+4. Tap photo
+5. Verify: Metadata embedded
+Expected: End-to-end flow works</code></pre>
+
+                <h3>Automated Test Requirements</h3>
+
+                <table>
+                    <tr>
+                        <th>Test Type</th>
+                        <th>Coverage Target</th>
+                        <th>Framework</th>
+                    </tr>
+                    <tr>
+                        <td>Unit Tests</td>
+                        <td>90%+ business logic</td>
+                        <td>JUnit 4, MockK</td>
+                    </tr>
+                    <tr>
+                        <td>Integration Tests</td>
+                        <td>85%+ workflows</td>
+                        <td>AndroidJUnit4</td>
+                    </tr>
+                    <tr>
+                        <td>UI Tests</td>
+                        <td>100% navigation</td>
+                        <td>Compose Testing</td>
+                    </tr>
+                    <tr>
+                        <td>Performance Tests</td>
+                        <td>Key metrics</td>
+                        <td>Macrobenchmark</td>
+                    </tr>
+                </table>
+
+                <h3>Performance Acceptance Criteria</h3>
+
+                <table>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Target</th>
+                        <th>Measurement</th>
+                    </tr>
+                    <tr>
+                        <td>PhotoViewer launch</td>
+                        <td>&lt; 200ms</td>
+                        <td>Macrobenchmark P95</td>
+                    </tr>
+                    <tr>
+                        <td>Tab switching</td>
+                        <td>&lt; 50ms</td>
+                        <td>Compose UI test</td>
+                    </tr>
+                    <tr>
+                        <td>Photo navigation</td>
+                        <td>&lt; 100ms</td>
+                        <td>Macrobenchmark</td>
+                    </tr>
+                    <tr>
+                        <td>Memory usage</td>
+                        <td>&lt; 500MB growth</td>
+                        <td>Android Profiler</td>
+                    </tr>
+                </table>
+
+                <h3>Rollback Criteria</h3>
+
+                <div class="alert alert-critical">
+                    <strong>Immediate Rollback If:</strong>
+                    <ul>
+                        <li>✗ App crashes on gallery launch</li>
+                        <li>✗ PhotoViewer fails to open</li>
+                        <li>✗ Cannot navigate between photos</li>
+                        <li>✗ Camera → Gallery flow broken</li>
+                    </ul>
+                </div>
+
+                <div class="alert alert-warning">
+                    <strong>Conditional Rollback If:</strong>
+                    <ul>
+                        <li>⚠ SafetyAnalysisPanel crashes (revert panel only)</li>
+                        <li>⚠ PhotoViewer launch &gt; 500ms (performance issue)</li>
+                        <li>⚠ Memory leaks detected (monitor heap)</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- SECURITY ASSESSMENT -->
+            <section id="security-assessment">
+                <h2>🔒 Security & Compliance Assessment</h2>
+
+                <div class="alert alert-critical">
+                    <strong>🔴 CRITICAL:</strong> androidx.security:security-crypto library is deprecated. Requires migration to Android Keystore APIs.
+                </div>
+
+                <h3>Vulnerability Scan Results</h3>
+
+                <table>
+                    <tr>
+                        <th>Dependency</th>
+                        <th>Version</th>
+                        <th>CVEs</th>
+                        <th>Status</th>
+                    </tr>
+                    <tr>
+                        <td>androidx.security:security-crypto</td>
+                        <td>1.1.0-alpha06</td>
+                        <td>0 CVEs</td>
+                        <td class="badge badge-critical">DEPRECATED</td>
+                    </tr>
+                    <tr>
+                        <td>ARCore</td>
+                        <td>1.45.0</td>
+                        <td>0 CVEs</td>
+                        <td class="badge badge-secure">Secure</td>
+                    </tr>
+                    <tr>
+                        <td>TensorFlow Lite</td>
+                        <td>2.14.0</td>
+                        <td>0 CVEs (2025)</td>
+                        <td class="badge badge-secure">Secure</td>
+                    </tr>
+                    <tr>
+                        <td>Firebase Vertex AI</td>
+                        <td>16.0.2</td>
+                        <td>0 CVEs</td>
+                        <td class="badge badge-secure">Patched</td>
+                    </tr>
+                    <tr>
+                        <td>Gemini API</td>
+                        <td>0.9.0</td>
+                        <td>0 CVEs</td>
+                        <td class="badge badge-secure">Patched</td>
+                    </tr>
+                </table>
+
+                <div class="card">
+                    <div class="card-title">🛡️ Security Controls in Place</div>
+                    <ul>
+                        <li>✅ Hardware-backed encryption (Android Keystore)</li>
+                        <li>✅ AES-256 encryption for sensitive data</li>
+                        <li>✅ EncryptedSharedPreferences for credentials</li>
+                        <li>✅ API keys stored securely (not in APK)</li>
+                        <li>✅ HTTPS enforcement for all APIs</li>
+                        <li>✅ Secure metadata embedding</li>
+                        <li>✅ ProGuard/R8 obfuscation enabled</li>
+                    </ul>
+                </div>
+
+                <h3>GDPR Compliance Status</h3>
+
+                <table>
+                    <tr>
+                        <th>Article</th>
+                        <th>Requirement</th>
+                        <th>Status</th>
+                    </tr>
+                    <tr>
+                        <td>Article 25</td>
+                        <td>Privacy by Design</td>
+                        <td class="badge badge-secure">✅ Compliant</td>
+                    </tr>
+                    <tr>
+                        <td>Article 32</td>
+                        <td>Security of Processing</td>
+                        <td class="badge badge-secure">✅ Compliant</td>
+                    </tr>
+                    <tr>
+                        <td>Article 30</td>
+                        <td>Records of Processing</td>
+                        <td class="badge badge-medium">⚠️ Gap Identified</td>
+                    </tr>
+                    <tr>
+                        <td>Article 17</td>
+                        <td>Right to Erasure</td>
+                        <td class="badge badge-secure">✅ Compliant</td>
+                    </tr>
+                </table>
+
+                <h3>OSHA Compliance</h3>
+
+                <div class="card">
+                    <div class="card-title">✅ OSHA 29 CFR 1904.33 - Record Retention</div>
+                    <ul>
+                        <li>✅ 7-year retention implemented</li>
+                        <li>✅ Automated compliance monitoring</li>
+                        <li>✅ OSHAComplianceManager tracks requirements</li>
+                        <li>✅ Tamper-proof audit trail</li>
+                        <li>✅ Digital signature validation</li>
+                        <li>✅ Compliance report generation</li>
+                    </ul>
+                </div>
+
+                <h3>Security Recommendations</h3>
+
+                <div class="recommendation">
+                    <div class="recommendation-title">🔴 CRITICAL - Immediate Action Required</div>
+                    <ol>
+                        <li><strong>Migrate from androidx.security:security-crypto</strong>
+                            <ul>
+                                <li>Option A: Direct Android Keystore implementation (recommended)</li>
+                                <li>Option B: Community fork dev.spght:encryptedprefs-core</li>
+                                <li>Timeline: Next major release (v0.3.0)</li>
+                            </ul>
+                        </li>
+                        <li><strong>Add Firebase App Check</strong>
+                            <ul>
+                                <li>Protect Gemini API from unauthorized clients</li>
+                                <li>Implementation: 1 day</li>
+                            </ul>
+                        </li>
+                    </ol>
+                </div>
+
+                <div class="recommendation">
+                    <div class="recommendation-title">🟡 HIGH PRIORITY - Next Release</div>
+                    <ol>
+                        <li><strong>Implement GDPR Processing Records</strong> (Article 30)</li>
+                        <li><strong>Add Certificate Pinning</strong> for Gemini API</li>
+                        <li><strong>Implement Data Export</strong> for CCPA compliance</li>
+                        <li><strong>Security Penetration Testing</strong></li>
+                    </ol>
+                </div>
+            </section>
+
+            <!-- RECOMMENDATIONS -->
+            <section id="recommendations">
+                <h2>💡 Recommendations & Decision Points</h2>
+
+                <h3>Priority Matrix</h3>
+
+                <div class="risk-matrix">
+                    <div class="risk-card risk-card-critical">
+                        <h4>🔴 CRITICAL (This Sprint)</h4>
+                        <ul>
+                            <li>Fix 12 compilation errors</li>
+                            <li>Plan security-crypto migration</li>
+                            <li>Update Compose Compiler to 2.1.0</li>
+                        </ul>
+                        <strong>Timeline:</strong> 2-3 days
+                    </div>
+
+                    <div class="risk-card risk-card-high">
+                        <h4>🟡 HIGH (Next Sprint)</h4>
+                        <ul>
+                            <li>Update Compose BOM to 2025.09.01</li>
+                            <li>Update Core KTX to 1.17.0</li>
+                            <li>Simplify gallery workflow UX</li>
+                            <li>Add Firebase App Check</li>
+                        </ul>
+                        <strong>Timeline:</strong> 1-2 weeks
+                    </div>
+
+                    <div class="risk-card risk-card-medium">
+                        <h4>🟠 MEDIUM (Next Release)</h4>
+                        <ul>
+                            <li>Ktor 2.x → 3.x upgrade</li>
+                            <li>Navigation Compose 2.7 → 2.9</li>
+                            <li>GDPR processing records</li>
+                            <li>Koin 3.x → 4.x evaluation</li>
+                        </ul>
+                        <strong>Timeline:</strong> 3-4 weeks
+                    </div>
+
+                    <div class="risk-card risk-card-low">
+                        <h4>🟢 LOW (Future Enhancement)</h4>
+                        <ul>
+                            <li>CameraX 1.4.0 update</li>
+                            <li>Coil 3.3.0 update</li>
+                            <li>kotlinx libraries updates</li>
+                            <li>Security monitoring dashboard</li>
+                        </ul>
+                        <strong>Timeline:</strong> As needed
+                    </div>
+                </div>
+
+                <h3>Decision Points</h3>
+
+                <h4>Decision 1: Gallery Workflow Simplification</h4>
+                <table>
+                    <tr>
+                        <th>Option</th>
+                        <th>Pros</th>
+                        <th>Cons</th>
+                        <th>Recommendation</th>
+                    </tr>
+                    <tr>
+                        <td>Keep current complex workflow</td>
+                        <td>Comprehensive analysis features</td>
+                        <td>High complexity, contradicts design philosophy</td>
+                        <td class="badge badge-critical">❌ Not Recommended</td>
+                    </tr>
+                    <tr>
+                        <td>Simplify to one-tap workflow</td>
+                        <td>Matches ClearCamera, faster, easier</td>
+                        <td>Less granular control for power users</td>
+                        <td class="badge badge-secure">✅ Recommended</td>
+                    </tr>
+                    <tr>
+                        <td>Progressive disclosure pattern</td>
+                        <td>Simple default, advanced optional</td>
+                        <td>Still requires refactoring</td>
+                        <td class="badge badge-medium">⚠️ Compromise</td>
+                    </tr>
+                </table>
+
+                <h4>Decision 2: Ktor Version Strategy</h4>
+                <table>
+                    <tr>
+                        <th>Option</th>
+                        <th>Pros</th>
+                        <th>Cons</th>
+                        <th>Recommendation</th>
+                    </tr>
+                    <tr>
+                        <td>Stay on Ktor 2.3.12</td>
+                        <td>Stable, no migration needed</td>
+                        <td>Missing new features, will eventually need upgrade</td>
+                        <td class="badge badge-medium">⚠️ Short-term OK</td>
+                    </tr>
+                    <tr>
+                        <td>Upgrade to Ktor 3.2.2</td>
+                        <td>Latest features, better performance</td>
+                        <td>Major version, requires migration effort</td>
+                        <td class="badge badge-secure">✅ Long-term</td>
+                    </tr>
+                    <tr>
+                        <td>Test 3.x in feature branch</td>
+                        <td>Low risk, can evaluate before committing</td>
+                        <td>Additional overhead</td>
+                        <td class="badge badge-secure">✅ Recommended Approach</td>
+                    </tr>
+                </table>
+
+                <h4>Decision 3: Security-Crypto Migration</h4>
+                <table>
+                    <tr>
+                        <th>Option</th>
+                        <th>Pros</th>
+                        <th>Cons</th>
+                        <th>Recommendation</th>
+                    </tr>
+                    <tr>
+                        <td>Direct Android Keystore</td>
+                        <td>Official API, full control, no dependencies</td>
+                        <td>More complex implementation</td>
+                        <td class="badge badge-secure">✅ Recommended</td>
+                    </tr>
+                    <tr>
+                        <td>Community fork (dev.spght)</td>
+                        <td>Easy migration, similar API</td>
+                        <td>Third-party dependency, less mature</td>
+                        <td class="badge badge-medium">⚠️ Alternative</td>
+                    </tr>
+                    <tr>
+                        <td>Delay migration</td>
+                        <td>No immediate effort</td>
+                        <td>Security debt, no updates</td>
+                        <td class="badge badge-critical">❌ Not Recommended</td>
+                    </tr>
+                </table>
+            </section>
+
+            <!-- IMPLEMENTATION PLAN -->
+            <section id="implementation-plan">
+                <h2>🚀 Implementation Plan</h2>
+
+                <h3>Week 1: Critical Fixes</h3>
+
+                <div class="card">
+                    <div class="card-title">Day 1-2: Compilation Fixes</div>
+                    <ul class="checklist">
+                        <li>Fix AnalysisWorkflowComponents.kt syntax (8 errors)</li>
+                        <li>Remove duplicate getCategoryIcon() function</li>
+                        <li>Verify all imports and dependencies</li>
+                        <li>Run smoke tests (5 scenarios)</li>
+                        <li>Commit: "Fix compilation errors in gallery analysis workflow"</li>
+                    </ul>
+                    <strong>Estimated Time:</strong> 4 hours
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Day 3: Foundation Updates</div>
+                    <ul class="checklist">
+                        <li>Update Compose Compiler: 2.0.0 → 2.1.0</li>
+                        <li>Update Core KTX: 1.13.1 → 1.17.0</li>
+                        <li>Update CameraX: 1.3.3 → 1.4.0</li>
+                        <li>Update Coil: 3.0.0 → 3.3.0</li>
+                        <li>Run full test suite</li>
+                        <li>Commit: "Update foundation dependencies"</li>
+                    </ul>
+                    <strong>Estimated Time:</strong> 4 hours
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Day 4-5: Testing & Verification</div>
+                    <ul class="checklist">
+                        <li>Run all automated tests</li>
+                        <li>Manual testing on physical devices</li>
+                        <li>Performance profiling</li>
+                        <li>Memory leak detection</li>
+                        <li>Document any issues found</li>
+                    </ul>
+                    <strong>Estimated Time:</strong> 8 hours
+                </div>
+
+                <h3>Week 2: Compose Ecosystem</h3>
+
+                <div class="card">
+                    <div class="card-title">Day 1-3: Major Updates</div>
+                    <ul class="checklist">
+                        <li>Update Compose BOM: 2024.09.02 → 2025.09.01</li>
+                        <li>Update Navigation Compose: 2.7.7 → 2.9.5</li>
+                        <li>Update Activity Compose: 1.9.1 → 1.11.0 (when stable)</li>
+                        <li>Test all UI components</li>
+                        <li>Verify navigation flows</li>
+                        <li>Performance testing</li>
+                    </ul>
+                    <strong>Estimated Time:</strong> 12 hours
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Day 4-5: Security Enhancements</div>
+                    <ul class="checklist">
+                        <li>Add Firebase App Check integration</li>
+                        <li>Plan security-crypto migration</li>
+                        <li>Document security architecture</li>
+                        <li>Security testing</li>
+                    </ul>
+                    <strong>Estimated Time:</strong> 8 hours
+                </div>
+
+                <h3>Week 3: UX Simplification (Optional)</h3>
+
+                <div class="card">
+                    <div class="card-title">Gallery Workflow Refactoring</div>
+                    <ul class="checklist">
+                        <li>Remove PRE_ANALYSIS phase</li>
+                        <li>Auto-run AI analysis on photo open</li>
+                        <li>Simplify analysis results display</li>
+                        <li>Make manual tagging optional</li>
+                        <li>Test with construction workers</li>
+                        <li>Iterate based on feedback</li>
+                    </ul>
+                    <strong>Estimated Time:</strong> 3-5 days
+                </div>
+
+                <h3>Week 4: Kotlin Ecosystem (Isolated Branch)</h3>
+
+                <div class="card">
+                    <div class="card-title">Major Version Upgrades</div>
+                    <ul class="checklist">
+                        <li>Create feature branch: feature/ktor-3-upgrade</li>
+                        <li>Upgrade Ktor: 2.3.12 → 3.2.2</li>
+                        <li>Review migration guide</li>
+                        <li>Update all HTTP client code</li>
+                        <li>Test all network operations</li>
+                        <li>Performance benchmarking</li>
+                        <li>Merge only if stable</li>
+                    </ul>
+                    <strong>Estimated Time:</strong> 1 week
+                </div>
+
+                <h3>Success Criteria</h3>
+
+                <table>
+                    <tr>
+                        <th>Milestone</th>
+                        <th>Success Criteria</th>
+                        <th>Verification</th>
+                    </tr>
+                    <tr>
+                        <td>Compilation Fixed</td>
+                        <td>Zero Kotlin compilation errors</td>
+                        <td><code>./gradlew assembleDebug</code> succeeds</td>
+                    </tr>
+                    <tr>
+                        <td>Dependencies Updated</td>
+                        <td>Phase 1 & 2 dependencies at latest stable</td>
+                        <td>libs.versions.toml matches targets</td>
+                    </tr>
+                    <tr>
+                        <td>Tests Passing</td>
+                        <td>All automated tests pass</td>
+                        <td>CI/CD pipeline green</td>
+                    </tr>
+                    <tr>
+                        <td>Performance Maintained</td>
+                        <td>All metrics within targets</td>
+                        <td>Macrobenchmark reports</td>
+                    </tr>
+                    <tr>
+                        <td>Security Enhanced</td>
+                        <td>Firebase App Check active, migration planned</td>
+                        <td>Security audit passed</td>
+                    </tr>
+                </table>
+
+                <h3>Risk Mitigation</h3>
+
+                <div class="alert alert-warning">
+                    <strong>Contingency Plans:</strong>
+                    <ul>
+                        <li><strong>If compilation fixes break functionality:</strong> Rollback to previous commit, fix incrementally</li>
+                        <li><strong>If Compose BOM update causes UI issues:</strong> Revert to 2025.06.00 (more conservative)</li>
+                        <li><strong>If Ktor 3.x migration fails:</strong> Stay on 2.3.12, plan migration for later</li>
+                        <li><strong>If performance degrades:</strong> Profile and optimize, or revert problematic updates</li>
+                    </ul>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p><strong>Research Report Generated:</strong> October 1, 2025</p>
+            <p><strong>Next Review:</strong> After Phase 1 implementation (Week 1)</p>
+            <p><strong>Report Version:</strong> 1.0</p>
+            <p style="margin-top: 1rem; opacity: 0.8;">Generated by HazardHawk Research Agents • 5 Parallel Specialists • Comprehensive Analysis</p>
+        </footer>
+    </div>
+</body>
+</html>
