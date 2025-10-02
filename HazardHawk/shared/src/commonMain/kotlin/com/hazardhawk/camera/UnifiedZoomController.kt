@@ -1,5 +1,6 @@
 package com.hazardhawk.camera
 
+import com.hazardhawk.platform.currentTimeMillis
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -50,7 +51,7 @@ class UnifiedZoomController(
             zoom = clampedZoom,
             source = source,
             isLive = isLive,
-            timestamp = System.currentTimeMillis()
+            timestamp = currentTimeMillis()
         )
     }
     

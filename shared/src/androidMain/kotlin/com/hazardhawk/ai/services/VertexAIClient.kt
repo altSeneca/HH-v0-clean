@@ -84,16 +84,16 @@ actual class VertexAIClient {
     private fun buildConstructionSafetyPrompt(workType: WorkType): String {
         return """
         You are a construction safety expert analyzing a worksite photo for OSHA compliance.
-        
+
         Work Type: ${workType.name}
-        
+
         Please analyze this construction site image and identify:
-        1. All safety hazards present
-        2. PPE compliance status for visible workers
+        1. All safety hazards present WITH BOUNDING BOX COORDINATES
+        2. PPE compliance status for visible workers WITH BOUNDING BOX COORDINATES
         3. Specific OSHA violations with regulation codes
         4. Immediate corrective actions needed
         5. Overall risk assessment
-        
+
         Respond ONLY with valid JSON in this exact format:
         {
             "hazards": [
@@ -103,12 +103,18 @@ actual class VertexAIClient {
                     "description": "Detailed description of hazard",
                     "oshaCode": "1926.405(a)(2)(ii)",
                     "confidence": 0.95,
+                    "boundingBox": {
+                        "left": 0.25,
+                        "top": 0.15,
+                        "width": 0.30,
+                        "height": 0.40
+                    },
                     "recommendations": ["Action 1", "Action 2"],
                     "immediateAction": "Stop work immediately"
                 }
             ],
             "ppeStatus": {
-                "hardHat": {"status": "PRESENT", "confidence": 0.89},
+                "hardHat": {"status": "PRESENT", "confidence": 0.89, "boundingBox": {"left": 0.1, "top": 0.05, "width": 0.15, "height": 0.2}},
                 "safetyVest": {"status": "MISSING", "confidence": 0.85},
                 "safetyBoots": {"status": "PRESENT", "confidence": 0.87},
                 "safetyGlasses": {"status": "UNKNOWN", "confidence": 0.45},
@@ -123,7 +129,13 @@ actual class VertexAIClient {
             "overallRiskLevel": "HIGH",
             "confidence": 0.87
         }
-        
+
+        IMPORTANT: For each detected hazard or PPE item, include a "boundingBox" with coordinates normalized 0.0-1.0:
+        - left: x-position from left edge (0.0 = left edge, 1.0 = right edge)
+        - top: y-position from top edge (0.0 = top edge, 1.0 = bottom edge)
+        - width: box width as fraction of image width (0.0-1.0)
+        - height: box height as fraction of image height (0.0-1.0)
+
         Focus on worker safety and OSHA compliance for ${workType.name} work.
         Use only these hazard types: ELECTRICAL_HAZARD, FALL_PROTECTION, PPE_VIOLATION, STRUCK_BY, CAUGHT_IN_BETWEEN, ENVIRONMENTAL, CHEMICAL_EXPOSURE.
         Use only these severity levels: LOW, MEDIUM, HIGH, CRITICAL.
@@ -132,36 +144,99 @@ actual class VertexAIClient {
         """.trimIndent()
     }
     
+    /**
+     * Parse bounding box from JSON object.
+     * Expects format: {"left": 0.25, "top": 0.15, "width": 0.30, "height": 0.40}
+     * All coordinates should be normalized 0.0-1.0
+     */
+    private fun parseBoundingBox(boxJson: kotlinx.serialization.json.JsonObject?): BoundingBox? {
+        return boxJson?.let {
+            try {
+                val left = it["left"]?.jsonPrimitive?.content?.toFloatOrNull() ?: return null
+                val top = it["top"]?.jsonPrimitive?.content?.toFloatOrNull() ?: return null
+                val width = it["width"]?.jsonPrimitive?.content?.toFloatOrNull() ?: return null
+                val height = it["height"]?.jsonPrimitive?.content?.toFloatOrNull() ?: return null
+
+                // Validate coordinates are in range [0.0, 1.0]
+                if (left < 0f || left > 1f || top < 0f || top > 1f ||
+                    width < 0f || width > 1f || height < 0f || height > 1f) {
+                    return null
+                }
+
+                // Validate box doesn't exceed image boundaries
+                if (left + width > 1f || top + height > 1f) {
+                    return null
+                }
+
+                BoundingBox(
+                    left = left,
+                    top = top,
+                    width = width,
+                    height = height
+                )
+            } catch (e: Exception) {
+                null // Invalid bounding box format
+            }
+        }
+    }
+
     private fun parseVertexAIResponse(
         responseText: String,
         workType: WorkType,
         startTime: Long
     ): SafetyAnalysis {
-        
+
         return try {
             // Extract JSON from response (handle markdown code blocks if present)
             val jsonText = responseText
                 .substringAfter("```json")
                 .substringBefore("```")
                 .takeIf { it.isNotBlank() } ?: responseText
-            
-            val json = Json.parseToJsonElement(jsonText).jsonObject
-            
-            // Parse hazards
+
+            val json = Json { ignoreUnknownKeys = true }.parseToJsonElement(jsonText).jsonObject
+
+            // Parse hazards with bounding boxes
             val hazards = mutableListOf<Hazard>()
             json["hazards"]?.let { hazardsArray ->
                 // Handle array parsing safely
                 try {
-                    hazardsArray.toString().let { hazardStr ->
-                        // This is a simplified parser - in production you'd use proper JSON array parsing
-                        if (hazardStr.contains("ELECTRICAL_HAZARD")) {
-                            hazards.add(createHazardFromType(HazardType.ELECTRICAL_HAZARD, workType))
+                    // Improved parsing that attempts to extract individual hazard objects
+                    val hazardsJson = Json { ignoreUnknownKeys = true }.parseToJsonElement(hazardsArray.toString())
+
+                    if (hazardsJson is kotlinx.serialization.json.JsonArray) {
+                        hazardsJson.forEach { hazardElement ->
+                            val hazardObj = hazardElement.jsonObject
+                            val hazardType = parseHazardType(hazardObj["type"]?.jsonPrimitive?.content)
+                            val severity = parseSeverity(hazardObj["severity"]?.jsonPrimitive?.content)
+                            val boundingBox = parseBoundingBox(hazardObj["boundingBox"]?.jsonObject)
+
+                            hazards.add(Hazard(
+                                id = uuid4().toString(),
+                                type = hazardType,
+                                severity = severity,
+                                description = hazardObj["description"]?.jsonPrimitive?.content
+                                    ?: "Safety hazard detected",
+                                oshaCode = hazardObj["oshaCode"]?.jsonPrimitive?.content,
+                                boundingBox = boundingBox, // NOW INCLUDES BOUNDING BOX!
+                                confidence = hazardObj["confidence"]?.jsonPrimitive?.content?.toFloatOrNull() ?: 0.8f,
+                                recommendations = parseRecommendations(hazardObj["recommendations"]),
+                                immediateAction = hazardObj["immediateAction"]?.jsonPrimitive?.content
+                            ))
                         }
-                        if (hazardStr.contains("FALL_PROTECTION")) {
-                            hazards.add(createHazardFromType(HazardType.FALL_PROTECTION, workType))
-                        }
-                        if (hazardStr.contains("PPE_VIOLATION")) {
-                            hazards.add(createHazardFromType(HazardType.PPE_VIOLATION, workType))
+                    }
+
+                    // Fallback if array parsing fails
+                    if (hazards.isEmpty()) {
+                        hazardsArray.toString().let { hazardStr ->
+                            if (hazardStr.contains("ELECTRICAL_HAZARD")) {
+                                hazards.add(createHazardFromType(HazardType.ELECTRICAL_HAZARD, workType))
+                            }
+                            if (hazardStr.contains("FALL_PROTECTION")) {
+                                hazards.add(createHazardFromType(HazardType.FALL_PROTECTION, workType))
+                            }
+                            if (hazardStr.contains("PPE_VIOLATION")) {
+                                hazards.add(createHazardFromType(HazardType.PPE_VIOLATION, workType))
+                            }
                         }
                     }
                 } catch (e: Exception) {
@@ -240,6 +315,46 @@ actual class VertexAIClient {
         }
     }
     
+    private fun parseHazardType(type: String?): HazardType {
+        return when (type?.uppercase()?.replace(" ", "_")) {
+            "ELECTRICAL_HAZARD" -> HazardType.ELECTRICAL_HAZARD
+            "FALL_PROTECTION" -> HazardType.FALL_PROTECTION
+            "PPE_VIOLATION" -> HazardType.PPE_VIOLATION
+            "STRUCK_BY" -> HazardType.STRUCK_BY_OBJECT
+            "STRUCK_BY_OBJECT" -> HazardType.STRUCK_BY_OBJECT
+            "CAUGHT_IN_BETWEEN", "CAUGHT_IN_EQUIPMENT" -> HazardType.CAUGHT_IN_EQUIPMENT
+            "ENVIRONMENTAL" -> HazardType.ENVIRONMENTAL_HAZARD
+            "CHEMICAL_EXPOSURE", "CHEMICAL_HAZARD" -> HazardType.CHEMICAL_HAZARD
+            "FIRE_HAZARD" -> HazardType.FIRE_HAZARD
+            "MECHANICAL_HAZARD" -> HazardType.MECHANICAL_HAZARD
+            "HOUSEKEEPING" -> HazardType.HOUSEKEEPING
+            else -> HazardType.PPE_VIOLATION // Default
+        }
+    }
+
+    private fun parseSeverity(severity: String?): Severity {
+        return when (severity?.uppercase()) {
+            "LOW" -> Severity.LOW
+            "MEDIUM" -> Severity.MEDIUM
+            "HIGH" -> Severity.HIGH
+            "CRITICAL" -> Severity.CRITICAL
+            else -> Severity.MEDIUM // Default
+        }
+    }
+
+    private fun parseRecommendations(recommendationsJson: kotlinx.serialization.json.JsonElement?): List<String> {
+        return try {
+            when (recommendationsJson) {
+                is kotlinx.serialization.json.JsonArray -> {
+                    recommendationsJson.mapNotNull { it.jsonPrimitive?.content }
+                }
+                else -> emptyList()
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
     private fun parsePPEStatus(status: String?): PPEItemStatus {
         return when (status?.uppercase()) {
             "PRESENT" -> PPEItemStatus.PRESENT
@@ -247,7 +362,7 @@ actual class VertexAIClient {
             else -> PPEItemStatus.UNKNOWN
         }
     }
-    
+
     private fun parseRiskLevel(risk: String?): RiskLevel {
         return when (risk?.uppercase()) {
             "LOW" -> RiskLevel.LOW

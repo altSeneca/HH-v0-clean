@@ -5,9 +5,6 @@ import com.hazardhawk.domain.entities.Photo
 import com.hazardhawk.domain.repositories.PhotoRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.Dispatchers
-import java.io.File
 
 class PhotoRepositoryImpl(
     private val database: HazardHawkDatabase?,
@@ -36,7 +33,7 @@ class PhotoRepositoryImpl(
     
     override suspend fun getPhotos(): Flow<List<Photo>> = flow {
         emit(getAllPhotosFromDatabase())
-    }.flowOn(Dispatchers.IO)
+    }
     
     override suspend fun getAllPhotos(): List<Photo> {
         return getAllPhotosFromDatabase()
@@ -46,18 +43,15 @@ class PhotoRepositoryImpl(
         return try {
             // 1. Get photo details for file deletion
             val photo = getPhoto(photoId)
-            
+
             // 2. Remove from database
             // database.photoDao().deletePhoto(photoId)
-            
-            // 3. Delete physical file if it exists
+
+            // 3. Delete physical file if it exists (delegated to platform-specific FileManager)
             if (photo != null && fileManager != null) {
-                val file = File(photo.filePath)
-                if (file.exists()) {
-                    file.delete()
-                }
+                fileManager.deleteFile(photo.filePath)
             }
-            
+
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

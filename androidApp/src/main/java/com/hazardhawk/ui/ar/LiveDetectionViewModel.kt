@@ -65,9 +65,23 @@ class LiveDetectionViewModel(
     val continuousAnalysis: StateFlow<Boolean> = _continuousAnalysis.asStateFlow()
     
     init {
-        // Initialize AI orchestrator
+        // Initialize AI orchestrator with API key from BuildConfig
         viewModelScope.launch {
-            smartAIOrchestrator.configure()
+            try {
+                // Get API key from local.properties via BuildConfig
+                val apiKey = com.hazardhawk.ai.AIConfig.getGeminiApiKey()
+
+                if (com.hazardhawk.ai.AIConfig.isGeminiConfigured()) {
+                    smartAIOrchestrator.configure(apiKey)
+                } else {
+                    // Log warning if API key not configured
+                    println("⚠️ Gemini API key not configured. Add to local.properties")
+                    smartAIOrchestrator.configure()
+                }
+            } catch (e: Exception) {
+                println("❌ Error configuring AI: ${e.message}")
+                smartAIOrchestrator.configure()
+            }
         }
     }
 

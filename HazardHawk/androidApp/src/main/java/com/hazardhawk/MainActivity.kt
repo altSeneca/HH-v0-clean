@@ -39,6 +39,8 @@ import com.hazardhawk.ui.camera.clear.ClearCameraScreen
 import com.hazardhawk.ui.camera.ARCameraPreview
 import com.hazardhawk.ui.settings.SettingsScreen
 import com.hazardhawk.ui.home.CompanyProjectEntryScreen
+// Import PTP navigation
+import com.hazardhawk.navigation.ptpNavGraph
 
 // Import working gallery components from enhancement implementation
 import java.io.File
@@ -262,9 +264,16 @@ fun HazardHawkNavigation(
                     navController.navigate("clear_camera") {
                         popUpTo("clear_camera") { inclusive = false }
                     }
+                },
+                onNavigateToPTP = {
+                    // Navigate to PTP list screen
+                    navController.navigate("ptp/list")
                 }
             )
         }
+
+        // PTP Feature Navigation Graph
+        ptpNavGraph(navController)
     }
 }
 

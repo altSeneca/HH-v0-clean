@@ -32,8 +32,8 @@ class MetadataEmbedder(private val context: android.content.Context) {
         // Content-aware watermark sizing constants - BALANCED APPROACH
         private const val WATERMARK_SIZE_RATIO_OLD = 0.035f // Old oversized ratio for reference
         private const val WATERMARK_TARGET_VISIBILITY = 0.08f // Increased to 8% for better visibility
-        private const val WATERMARK_MIN_TEXT_SIZE = 24f // Increased minimum for better readability
-        private const val WATERMARK_MAX_TEXT_SIZE = 60f // Increased maximum for better visibility
+        private const val WATERMARK_MIN_TEXT_SIZE = 28f // Increased by 1 size (was 24f)
+        private const val WATERMARK_MAX_TEXT_SIZE = 64f // Increased by 1 size (was 60f)
         private const val WATERMARK_PADDING = 20f
         private const val GCM_IV_LENGTH = 12
         private const val GCM_TAG_LENGTH = 16
@@ -82,38 +82,43 @@ class MetadataEmbedder(private val context: android.content.Context) {
 
         /**
          * Shared utility to create consistent metadata lines for both overlay and watermark
+         * New 4-line format:
+         * Line 1: Company
+         * Line 2: Project
+         * Line 3: GPS Coordinates or address (optional based on settings)
+         * Line 4: "Taken with HazardHawk" (optional based on settings)
          */
         fun createMetadataLines(
             companyName: String?,
             projectName: String?,
             timestamp: String?,
-            location: String?
+            location: String?,
+            showLocation: Boolean = true,
+            showBranding: Boolean = true
         ): List<String> {
             val lines = mutableListOf<String>()
 
-            // Main header line: [Company] | [Project] | [Date] [Time]
-            val headerLine = buildString {
-                val company = companyName ?: "HazardHawk"
-                append(company)
+            // Line 1: Company name
+            val company = companyName?.ifBlank { "HazardHawk" } ?: "HazardHawk"
+            lines.add(company)
 
-                projectName?.let {
-                    if (it.isNotBlank()) append(" | $it")
-                }
-                timestamp?.let {
-                    if (it.isNotBlank()) append(" | $it")
-                }
-            }
-            lines.add(headerLine)
+            // Line 2: Project name
+            val project = projectName?.ifBlank { "Safety Documentation" } ?: "Safety Documentation"
+            lines.add(project)
 
-            // GPS coordinates or location
-            location?.let { loc ->
-                if (loc.isNotBlank() && loc != "Location unavailable") {
-                    lines.add(loc)
+            // Line 3: GPS coordinates or location (if enabled and available)
+            if (showLocation) {
+                location?.let { loc ->
+                    if (loc.isNotBlank() && loc != "Location unavailable") {
+                        lines.add(loc)
+                    }
                 }
             }
 
-            // Watermark text
-            lines.add("Taken with HazardHawk")
+            // Line 4: Branding watermark (if enabled)
+            if (showBranding) {
+                lines.add("Taken with HazardHawk")
+            }
 
             return lines
         }
@@ -647,13 +652,17 @@ class MetadataEmbedder(private val context: android.content.Context) {
         Log.d(TAG, "  ├─ userProfile.company: '${userProfile.company}'")
         Log.d(TAG, "  ├─ currentProject.projectName: '${currentProject.projectName}'")
         Log.d(TAG, "  ├─ showGPSCoordinates: ${appSettings.dataPrivacy.showGPSCoordinates}")
+        Log.d(TAG, "  ├─ includeLocation: ${appSettings.dataPrivacy.includeLocation}")
         Log.d(TAG, "  └─ locationData available: ${metadata.locationData.isAvailable}")
 
-        // Use EXACT same logic as SafetyHUDCameraScreen lines 589-601
+        // Company and project names
         val companyName = userProfile.company.ifBlank { "HazardHawk" }
         val projectName = currentProject.projectName.ifBlank { "Safety Documentation" }
 
-        // Location logic matching SafetyHUDCameraScreen lines 591-599
+        // Format timestamp (12-hour format with AM/PM)
+        val timestamp = SimpleDateFormat("yyyy-MM-dd hh:mm:ss a", Locale.getDefault()).format(Date(metadata.timestamp))
+
+        // Determine location display based on settings
         val location = if (metadata.locationData.isAvailable) {
             if (appSettings.dataPrivacy.showGPSCoordinates) {
                 // Show coordinates when setting is enabled
@@ -665,15 +674,27 @@ class MetadataEmbedder(private val context: android.content.Context) {
                 }
             }
         } else {
-            "Location unavailable"
+            null // Don't show location if unavailable
         }
 
-        return createMetadataLines(
-            companyName = companyName,
-            projectName = projectName,
-            timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(metadata.timestamp)),
-            location = if (location != "Location unavailable") location else null
-        )
+        // Build watermark lines with timestamp on same line as company
+        val lines = mutableListOf<String>()
+
+        // Line 1: Company name | Timestamp
+        lines.add("$companyName | $timestamp")
+
+        // Line 2: Project name
+        lines.add(projectName)
+
+        // Line 3: GPS coordinates or location (if enabled and available)
+        if (location != null && appSettings.dataPrivacy.includeLocation) {
+            lines.add(location)
+        }
+
+        // Line 4: Branding watermark (always show)
+        lines.add("Taken with HazardHawk")
+
+        return lines
     }
 
     
@@ -1120,6 +1141,134 @@ class MetadataEmbedder(private val context: android.content.Context) {
         } catch (e: Exception) {
             Log.e(TAG, "Failed to hash user ID", e)
             "ANON"
+        }
+    }
+
+    /**
+     * Batch reprocess photos to add timestamp overlays
+     * Useful for fixing photos that were taken without timestamp watermarks
+     *
+     * @param photoFilePaths List of file paths to reprocess
+     * @param onProgress Callback for progress updates (current, total, filePath)
+     * @return Result with number of successfully processed photos
+     */
+    suspend fun batchReprocessPhotosWithTimestamp(
+        photoFilePaths: List<String>,
+        onProgress: ((current: Int, total: Int, filePath: String) -> Unit)? = null
+    ): Result<Int> = withContext(Dispatchers.IO) {
+        try {
+            var successCount = 0
+            val total = photoFilePaths.size
+
+            photoFilePaths.forEachIndexed { index, filePath ->
+                try {
+                    Log.d(TAG, "Reprocessing photo ${index + 1}/$total: $filePath")
+                    onProgress?.invoke(index + 1, total, filePath)
+
+                    val photoFile = File(filePath)
+                    if (!photoFile.exists()) {
+                        Log.w(TAG, "Photo file does not exist: $filePath")
+                        return@forEachIndexed
+                    }
+
+                    // Extract existing metadata from EXIF
+                    val existingMetadata = extractMetadataFromPhoto(photoFile)
+                    if (existingMetadata == null) {
+                        Log.w(TAG, "Could not extract metadata from photo: $filePath")
+                        // Create minimal metadata from file timestamp
+                        val minimalMetadata = CaptureMetadata(
+                            timestamp = photoFile.lastModified(),
+                            locationData = LocationData(),
+                            projectName = "",
+                            projectId = "",
+                            userName = "",
+                            userId = "",
+                            deviceInfo = ""
+                        )
+
+                        // Reprocess with minimal metadata directly on file
+                        val result = reprocessPhotoFile(photoFile, minimalMetadata)
+
+                        if (result.isSuccess) {
+                            successCount++
+                            Log.d(TAG, "Successfully reprocessed photo with minimal metadata: $filePath")
+                        }
+                    } else {
+                        // Reprocess with existing metadata to add timestamp overlay
+                        val result = reprocessPhotoFile(photoFile, existingMetadata)
+
+                        if (result.isSuccess) {
+                            successCount++
+                            Log.d(TAG, "Successfully reprocessed photo: $filePath")
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to reprocess photo $filePath", e)
+                }
+            }
+
+            Log.d(TAG, "Batch reprocessing complete: $successCount/$total photos successful")
+            Result.success(successCount)
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Batch reprocessing failed", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Reprocess a photo file directly to add watermark
+     */
+    private suspend fun reprocessPhotoFile(
+        photoFile: File,
+        metadata: CaptureMetadata
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            Log.d(TAG, "Reprocessing file: ${photoFile.absolutePath}")
+
+            // Load bitmap with correct orientation
+            val originalBitmap = loadBitmapWithCorrectOrientation(photoFile)
+                ?: return@withContext Result.failure(IllegalStateException("Could not load bitmap"))
+
+            // Add watermark
+            val watermarkedBitmap = addWatermarkToBitmap(originalBitmap, metadata)
+
+            // Preserve EXIF data before overwriting
+            val originalExif = ExifInterface(photoFile.absolutePath)
+            val preservedData = mapOf(
+                ExifInterface.TAG_ORIENTATION to originalExif.getAttribute(ExifInterface.TAG_ORIENTATION),
+                ExifInterface.TAG_DATETIME to originalExif.getAttribute(ExifInterface.TAG_DATETIME),
+                ExifInterface.TAG_GPS_LATITUDE to originalExif.getAttribute(ExifInterface.TAG_GPS_LATITUDE),
+                ExifInterface.TAG_GPS_LONGITUDE to originalExif.getAttribute(ExifInterface.TAG_GPS_LONGITUDE),
+                ExifInterface.TAG_GPS_LATITUDE_REF to originalExif.getAttribute(ExifInterface.TAG_GPS_LATITUDE_REF),
+                ExifInterface.TAG_GPS_LONGITUDE_REF to originalExif.getAttribute(ExifInterface.TAG_GPS_LONGITUDE_REF),
+                ExifInterface.TAG_MAKE to originalExif.getAttribute(ExifInterface.TAG_MAKE),
+                ExifInterface.TAG_MODEL to originalExif.getAttribute(ExifInterface.TAG_MODEL)
+            )
+
+            // Write watermarked bitmap back to file
+            FileOutputStream(photoFile).use { outputStream ->
+                watermarkedBitmap.compress(Bitmap.CompressFormat.JPEG, 95, outputStream)
+            }
+
+            // Restore EXIF data
+            val newExif = ExifInterface(photoFile.absolutePath)
+            preservedData.forEach { (tag, value) ->
+                if (value != null) {
+                    newExif.setAttribute(tag, value)
+                }
+            }
+            newExif.saveAttributes()
+
+            // Clean up bitmaps
+            watermarkedBitmap.recycle()
+
+            Log.d(TAG, "Successfully reprocessed file: ${photoFile.name}")
+            Result.success(Unit)
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to reprocess file", e)
+            Result.failure(e)
         }
     }
 }

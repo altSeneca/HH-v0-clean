@@ -6,6 +6,7 @@ import com.hazardhawk.ai.core.SafetyHazard
 import com.hazardhawk.ai.core.HazardType
 import com.hazardhawk.ai.core.HazardSeverity
 import com.hazardhawk.domain.entities.WorkType
+import com.hazardhawk.platform.currentTimeMillis
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
@@ -53,12 +54,12 @@ class SimpleAIPhotoAnalyzer : AIPhotoAnalyzer {
             val hazards = generateMockHazards(workType)
 
             val analysis = SafetyAnalysis(
-                analysisId = "mock_${System.currentTimeMillis()}",
+                analysisId = "mock_${currentTimeMillis()}",
                 hazards = hazards,
                 complianceScore = Random.nextFloat() * 100f,
                 confidence = 0.85f + Random.nextFloat() * 0.15f,
                 recommendations = generateMockRecommendations(workType, hazards),
-                timestamp = System.currentTimeMillis()
+                timestamp = currentTimeMillis()
             )
 
             Result.success(analysis)
@@ -89,7 +90,7 @@ class SimpleAIPhotoAnalyzer : AIPhotoAnalyzer {
 
             hazards.add(
                 SafetyHazard(
-                    id = "hazard_${index}_${System.currentTimeMillis()}",
+                    id = "hazard_${index}_${currentTimeMillis()}",
                     type = hazardType,
                     description = getHazardDescription(hazardType),
                     severity = getHazardSeverity(hazardType),

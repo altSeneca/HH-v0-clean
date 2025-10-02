@@ -11,13 +11,10 @@ import kotlinx.serialization.decodeFromString
 
 /**
  * Data class for UI Settings
+ * NOTE: Glass effects, performance tier, emergency mode, and high contrast mode have been REMOVED (deprecated)
  */
 @Serializable
 data class UISettings(
-    val glassEnabled: Boolean = false,
-    val performanceTier: String = "AUTO",
-    val emergencyMode: Boolean = false,
-    val highContrastMode: Boolean = false,
     val metadataFontSize: Float = 16f,
     val autoFadeDelay: Long = 8000L,
     val hapticFeedbackEnabled: Boolean = true,
@@ -34,14 +31,11 @@ data class UISettings(
 
 /**
  * Repository interface for UI settings persistence
+ * NOTE: Deprecated methods for glass effects, performance tier, emergency mode, and high contrast have been REMOVED
  */
 interface UISettingsRepository {
     suspend fun loadSettings(): UISettings
     suspend fun saveSettings(settings: UISettings)
-    suspend fun updateGlassEnabled(enabled: Boolean)
-    suspend fun updatePerformanceTier(tier: String)
-    suspend fun updateEmergencyMode(enabled: Boolean)
-    suspend fun updateHighContrastMode(enabled: Boolean)
     suspend fun updateMetadataFontSize(size: Float)
     suspend fun updateAutoFadeDelay(delay: Long)
     suspend fun updateHapticFeedback(enabled: Boolean)
@@ -101,30 +95,6 @@ class UISettingsRepositoryImpl(
             // Log error but don't throw
             println("UISettingsRepository: Failed to save settings: ${e.message}")
         }
-    }
-
-    override suspend fun updateGlassEnabled(enabled: Boolean) {
-        ensureLoaded()
-        val updated = _settingsFlow.value.copy(glassEnabled = enabled)
-        saveSettings(updated)
-    }
-
-    override suspend fun updatePerformanceTier(tier: String) {
-        ensureLoaded()
-        val updated = _settingsFlow.value.copy(performanceTier = tier)
-        saveSettings(updated)
-    }
-
-    override suspend fun updateEmergencyMode(enabled: Boolean) {
-        ensureLoaded()
-        val updated = _settingsFlow.value.copy(emergencyMode = enabled)
-        saveSettings(updated)
-    }
-
-    override suspend fun updateHighContrastMode(enabled: Boolean) {
-        ensureLoaded()
-        val updated = _settingsFlow.value.copy(highContrastMode = enabled)
-        saveSettings(updated)
     }
 
     override suspend fun updateMetadataFontSize(size: Float) {

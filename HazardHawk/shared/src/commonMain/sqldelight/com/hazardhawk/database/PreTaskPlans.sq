@@ -1,0 +1,351 @@
+-- Pre-Task Plans (PTPs) - OSHA-compliant job hazard analysis
+CREATE TABLE pre_task_plans (
+    id TEXT PRIMARY KEY,
+    project_id TEXT,
+    created_by TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    work_type TEXT NOT NULL, -- e.g., "Roofing", "Electrical", "Plumbing"
+    work_scope TEXT NOT NULL, -- Detailed description from questionnaire
+    crew_size INTEGER,
+    status TEXT DEFAULT 'draft' CHECK (status IN ('draft', 'approved', 'submitted', 'archived')),
+
+    -- AI-generated content (JSON)
+    ai_generated_content TEXT, -- Original AI output
+    user_modified_content TEXT, -- User edits to AI content
+
+    -- Document metadata
+    pdf_path TEXT,
+    cloud_storage_url TEXT,
+
+    -- Signatures
+    signature_supervisor_blob BLOB,
+    signature_supervisor_name TEXT,
+    signature_date INTEGER,
+
+    -- Work details from questionnaire
+    tools_equipment TEXT, -- JSON array
+    mechanical_equipment TEXT, -- JSON array
+    environmental_conditions TEXT, -- JSON array
+    materials_involved TEXT, -- JSON array
+    specific_tasks TEXT, -- JSON array
+
+    -- Emergency information
+    emergency_contacts TEXT, -- JSON array
+    nearest_hospital TEXT,
+    evacuation_routes TEXT
+
+    -- Note: project_id is a string field for future project management feature
+    -- No foreign key constraint since projects table doesn't exist yet
+);
+
+-- PTP Photos - Junction table linking PTPs to photos
+CREATE TABLE ptp_photos (
+    ptp_id TEXT NOT NULL,
+    photo_id TEXT NOT NULL,
+    display_order INTEGER NOT NULL,
+    photo_caption TEXT,
+    added_at INTEGER NOT NULL,
+    PRIMARY KEY (ptp_id, photo_id),
+    FOREIGN KEY (ptp_id) REFERENCES pre_task_plans(id) ON DELETE CASCADE,
+    FOREIGN KEY (photo_id) REFERENCES photos(id) ON DELETE CASCADE
+);
+
+-- Hazard Corrections - Track before/after photo pairs for hazard mitigation
+CREATE TABLE hazard_corrections (
+    id TEXT PRIMARY KEY,
+    original_photo_id TEXT NOT NULL,
+    correction_photo_id TEXT,
+    hazard_osha_code TEXT NOT NULL,
+    hazard_description TEXT NOT NULL,
+    date_identified INTEGER NOT NULL,
+    date_corrected INTEGER,
+    verified_by TEXT,
+    verification_notes TEXT,
+    status TEXT DEFAULT 'outstanding' CHECK (status IN ('outstanding', 'in_progress', 'mitigated', 'verified')),
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    FOREIGN KEY (original_photo_id) REFERENCES photos(id) ON DELETE CASCADE,
+    FOREIGN KEY (correction_photo_id) REFERENCES photos(id) ON DELETE SET NULL
+);
+
+-- AI Learning Feedback - Track user modifications to improve AI accuracy
+CREATE TABLE ai_learning_feedback (
+    id TEXT PRIMARY KEY,
+    document_type TEXT NOT NULL CHECK (document_type IN ('ptp', 'jha', 'toolbox_talk', 'incident_report')),
+    work_type TEXT,
+    ai_suggestion TEXT NOT NULL,
+    user_modification TEXT,
+    feedback_type TEXT NOT NULL CHECK (feedback_type IN ('accept', 'edit', 'reject', 'add')),
+    context TEXT, -- Additional context for the suggestion
+    timestamp INTEGER NOT NULL,
+    user_id TEXT
+);
+
+-- Indexes for better query performance
+CREATE INDEX pre_task_plans_project_id_idx ON pre_task_plans(project_id);
+CREATE INDEX pre_task_plans_created_by_idx ON pre_task_plans(created_by);
+CREATE INDEX pre_task_plans_status_idx ON pre_task_plans(status);
+CREATE INDEX pre_task_plans_work_type_idx ON pre_task_plans(work_type);
+CREATE INDEX pre_task_plans_created_at_idx ON pre_task_plans(created_at);
+
+CREATE INDEX ptp_photos_ptp_id_idx ON ptp_photos(ptp_id);
+CREATE INDEX ptp_photos_photo_id_idx ON ptp_photos(photo_id);
+
+CREATE INDEX hazard_corrections_original_photo_idx ON hazard_corrections(original_photo_id);
+CREATE INDEX hazard_corrections_correction_photo_idx ON hazard_corrections(correction_photo_id);
+CREATE INDEX hazard_corrections_status_idx ON hazard_corrections(status);
+CREATE INDEX hazard_corrections_date_identified_idx ON hazard_corrections(date_identified);
+
+CREATE INDEX ai_learning_feedback_document_type_idx ON ai_learning_feedback(document_type);
+CREATE INDEX ai_learning_feedback_work_type_idx ON ai_learning_feedback(work_type);
+CREATE INDEX ai_learning_feedback_feedback_type_idx ON ai_learning_feedback(feedback_type);
+CREATE INDEX ai_learning_feedback_timestamp_idx ON ai_learning_feedback(timestamp);
+
+-- ============================================================================
+-- Pre-Task Plans Queries
+-- ============================================================================
+
+-- Insert a new PTP
+insertPreTaskPlan:
+INSERT INTO pre_task_plans (
+    id, project_id, created_by, created_at, updated_at, work_type, work_scope,
+    crew_size, status, ai_generated_content, user_modified_content, pdf_path,
+    cloud_storage_url, signature_supervisor_blob, signature_supervisor_name,
+    signature_date, tools_equipment, mechanical_equipment, environmental_conditions,
+    materials_involved, specific_tasks, emergency_contacts, nearest_hospital,
+    evacuation_routes
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+-- Get PTP by ID
+selectPreTaskPlanById:
+SELECT * FROM pre_task_plans WHERE id = ?;
+
+-- Get all PTPs for a project
+selectPreTaskPlansByProject:
+SELECT * FROM pre_task_plans
+WHERE project_id = ?
+ORDER BY created_at DESC;
+
+-- Get PTPs by status
+selectPreTaskPlansByStatus:
+SELECT * FROM pre_task_plans
+WHERE status = ?
+ORDER BY created_at DESC;
+
+-- Get PTPs by created_by
+selectPreTaskPlansByCreator:
+SELECT * FROM pre_task_plans
+WHERE created_by = ?
+ORDER BY created_at DESC;
+
+-- Get recent PTPs
+selectRecentPreTaskPlans:
+SELECT * FROM pre_task_plans
+WHERE created_at > ?
+ORDER BY created_at DESC
+LIMIT ?;
+
+-- Update PTP status
+updatePreTaskPlanStatus:
+UPDATE pre_task_plans
+SET status = ?, updated_at = ?
+WHERE id = ?;
+
+-- Update PTP content
+updatePreTaskPlanContent:
+UPDATE pre_task_plans
+SET user_modified_content = ?, updated_at = ?
+WHERE id = ?;
+
+-- Update PTP signature
+updatePreTaskPlanSignature:
+UPDATE pre_task_plans
+SET signature_supervisor_blob = ?, signature_supervisor_name = ?,
+    signature_date = ?, updated_at = ?
+WHERE id = ?;
+
+-- Update PTP PDF paths
+updatePreTaskPlanPdfPaths:
+UPDATE pre_task_plans
+SET pdf_path = ?, cloud_storage_url = ?, updated_at = ?
+WHERE id = ?;
+
+-- Delete PTP
+deletePreTaskPlan:
+DELETE FROM pre_task_plans WHERE id = ?;
+
+-- Count PTPs by project
+countPreTaskPlansByProject:
+SELECT COUNT(*) FROM pre_task_plans WHERE project_id = ?;
+
+-- Count PTPs by status
+countPreTaskPlansByStatus:
+SELECT COUNT(*) FROM pre_task_plans WHERE status = ?;
+
+-- ============================================================================
+-- PTP Photos Queries
+-- ============================================================================
+
+-- Insert PTP photo link
+insertPtpPhoto:
+INSERT INTO ptp_photos (ptp_id, photo_id, display_order, photo_caption, added_at)
+VALUES (?, ?, ?, ?, ?);
+
+-- Get all photos for a PTP
+selectPhotosByPtpId:
+SELECT pp.*, p.*
+FROM ptp_photos pp
+INNER JOIN photos p ON pp.photo_id = p.id
+WHERE pp.ptp_id = ?
+ORDER BY pp.display_order ASC;
+
+-- Get PTPs that use a specific photo
+selectPtpsByPhotoId:
+SELECT ptp.*
+FROM pre_task_plans ptp
+INNER JOIN ptp_photos pp ON ptp.id = pp.ptp_id
+WHERE pp.photo_id = ?;
+
+-- Update photo display order
+updatePtpPhotoOrder:
+UPDATE ptp_photos
+SET display_order = ?
+WHERE ptp_id = ? AND photo_id = ?;
+
+-- Update photo caption
+updatePtpPhotoCaption:
+UPDATE ptp_photos
+SET photo_caption = ?
+WHERE ptp_id = ? AND photo_id = ?;
+
+-- Delete PTP photo link
+deletePtpPhoto:
+DELETE FROM ptp_photos WHERE ptp_id = ? AND photo_id = ?;
+
+-- Delete all photos for a PTP
+deletePtpPhotosByPtpId:
+DELETE FROM ptp_photos WHERE ptp_id = ?;
+
+-- Count photos for a PTP
+countPhotosByPtpId:
+SELECT COUNT(*) FROM ptp_photos WHERE ptp_id = ?;
+
+-- ============================================================================
+-- Hazard Corrections Queries
+-- ============================================================================
+
+-- Insert hazard correction
+insertHazardCorrection:
+INSERT INTO hazard_corrections (
+    id, original_photo_id, correction_photo_id, hazard_osha_code,
+    hazard_description, date_identified, date_corrected, verified_by,
+    verification_notes, status, created_at, updated_at
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+-- Get hazard correction by ID
+selectHazardCorrectionById:
+SELECT * FROM hazard_corrections WHERE id = ?;
+
+-- Get all hazard corrections for a photo
+selectHazardCorrectionsByOriginalPhoto:
+SELECT * FROM hazard_corrections
+WHERE original_photo_id = ?
+ORDER BY date_identified DESC;
+
+-- Get hazard corrections by status
+selectHazardCorrectionsByStatus:
+SELECT hc.*, p1.file_path AS original_photo_path, p2.file_path AS correction_photo_path
+FROM hazard_corrections hc
+LEFT JOIN photos p1 ON hc.original_photo_id = p1.id
+LEFT JOIN photos p2 ON hc.correction_photo_id = p2.id
+WHERE hc.status = ?
+ORDER BY hc.date_identified DESC;
+
+-- Get outstanding hazards
+selectOutstandingHazards:
+SELECT hc.*, p.file_path, p.timestamp, p.project_id
+FROM hazard_corrections hc
+INNER JOIN photos p ON hc.original_photo_id = p.id
+WHERE hc.status IN ('outstanding', 'in_progress')
+ORDER BY hc.date_identified DESC;
+
+-- Update hazard correction status
+updateHazardCorrectionStatus:
+UPDATE hazard_corrections
+SET status = ?, updated_at = ?
+WHERE id = ?;
+
+-- Link correction photo
+updateHazardCorrectionPhoto:
+UPDATE hazard_corrections
+SET correction_photo_id = ?, date_corrected = ?, updated_at = ?
+WHERE id = ?;
+
+-- Verify hazard correction
+verifyHazardCorrection:
+UPDATE hazard_corrections
+SET status = 'verified', verified_by = ?, verification_notes = ?, updated_at = ?
+WHERE id = ?;
+
+-- Delete hazard correction
+deleteHazardCorrection:
+DELETE FROM hazard_corrections WHERE id = ?;
+
+-- Count hazards by status
+countHazardsByStatus:
+SELECT COUNT(*) FROM hazard_corrections WHERE status = ?;
+
+-- Get hazard statistics by OSHA code
+selectHazardStatsByOshaCode:
+SELECT hazard_osha_code, COUNT(*) AS hazard_count,
+       SUM(CASE WHEN status = 'mitigated' OR status = 'verified' THEN 1 ELSE 0 END) AS mitigated_count,
+       SUM(CASE WHEN status = 'outstanding' OR status = 'in_progress' THEN 1 ELSE 0 END) AS outstanding_count
+FROM hazard_corrections
+GROUP BY hazard_osha_code
+ORDER BY hazard_count DESC;
+
+-- ============================================================================
+-- AI Learning Feedback Queries
+-- ============================================================================
+
+-- Insert AI feedback
+insertAiLearningFeedback:
+INSERT INTO ai_learning_feedback (
+    id, document_type, work_type, ai_suggestion, user_modification,
+    feedback_type, context, timestamp, user_id
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+-- Get feedback by document type
+selectFeedbackByDocumentType:
+SELECT * FROM ai_learning_feedback
+WHERE document_type = ?
+ORDER BY timestamp DESC
+LIMIT ?;
+
+-- Get feedback by work type
+selectFeedbackByWorkType:
+SELECT * FROM ai_learning_feedback
+WHERE work_type = ?
+ORDER BY timestamp DESC
+LIMIT ?;
+
+-- Get feedback statistics
+selectFeedbackStatistics:
+SELECT document_type, work_type, feedback_type, COUNT(*) AS feedback_count
+FROM ai_learning_feedback
+GROUP BY document_type, work_type, feedback_type
+ORDER BY feedback_count DESC;
+
+-- Get recent user modifications
+selectRecentModifications:
+SELECT * FROM ai_learning_feedback
+WHERE feedback_type IN ('edit', 'reject', 'add')
+  AND timestamp > ?
+ORDER BY timestamp DESC
+LIMIT ?;
+
+-- Delete old feedback (cleanup)
+deleteOldFeedback:
+DELETE FROM ai_learning_feedback
+WHERE timestamp < ?;

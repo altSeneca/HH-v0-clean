@@ -3,171 +3,977 @@
 **Product Name:** HazardHawk
 **Product Type:** AI-powered Construction Safety SaaS Platform
 **Owner:** Aaron Burroughs
+**Version:** 3.1.0 Production Ready
+**Last Updated:** October 1, 2025
 **Target Users:** Construction Safety Managers, Foremen, Supervisors, Project Managers, and Executives
 **Target Clients:** General Contractors from (5 - 50,000 employees)
 ---
 
 ### 1. **Objective**
 
-To create a scalable, AI-driven platform for identifying, analyzing, and managing safety hazards on construction sites. HazardHawk will streamline compliance, improve safety culture, and reduce incident rates using automated image and text analysis aligned with OSHA standards. It should be easy for users to snap a photo, add safety tags 
+To create a scalable, AI-driven platform for identifying, analyzing, and managing safety hazards on construction sites. HazardHawk will streamline compliance, improve safety culture, and reduce incident rates using automated image and text analysis aligned with OSHA standards. It should be easy for users to snap a photo, add safety tags, and receive instant AI-powered analysis.
 
-The final product is always a simple, lovable, complete application capable of delighting users with how well thought out the UX and UI are. We are building for construction crews who do not have time to learn a new app, everything must be easy to find and easy to accomplish. 
+The final product is always a simple, lovable, complete application capable of delighting users with how well thought out the UX and UI are. We are building for construction crews who do not have time to learn a new app - everything must be easy to find and easy to accomplish.
+
+**Design Philosophy:** "Less, but Better" - Jony Ive inspired minimalism with perfect defaults and minimal configuration.
+
+---
+
+### 1.5 **Current Implementation Status**
+
+**Platform:** Android (Kotlin Multiplatform)
+**Version:** v3.1.0 Production Ready
+**Status:** Core Features Implemented, Backend Integration In Progress
+
+#### ✅ Implemented Features (v3.0-3.1)
+
+**Camera & Photo Capture:**
+- **ClearCamera System**: Minimalist Jony Ive-inspired camera with auto-hiding controls
+- **Metadata Overlay**: Real-time GPS, timestamp, project name, company name display
+- **Camera Controls**: Grid lines, HDR, flash modes, aspect ratio selection (1:1, 4:3, 16:9, 3:2)
+- **Glove-Friendly**: Volume button capture, large touch targets, high contrast UI
+- **Photo Quality**: Adjustable JPEG compression (85-100%), HDR mode
+
+**AI Safety Analysis:**
+- **Live OSHA Analysis**: Gemini Vision Pro 2.5 integration with real-time hazard detection
+- **Compliance Checking**: OSHA code references, violation severity, PPE compliance
+- **Structured Results**: JSON format with hazards, mitigations, positive observations
+- **Local Persistence**: Analysis results stored in SQLDelight database
+- **Work Type Awareness**: Tailored analysis for different construction activities
+
+**Photo Gallery:**
+- **Grid View**: Thumbnail gallery with smooth scrolling
+- **Batch Operations**: Multi-select for bulk actions
+- **Photo Management**: Delete with confirmation, selection state
+- **PhotoViewer**: Full-screen view with swipe navigation and metadata display
+- **Filtering & Search**: Find photos by date, project, analysis status
+
+**AR Safety Mode (Experimental):**
+- **Real-Time Hazard Overlay**: Color-coded bounding boxes by severity
+- **Live OSHA Warnings**: Instant violation detection in camera preview
+- **Privacy Features**: Facial anonymization, consent management
+- **ARCore Integration**: Spatial tracking and hazard positioning
+
+**Unified Settings System:**
+- **Profile Management**: User name, role, company, project selection
+- **Camera Settings**: Quality, HDR, grid, flash, aspect ratio controls
+- **Location & Metadata**: GPS format selection, overlay customization
+- **Privacy & Security**: Local encryption toggle, auto-delete options
+- **Display & Accessibility**: Font size, orientation lock, haptic feedback
+- **Notifications**: Safety alerts, quiet hours configuration
+
+**Data Management:**
+- **Local Storage**: SQLDelight database with offline-first architecture
+- **Metadata Embedding**: GPS, timestamp, project info in EXIF data
+- **Photo Organization**: By project, date, analysis status
+- **Secure Storage**: Encrypted local storage option
+
+#### 🚧 In Progress
+
+- Backend API integration (Go + PostgreSQL + AWS)
+- AWS S3 photo upload pipeline with retry logic
+- User authentication system (AWS Cognito)
+- Multi-user project management
+- Team collaboration features
+- Cloud synchronization
+
+#### 📋 Planned (Future Releases)
+
+- Pre-Task Plans (PTPs) generator (Q2 2026)
+- Toolbox Talks generator (Q2 2026)
+- Pre-Shift Meeting tool (Q2 2026)
+- Incident Reports with photo attachments (Q2 2026)
+- Cloud storage configuration and backup (Q1 2026)
+- PDF export with embedded photos and analysis (Q2 2026)
+- Dashboard analytics and trends (Q4 2026)
 
 ---
 
 ### 2. **Core Features**
 
-#### A. **AI-Powered Safety Analysis**
+#### A. **Photo Capture & AI Analysis** ✅ IMPLEMENTED
 
-* **Bulk Photo Upload:** Users select multiple photos via the gallery interface.
-* **S3 Upload:** Photos are uploaded to an AWS S3 bucket.
-* **AI Processing:** S3 links are sent to the AI (e.g., Gemini Vision Pro 2.5), which processes each image and returns a structured JSON containing:
+**Camera System:**
+- Minimalist ClearCamera interface with auto-hiding controls
+- Full-screen camera preview with touch-to-focus
+- Real-time metadata overlay (GPS, timestamp, project, company)
+- Visual indicators: Grid lines, rule-of-thirds composition guide
+- Camera controls:
+  - Flash mode: Auto, Always On, Always Off
+  - HDR mode for better dynamic range
+  - Aspect ratio selection: Square (1:1), Standard (4:3), Wide (16:9), DSLR (3:2)
+  - Photo quality: 85%, 90%, 95%, 100% JPEG compression
+- Volume button capture for glove-friendly operation
+- Metadata position customization (4 corners)
+- Font size and opacity controls (12-24sp, 50-100%)
 
-  * Detected hazards
-  * OSHA Code references
-  * Suggested mitigations
-  * Severity ratings
-  * Postive observations
-* **Result Handling:**
+**Gallery & Selection:**
+- Grid view with photo thumbnails
+- Multi-select for batch operations (delete, analyze, export)
+- Photo filtering by date, project, analysis status
+- PhotoViewer with full-screen display
+- Swipe navigation between photos
+- Metadata display panel
+- Delete confirmation dialog
 
-  * JSON analysis results are paired with each image
-  * Stored in the user's gallery
-  * Exportable as a printable report (PDF), containing:
+**AI Safety Analysis:**
+- **Live OSHA Compliance Analysis** using Gemini Vision Pro 2.5
+- **Detects:**
+  - Fall hazards and protection violations
+  - PPE non-compliance (hard hats, safety glasses, gloves, vests)
+  - Electrical hazards and proper grounding
+  - Scaffolding and ladder safety
+  - Material storage and housekeeping issues
+  - Equipment operation safety
+  - OSHA regulation violations
 
-    * Each photo
-    * AI analysis
-    * Timestamp, location, and direction metadata
-* **Future Consideration:** Explore opportunities to streamline and automate the bundling of photos + analysis into a single cohesive report without manual steps.
+- **Returns Structured JSON:**
+  ```json
+  {
+    "oshaViolations": [
+      {
+        "oshaCode": "1926.501(b)(1)",
+        "description": "Fall protection not in use at 6+ feet",
+        "violationType": "CRITICAL",
+        "suggestedMitigation": "Install guardrails or use personal fall arrest system"
+      }
+    ],
+    "positiveObservations": [
+      "All workers wearing proper PPE",
+      "Good housekeeping - clear walkways"
+    ],
+    "overallRiskLevel": "MEDIUM",
+    "workType": "GENERAL_CONSTRUCTION"
+  }
+  ```
 
-#### B. **Pre-Task Plans (PTPs)**
+- **Analysis Results:**
+  - Persist locally in SQLDelight database
+  - Display in PhotoViewer with color-coded severity
+  - Exportable as safety reports (PDF generation planned)
+  - Searchable and filterable
 
-* **Input Form:** Work scope, crew details, tools, PPE, and environment.
+**Current Limitations:**
+- S3 upload: Backend API integration required
+- Batch cloud upload: Local queue implemented, sync pending
+- PDF export: Data structure ready, generation logic needed
+- Multi-user sync: Requires backend authentication
+
+#### A.5 **Augmented Reality Safety Mode** ✅ EXPERIMENTAL
+
+**AR Hazard Detection:**
+- Real-time hazard overlay on camera preview
+- Color-coded bounding boxes by severity:
+  - Red: Critical violations
+  - Orange: Major hazards
+  - Yellow: Minor issues
+  - Green: Observations
+- Live OSHA violation warnings
+- ARCore spatial tracking for hazard positioning
+- Persistent hazard markers
+
+**Privacy Controls:**
+- Facial anonymization toggle (default: enabled)
+- AR consent management system
+- Data retention settings (30 days default, configurable)
+- Privacy protection levels:
+  - Standard: Facial blur + data encryption
+  - High: No facial recognition, minimal data retention
+
+**Requirements:**
+- ARCore-capable Android device
+- Android 7.0+ (API 24+)
+- Camera and location permissions
+
+**Status:** Experimental feature - user feedback being collected
+
+#### B. **Pre-Task Plans (PTPs)** 📋 PLANNED Q2 2026
+
+* **Input Form:** Work scope, crew details, tools, PPE, and environment
 * **Output Template:** PDF format including:
-
-  * Job steps
-  * Hazards
-  * Controls
-  * Signature section
+  * Job steps breakdown
+  * Identified hazards per step
+  * Control measures
+  * Signature section for crew acknowledgment
 * **Compliance:** Aligned with 'All PTPs.docx' format
+* **AI Assistance:** Suggest hazards and controls based on work type
 
-#### C. **Toolbox Talks Generator**
+#### C. **Toolbox Talks Generator** 📋 PLANNED Q2 2026
 
 * **Input:** Topic selection or auto-generate from task type
 * **Output:** OSHA-compliant template with:
-
   * Topic summary
-  * Discussion points
-  * Worker acknowledgment/signatures
+  * Discussion points and key safety reminders
+  * Worker acknowledgment and signatures
   * Optional extra signature page
-* **Export:** PDF and print-ready
+* **Export:** PDF and print-ready format
+* **Library:** Pre-built templates for common construction topics
 
-#### D. **Pre-Shift Meeting Tool**
+#### D. **Pre-Shift Meeting Tool** 📋 PLANNED Q2 2026
 
 * **Input:** Type of work + hazard checklist
-* **Output:** Printable and exportable talk with task-specific reminders and safety checks
+* **Output:** Printable and exportable talk with:
+  * Task-specific safety reminders
+  * Weather and environmental considerations
+  * Safety checks and equipment inspection
+  * Crew assignments and responsibilities
 
-#### E. **Incident Reports**
+#### E. **Incident Reports** 📋 PLANNED Q2 2026
 
-* **Form Builder:** Incident type, involved personnel, timeline, actions taken
-* **Output:** Structured PDF with image support and OSHA references
+* **Form Builder:**
+  * Incident type selection
+  * Involved personnel and witnesses
+  * Timeline of events
+  * Actions taken and corrective measures
+* **Output:** Structured PDF with:
+  * Photo attachments from gallery
+  * OSHA references
+  * Signature collection
+* **Integration:** Link to AI analysis of incident scene photos
 
-#### F. **Dashboard**
+#### F. **Dashboard** 📋 PLANNED Q4 2026
 
-* **Buttons/Tools:**
+* **Quick Access Tools:**
+  1. Take Photo (1st Priority) ✅ IMPLEMENTED
+  2. Pre-Shift Meetings (2nd Priority) - Planned
+  3. Incident Reporting (3rd Priority) - Planned
+  4. Toolbox Talks (4th Priority) - Planned
+  5. Safety Orientations (Low Priority) - Future
 
-  * Take Photo (1st Priority)
-  * Toolbox Talks (4th)
-  * Safety Orientations (not a priority)
-  * Pre-Shift Meetings (2nd)
-  * Incident Reporting (3rd)
-* **User Role Management:**
-* **Field Access:** Basic tier with permissions to upload photos, view AI hazard analysis results, and read-only access to safety documentation. Ideal for on-site workers and subcontractors.
-* **Safety Lead:** Mid-tier with access to generate Pre-Task Plans, Toolbox Talks, and Incident Reports. Can edit and distribute safety content. Suitable for Safety Managers and Assistant Superintendents.
-* **Project Admin:** Full feature access including all generation tools, project data export, analytics dashboard, user role assignment, and access control. Intended for Superintendents, Project Managers, and Executive-level stakeholders.
+* **Analytics Dashboard:**
+  * Hazards identified by type and severity
+  * OSHA violations trends over time
+  * Incident rate tracking
+  * Project safety scores
+  * Team compliance metrics
 
-Each tier includes only the features necessary for their job function, aligning costs with value and ensuring streamlined access.
+#### G. **User Role Management** ✅ IMPLEMENTED
 
-#### G. **Data Management & Access**
+* **Field Access Tier:**
+  * Photo capture and upload
+  * View AI hazard analysis results
+  * Read-only safety documentation
+  * Gallery access
+  * Target: On-site workers and subcontractors
+  * Pricing: $29/month
 
-* **Cloud Storage:** AWS S3 for images, PDFs
-* **Database:** PostgreSQL (hosted on RDS)
-* **Permissions:** IAM roles for app/backend access, scoped S3 bucket policies
-* **Photo Meta Overlay:** GPS, direction (icon + angle), timestamp, project + company name
+* **Safety Lead Tier:**
+  * All Field Access features
+  * Generate Pre-Task Plans, Toolbox Talks, Incident Reports (when implemented)
+  * Edit and distribute safety content
+  * Project management access
+  * Target: Safety Managers and Assistant Superintendents
+  * Pricing: $49/month
+
+* **Project Admin Tier:**
+  * Full feature access
+  * Project data export
+  * Analytics dashboard (when implemented)
+  * User role assignment
+  * Access control management
+  * Target: Superintendents, Project Managers, Executives
+  * Pricing: $99/month
+
+**Data Transfer Policy:**
+* Tier-up: Retains all historical data
+* Tier-down: 30-day export period before data archival
+
+#### H. **Settings & Configuration** ✅ IMPLEMENTED
+
+**Unified Settings System:**
+- 9 category tabs (consolidation to 5 tabs planned):
+  1. Profile - User info, role, company, project selection
+  2. AI & Analysis - AI analysis preferences
+  3. AR Settings - Augmented reality privacy and controls
+  4. Camera - Photo quality and camera controls
+  5. Location & Metadata - GPS and overlay customization
+  6. Privacy & Security - Data privacy and encryption
+  7. Storage & Backup - Local storage management (cloud planned)
+  8. Display & Accessibility - UI preferences and accessibility
+  9. Notifications - Safety alerts and quiet hours
+
+**Profile & Project Management:**
+- User profile: Name, role, company
+- Multi-project support with dropdown selection
+- Project switching with data persistence
+- Company branding display
+
+**Camera Settings:**
+- Photo quality: 85-100% compression slider
+- HDR mode toggle
+- Grid lines for composition
+- Flash mode: Auto, Always On, Always Off
+- Aspect ratio: Square, 4:3, 16:9, 3:2
+- Save original without watermark option (planned)
+
+**Metadata Customization:**
+- Toggle project name, company name, user name, timestamp
+- Overlay position: Top-left, Top-right, Bottom-left, Bottom-right
+- Font size: 12-24sp adjustable slider
+- Opacity: 50-100% transparency control
+- Location format: Address or GPS coordinates
+
+**Privacy & Security:**
+- Include location toggle
+- Local encryption toggle
+- Auto-delete after: Never, 30 days, 90 days
+- Cloud sync permission (when implemented)
+- AR privacy controls
+
+**Display & Accessibility:**
+- Portrait orientation lock
+- Haptic feedback toggle
+- Metadata font size
+- Overlay auto-fade delay (1-10 seconds)
+
+**Notifications:**
+- Safety alerts toggle
+- Photo reminders
+- Location geofence alerts
+- Analysis complete notifications
+- Quiet hours: 10pm-6am default
+
+**Known Issues (Q1 2026 Simplification Planned):**
+- Some settings not yet connected to UI components
+- Aspect ratio dropdown shows hardcoded value
+- Grid lines not rendering in camera
+- Too many options (40 settings → 20 settings target)
+- Language complexity (simplify to 6th grade reading level)
+
+#### I. **Data Management & Access** 🚧 IN PROGRESS
+
+* **Local Storage (Implemented):**
+  * SQLDelight database for metadata
+  * Android internal storage for photo files
+  * Thumbnail cache management
+  * Offline-first architecture
+
+* **Cloud Storage (Planned Q1 2026):**
+  * AWS S3 for production photos
+  * CloudFront CDN for fast retrieval
+  * Multi-region replication for disaster recovery
+
+* **Database (Planned):**
+  * PostgreSQL hosted on AWS RDS
+  * Private subnet with VPC security
+  * Daily automated backups
+
+* **Permissions & Security:**
+  * IAM roles for app/backend access
+  * S3 bucket policies for project isolation
+  * Cognito user pools for authentication
+
+* **Photo Metadata Overlay (Implemented):**
+  * GPS coordinates or address
+  * Compass direction (icon + angle)
+  * Timestamp with date and time
+  * Project and company name
+  * User name and role
 
 ---
 
 ### 3. **Technical Requirements**
 
-* **Backend Language:** Go
-* **Containerization:** Stateless Docker containers
-* **Database:** PostgreSQL (RDS, not publicly accessible)
+**Mobile Platform:**
+* **Framework:** Kotlin Multiplatform (KMP) - Share business logic across platforms
+* **Android Implementation:**
+  * **UI:** Jetpack Compose with Material 3
+  * **Camera:** CameraX API with LifecycleCameraController
+  * **AR:** ARCore for augmented reality features
+  * **Location:** Google Play Services FusedLocationProviderClient
+  * **Image Processing:** Android EXIF library for metadata embedding
+  * **Background Jobs:** WorkManager for sync and uploads
+  * **Target:** Android 7.0+ (API 24+)
+
+* **Architecture:**
+  * Clean Architecture (Domain → Data → Presentation)
+  * MVVM pattern with StateFlow
+  * Unidirectional data flow
+  * Repository pattern for data access
+
+* **Dependency Injection:**
+  * Koin for Kotlin Multiplatform
+  * Hilt/Dagger for Android-specific dependencies
+
+* **Local Database:**
+  * SQLDelight (multiplatform SQL)
+  * Room for Android-specific features
+
+* **Image Storage Paths:**
+  * Photos: `/Android/data/com.hazardhawk.android/files/Pictures/HazardHawk/Photos/`
+  * Thumbnails: `/Android/data/com.hazardhawk.android/files/Pictures/HazardHawk/Thumbnails/`
+  * Database: `/Android/data/com.hazardhawk.android/databases/hazardhawk.db`
+
+**Backend (In Progress):**
+* **Language:** Go (Golang)
+* **Containerization:** Docker containers (stateless)
+* **Orchestration:** AWS ECS or Kubernetes
+* **Database:** PostgreSQL 14+ on AWS RDS
+  * Private subnet (no public access)
+  * VPC security groups restrict to backend only
+  * Automated backups and point-in-time recovery
 * **Image Storage:** AWS S3
-* **Authentication:** AWS Cognito / IAM
-* **APIs:** OpenAI, Google Gemini Vision/Vertex AI
-* **Hosting:** AWS ECS / Lambda (for serverless tools)
+  * Separate buckets per project for data isolation
+  * Lifecycle policies for cost optimization
+  * CloudFront CDN for fast global access
+* **Authentication:** AWS Cognito
+  * User pools for authentication
+  * Identity pools for AWS resource access
+  * MFA support for admin roles
+* **API Gateway:** AWS API Gateway
+  * Rate limiting and throttling
+  * API key management
+  * Request/response transformation
+
+**AI Integration:**
+* **Model:** Google Gemini Vision Pro 2.5 (multimodal)
+* **API:** Vertex AI or direct Gemini API
+* **Prompt Engineering:** OSHA-focused safety analysis prompts
+* **Processing:** Server-side via S3 URL links (no direct image upload)
+* **Response Format:** Structured JSON with schema validation
+* **Rate Limiting:** Throttling to manage AI API costs
+* **Fallback:** Queue system for batch processing during high load
+
+**Security & Compliance:**
+* **Data Encryption:**
+  * At rest: AES-256 encryption for S3 and RDS
+  * In transit: TLS 1.3 for all API communication
+  * Optional local encryption for Android storage
+* **Access Control:**
+  * IAM policies with least privilege principle
+  * S3 bucket policies for project isolation
+  * VPC security groups for RDS access
+* **Compliance:**
+  * OSHA data retention requirements
+  * GDPR considerations for personal data
+  * SOC 2 audit preparation
 
 ---
 
 ### 4. **AI Workflow & Cost Optimization**
 
-* Gemini Vision Pro 2.5 model used
-* Image upload: Bulk via gallery > stored in S3 > processed via links
-* Process:
+**AI Model:** Gemini Vision Pro 2.5
+* Input: S3 image URLs (not direct uploads)
+* Context: Work type, OSHA standards, project specifics
+* Output: Structured JSON with hazards, violations, mitigations
 
-  * 30 images/day per user
-  * 2 PTPs/day
-  * 1 toolbox talk/week
-  * 1 incident report/month
-* **Estimated Monthly Storage/Retrieval (per project):**
+**Processing Flow:**
+1. User captures photo via ClearCamera
+2. Photo stored locally with metadata
+3. Photo queued for S3 upload (when backend ready)
+4. Backend sends S3 URL to Gemini Vision API
+5. AI analyzes photo for safety hazards
+6. Backend receives JSON response
+7. Results synced back to mobile app
+8. Analysis displayed in PhotoViewer
 
-  * \~0.888GB stored
-  * Retrieval and storage costs calculated via AWS S3 pricing
+**Usage Estimates (per user/project):**
+* Photos: 30 images/day
+* PTPs: 2 per day (when implemented)
+* Toolbox Talks: 1 per week (when implemented)
+* Incident Reports: 1 per month (when implemented)
+
+**Monthly Storage/Retrieval (per project):**
+* Photos: ~0.888GB/month (30 photos/day × 30 days × 1MB avg)
+* S3 storage: $0.023/GB = ~$0.02/month
+* S3 retrieval: Minimal cost with CloudFront caching
+* AI processing: ~$0.025 per image = $22.50/user/month
+* Database: Minimal cost on shared RDS instance
+
+**Cost Optimization Strategies:**
+* S3 Intelligent-Tiering for automatic cost reduction
+* CloudFront caching to reduce retrieval costs
+* Batch AI processing during off-peak hours
+* Image compression before upload (95% quality default)
+* Thumbnail generation for gallery view (50KB vs 1MB)
+* Lifecycle policies: Move to Glacier after 90 days
 
 ---
 
 ### 5. **UI/UX Considerations**
 
-* **Camera Screen Layout:**
+**Design Philosophy:**
+* Minimalist, Jony Ive-inspired Design Principles Applied:
+  - "Less, but Better" / "The Indistinguishable": The UI elements would be minimal, receding into the background until interaction is required.
+  - Exquisite Typography: Clean, precise San Francisco (or similar) typeface, used with meticulous kerning and leading for maximum legibility.
+  - Subtle Materiality & Haptics: Controls would feel tactile and responsive. Haptic feedback on capture would be precise and satisfying.
+  - Consistency & Clarity: Every icon, every interaction would be instantly understandable and consistent with Apple's ecosystem.
+* Construction-friendly: High contrast, large touch targets
+* Glove-friendly: Volume buttons, simple gestures
+* Offline-first: All core features work without internet
+* Auto-hiding controls: Technology recedes, content first
+* Haptic feedback for confirmation
 
-  * BoxWithConstraints for viewfinder with visible borders
-  * Metadata and direction icon overlays
-  * Bottom bar: gallery, capture, settings
-  * Top-left permanent hamburger menu for nav
-* **Visual Style:** Minimalist, construction-friendly theme
+**ClearCamera Screen Layout:**
+* Full-screen camera preview
+* Auto-hiding controls (fade after 3 seconds)
+* Metadata overlay in user-selected corner
+* Subtle grid lines (rule-of-thirds)
+* Large circular capture button (center bottom)
+* Gallery thumbnail (bottom-left)
+* Settings icon (bottom-right)
+* AR mode toggle (top-right)
+
+**Navigation:**
+* Persistent hamburger menu (top-left)
+* Bottom navigation bar:
+  - Camera (home)
+  - Gallery
+  - Reports (when implemented)
+  - Settings
+* Swipe gestures for photo navigation
+* Pull-to-refresh for sync
+
+**Visual Style:**
+* Color scheme:
+  - Safety Orange: #FF6B35 (primary)
+  - High-Vis Yellow: #FFDD00 (accents)
+  - Construction Blue: #2B6CB0 (secondary)
+  - Critical Red: #E53E3E (warnings)
+* Typography: Roboto (high legibility)
+* Icons: Material Design with construction context
+* Spacing: Generous for outdoor use
+* Contrast: WCAG AA compliant minimum
 
 ---
 
 ### 6. **Roles & Tiers**
 
-* **Apprentice:** Limited uploads/analysis ($29/month)
-* **Journey Person:** Mid-tier access, some generation tools ($49/month)
-* **Supervisor:** Full access to all features($99/month)
-* **Data Transfer:** Tier-up retains all data; Tier-down gets 30-day export period
+**Tier Structure:**
+
+| Tier | Features | Price | Target User |
+|------|----------|-------|-------------|
+| **Field Access** | Photo capture, AI analysis view, read-only docs | $29/month | Workers, subcontractors |
+| **Safety Lead** | + PTPs, Toolbox Talks, Incident Reports | $49/month | Safety managers, foremen |
+| **Project Admin** | + Analytics, user management, full access | $99/month | Superintendents, PMs, executives |
+
+**Feature Access Matrix:**
+
+| Feature | Field Access | Safety Lead | Project Admin |
+|---------|--------------|-------------|---------------|
+| Photo Capture | ✓ | ✓ | ✓ |
+| AI Analysis View | ✓ | ✓ | ✓ |
+| Gallery & Search | ✓ | ✓ | ✓ |
+| AR Safety Mode | ✓ | ✓ | ✓ |
+| Generate PTPs | - | ✓ | ✓ |
+| Toolbox Talks | - | ✓ | ✓ |
+| Incident Reports | - | ✓ | ✓ |
+| Edit Safety Content | - | ✓ | ✓ |
+| Analytics Dashboard | - | - | ✓ |
+| User Management | - | - | ✓ |
+| Project Settings | - | - | ✓ |
+| Data Export | - | - | ✓ |
+
+**Tier Change Policy:**
+* **Upgrade:** Immediate access, all data retained
+* **Downgrade:** 30-day grace period, export window, then data archival
+* **Cancellation:** 30-day data export period before deletion
 
 ---
 
 ### 7. **Security & Compliance**
 
-* **Data Isolation per Project**
-* **S3 Access:** Enforced via IAM + Bucket Policies
-* **RDS Access:** VPC security groups restrict to backend and Android app only
+**Data Isolation:**
+* Separate S3 buckets per project
+* RDS row-level security by project ID
+* User access scoped to assigned projects only
+
+**Access Control:**
+* S3 bucket policies enforce project boundaries
+* IAM roles with least privilege
+* RDS access via VPC security groups (backend and app only)
+* API authentication via Cognito tokens
+
+**Data Retention:**
+* Photos: 90 days active, then Glacier archival
+* Analysis results: Retained for 2 years (OSHA requirement)
+* User data: Retained per account lifetime
+* Deleted data: 30-day soft delete, then permanent removal
+
+**Audit Logging:**
+* All photo uploads logged with user, timestamp, project
+* Analysis requests tracked for billing
+* User actions logged for compliance
+* S3 access logs enabled
+* CloudTrail for AWS API calls
+
+**OSHA Compliance:**
+* Retain safety records for 5 years minimum
+* Provide data export for OSHA inspections
+* Document safety training via Toolbox Talks
+* Track incident reports per OSHA 300 log requirements
 
 ---
 
 ### 8. **Success Metrics**
 
-* Time to generate safety report
+**Operational Metrics:**
+* Photo capture time: < 500ms ✅ ACHIEVED
+* Camera launch time: < 2 seconds ✅ ACHIEVED
+* AI analysis response time: < 10 seconds (target: 5s)
+* App crash rate: < 1% ✅ STABLE
+* Settings task completion: < 60 seconds for common tasks
+
+**Safety Impact Metrics:**
 * Number of hazards identified per week
-* User engagement rate by tier
-* Incident rate reduction by project
-* Customer retention and expansion
+* OSHA violations detected and resolved
+* Near-miss incidents documented
+* Incident rate reduction by project (target: 25% reduction)
+* PPE compliance improvement
+
+**User Engagement:**
+* Daily active users (DAU) by tier
+* Photos captured per user per day (target: 30)
+* AI analysis requests per week
+* Feature adoption rates:
+  - AR mode usage
+  - Batch operations
+  - Settings customization
+* Time spent in app per day
+
+**Business Metrics:**
+* Customer retention rate (target: 90%)
+* Tier upgrade conversion rate (target: 15%)
+* Average revenue per user (ARPU)
+* Customer acquisition cost (CAC)
+* Lifetime value (LTV) to CAC ratio
+
+**Cost Metrics:**
+* Storage costs per project
+* AI processing costs per user
+* Bandwidth costs per photo
+* Infrastructure costs per user
+
+**Quality Metrics:**
+* User-reported bugs per release
+* Settings usability score (post-simplification target: 8/10)
+* User satisfaction (NPS score target: 50+)
+* AI analysis accuracy (false positive rate < 10%)
+* Photo upload success rate (target: 99%)
 
 ---
 
 ### 9. **Future Roadmap**
 
-* Integration with project management platforms
+#### Phase 1: Cloud Integration (Q1 2026)
+
+**Cloud Storage Configuration:**
+* AWS S3 bucket setup and credential management
+* Multi-provider support (S3, Google Drive, Dropbox)
+* Storage provider selection in settings UI
+* Connection testing and validation
+* Secure key storage using Android Keystore
+
+**Automated Photo Backup:**
+* Auto-backup on WiFi (default behavior)
+* Manual backup trigger button
+* Backup quality settings:
+  - Original (100%): No compression
+  - High (95%): Minimal compression
+  - Medium (85%): Balanced quality/size
+  - Low (75%): Maximum compression
+* Backup frequency options:
+  - WiFi only (default)
+  - WiFi + Cellular
+  - Manual only
+* Background sync with WorkManager (Android)
+* Upload queue with retry logic
+* Bandwidth throttling for cellular
+
+**Backup History & Management:**
+* View backup operations history
+* Backup status tracking:
+  - Pending: Queued for upload
+  - In Progress: Currently uploading
+  - Completed: Successfully backed up
+  - Failed: Upload error (with retry)
+* Manual retry for failed uploads
+* Restore from cloud backup
+* Storage usage analytics and warnings
+* Selective sync (by project, date range, analysis status)
+
+**Smart Sync Features:**
+* Conflict resolution for edited photos
+* Delta sync to minimize bandwidth
+* Compression on upload to reduce storage costs
+* Deduplication for identical photos
+* Progress tracking with notifications
+* Pause/resume capability
+
+#### Phase 2: Document Generation (Q2 2026)
+
+**Pre-Task Plans (PTPs):**
+* AI-assisted hazard identification
+* Template library for common tasks
+* Custom template builder
+* Digital signature collection
+* PDF export with company branding
+
+**Toolbox Talks:**
+* 100+ pre-built OSHA-compliant topics
+* Custom talk builder
+* Attendance tracking with photos
+* Digital signature capture
+* Weekly reminder system
+
+**Pre-Shift Meetings:**
+* Weather integration for environmental hazards
+* Equipment inspection checklist
+* Crew assignment management
+* Daily safety briefing templates
+
+**Incident Reports:**
+* Photo attachment from gallery
+* Witness statement collection
+* Timeline builder
+* Corrective action tracking
+* OSHA 300 log integration
+
+**PDF Generation:**
+* Embedded photos with analysis
+* Company logo and branding
+* Digital signatures
+* Timestamps and location data
+* OSHA-compliant formatting
+
+#### Phase 3: Team Collaboration (Q3 2026)
+
+**Multi-User Features:**
+* In-app messaging by project
+* @mentions and notifications
+* Photo sharing between team members
+* Comment threads on analysis results
+
+**Supervisor Tools:**
+* Daily logs and notes
+* Crew check-in/check-out
+* Safety observation tracking
+* Performance metrics per worker
+
+**Project Management:**
+* Project dashboard with safety score
+* Team member access control
+* Role-based permissions enforcement
+* Activity feed for project events
+
+#### Phase 4: Advanced Features (Q4 2026)
+
+**Integration Partners:**
+* Procore integration for project sync
+* Buildertrend safety module
+* PlanGrid document management
+* Smartsheet reporting
+
+**On-Device ML:**
 * Live camera hazard detection
-* In-app messaging
-* Supervisor daily logs
+* Offline AI analysis with TensorFlow Lite
+* PPE detection without cloud
+* Instant feedback mode
+
+**Analytics & Trends:**
+* Incident rate dashboard
+* Hazard heat maps by location
+* Trend analysis over time
+* Predictive safety scoring
+* Benchmarking across projects
+
+**Additional Tools:**
 * Inspection checklist generator
+* Safety audit templates
+* Training certification tracking
+* Equipment maintenance logs
+
+---
+
+### 10. **Implementation Notes & Technical Debt**
+
+#### Settings UX Simplification (Priority: Q1 2026)
+
+**Current State:**
+* 40+ settings across 9 tabs
+* Some toggles not functional (TODOs in code)
+* Technical language exceeds 6th grade level
+* Confusing options (e.g., 3 location toggles for same feature)
+
+**Issues Identified:**
+1. **Non-Functional Settings** (need backend connection):
+   - Configure Cloud Storage → Button does nothing
+   - View Backup History → Not implemented
+   - Backup Quality/Frequency → Placeholders
+   - Timer Delay → No timer implementation
+   - Volume Button Capture → Always enabled, toggle does nothing
+   - Auto-Focus → Always enabled, toggle does nothing
+   - Zoom Settings → Pinch gesture works, menu unnecessary
+
+2. **UI Disconnection Issues:**
+   - Grid Lines toggle exists but doesn't render in ClearCameraScreen
+   - Aspect Ratio dropdown shows hardcoded "4:3 (Standard)"
+   - Flash mode and HDR not applied to CameraX controller
+   - Metadata overlay sliders don't affect actual overlay
+
+3. **Confusing UX:**
+   - "Include Location" + "Show GPS Coordinates" + "GPS Overlay on Camera" = 3 toggles for location
+   - "Encrypt Local Storage" - users don't understand benefit
+   - "Include Device Info" - toggle exists but always true, can't be turned off
+   - "Overlay Auto-Fade Delay" - unclear what it controls
+
+**Simplification Plan:**
+* Reduce: 40 settings → 20 settings
+* Consolidate: 9 tabs → 5 tabs
+* Simplify language to 6th grade reading level
+* Remove non-functional features until backend ready
+* Connect all functional settings to actual UI components
+
+**Removal Candidates:**
+- Timer Delay → Use camera's native timer
+- Volume Button Capture → Always enabled (no toggle)
+- Auto-Focus → Always enabled (no toggle)
+- Zoom Settings → Use pinch gesture (no menu)
+- Encrypt Local Storage → Remove until clear benefit
+- Include Device Info → Always include (no toggle)
+- GPS Overlay on Camera → Redundant with "Include Location"
+
+**Simplification Examples:**
+* Location: 3 toggles → 1 toggle + format dropdown
+  - "Show where photo was taken" [On/Off]
+  - Format: [Address ▼] or [GPS Coordinates ▼]
+
+* Metadata: 7 controls → 3 toggles + 1 slider
+  - ☑️ Company Name
+  - ☑️ Project Name
+  - ☑️ Date & Time
+  - ☑️ Your Name
+  - Text Size: [——◯———]
+
+* Privacy: 8 options → 2 choices
+  - ☑️ Allow Cloud Backup
+    "Keeps photos safe if phone is lost"
+  - ☑️ Delete Old Photos
+    After: [Never ▼]
+
+**Philosophy:** "Less, but Better"
+* Perfect defaults - 95% of users never change settings
+* Every setting must answer: "Why would I want this?"
+* Clear benefit in plain English
+* No technical jargon
+
+#### Functional Connection TODOs
+
+**High Priority (Q1 2026):**
+1. Connect grid lines setting to ClearCameraScreen camera overlay
+2. Fix aspect ratio dropdown to read/write actual AppSettings value
+3. Apply flash mode to CameraX ImageCapture configuration
+4. Apply HDR setting to CameraX ImageCapture
+5. Connect metadata overlay sliders (font size, opacity, position) to MetadataOverlay composable
+6. Apply metadata toggles (project, user, timestamp) to display logic
+
+**Medium Priority (Q2 2026):**
+7. Implement timer delay countdown before capture
+8. Add volume button capture key event listener
+9. Implement auto-focus when tapping capture area
+10. Add zoom controls UI (currently pinch-only)
+
+**Low Priority (Future):**
+11. Save original without watermark implementation
+12. Encrypt local storage encryption layer
+13. Device info embedding in EXIF (privacy consideration)
+
+#### Cloud Storage Integration Prerequisites
+
+**Backend Requirements:**
+1. API endpoints for S3 credential management
+2. Presigned URL generation for uploads
+3. Upload confirmation webhook
+4. Backup status tracking database tables
+5. Storage usage calculation API
+
+**Mobile Requirements:**
+1. Secure credential storage (Android Keystore)
+2. Background upload service (WorkManager)
+3. Network connectivity monitoring
+4. Upload queue with prioritization
+5. Retry logic with exponential backoff
+6. Progress notification UI
+7. Bandwidth throttling on cellular
+
+**Testing Requirements:**
+1. Upload failure scenarios (network loss, server errors)
+2. Retry logic validation
+3. Battery drain impact testing
+4. Large batch upload performance
+5. Storage quota handling
+6. Multi-device sync conflict resolution
+
+#### Known Limitations
+
+**Current v3.1.0:**
+* Backend not deployed - using local storage only
+* No user authentication - single-user mode
+* No cloud sync - offline only
+* PDF export not implemented
+* Team collaboration not available
+* Analytics dashboard not built
+
+**Performance Considerations:**
+* Large photo galleries (1000+ photos) may have scroll lag
+* AI analysis takes 8-10 seconds (target: 5s)
+* First-time camera launch can be slow on low-end devices
+* AR mode requires high-end device (ARCore capable)
+
+**Platform Limitations:**
+* Android only (iOS planned for 2027)
+* Requires Google Play Services for location
+* ARCore limited to compatible devices
+* Minimum Android 7.0 (API 24) requirement
+
+---
+
+### 11. **Deployment & Release Strategy**
+
+**Current Status:** v3.1.0 deployed to test devices via USB
+
+**Release Plan:**
+
+**Q1 2026 - Settings Simplification & Cloud Launch:**
+* Simplify settings UX (40 → 20 settings)
+* Fix all functional connection issues
+* Deploy backend API (Go + PostgreSQL + S3)
+* Implement cloud storage and backup
+* Beta testing with 10 pilot projects
+* Play Store internal testing track
+
+**Q2 2026 - Document Generation:**
+* PTPs, Toolbox Talks, Incident Reports
+* PDF export with photos and analysis
+* Digital signature capture
+* Play Store open beta (100 testers)
+
+**Q3 2026 - Team Collaboration:**
+* Multi-user support with authentication
+* In-app messaging and notifications
+* Role-based access control
+* Play Store production release (limited rollout)
+
+**Q4 2026 - Advanced Features:**
+* Analytics dashboard
+* Integration partners (Procore, Buildertrend)
+* On-device ML for offline analysis
+* Full production rollout
+
+**Release Criteria:**
+* Zero crash rate on test devices
+* All settings functional and connected
+* Backend API deployed and tested
+* Cloud backup working reliably
+* User testing feedback incorporated
+* Play Store listing prepared
+
+---
+
+**End of Document**
+
+**Document Version:** 2.0
+**Previous Version:** 1.0 (pre-implementation)
+**Author:** Aaron Burroughs
+**Contributors:** Claude Code (implementation documentation)
+**Last Updated:** October 1, 2025

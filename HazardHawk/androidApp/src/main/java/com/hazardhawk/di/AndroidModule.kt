@@ -48,10 +48,14 @@ import coil3.disk.DiskCache
 import coil3.request.crossfade
 import coil3.util.DebugLogger
 import com.hazardhawk.performance.ConstructionImageLoader
+import com.hazardhawk.security.SecureKeyManager
+import com.hazardhawk.camera.MetadataSettingsManager
+import com.hazardhawk.ui.gallery.state.AnalysisWorkflowViewModel
 import com.hazardhawk.performance.ConstructionPerformanceMonitor
 import com.hazardhawk.performance.PhotoViewerPerformanceTracker
 import com.hazardhawk.performance.ConstructionPhotoMemoryManager
 import com.hazardhawk.camera.MetadataEmbedder
+import com.hazardhawk.utils.FileStorageUtil
 
 /**
  * Android-specific dependency injection module.
@@ -107,6 +111,9 @@ val androidModule = module {
 
     // Metadata and camera components
     single<MetadataEmbedder> { MetadataEmbedder(androidContext()) }
+
+    // File storage utilities
+    single<FileStorageUtil> { FileStorageUtil(androidContext()) }
 
     // Optimized image loading for construction photography
     single<ConstructionImageLoader> { ConstructionImageLoader(androidContext()) }
@@ -377,10 +384,24 @@ val androidSecurityModule = module {
     //     )
     // }
     
-    // Secure token storage
-    // single<SecureTokenStorage> {
-    //     SecureTokenStorageImpl(
-    //         encryptedPrefs = get(qualifier = named("secure"))
-    //     )
-    // }
+    // Secure key manager for API keys and sensitive data
+    single<SecureKeyManager> {
+        SecureKeyManager.getInstance(androidContext())
+    }
+
+    // Metadata settings manager for camera and app configuration
+    single<MetadataSettingsManager> {
+        MetadataSettingsManager(androidContext())
+    }
+
+    // Analysis workflow ViewModel with all dependencies
+    factory<AnalysisWorkflowViewModel> {
+        AnalysisWorkflowViewModel(
+            aiService = get<GeminiVisionAnalyzer>(),
+            oshaRepository = get<OSHARegulationRepository>(),
+            analysisRepository = get(), // Assuming this exists in another module
+            secureKeyManager = get<SecureKeyManager>(),
+            metadataSettings = get<MetadataSettingsManager>()
+        )
+    }
 }

@@ -26,7 +26,8 @@ object ModuleRegistry {
             // com.hazardhawk.di.databaseModule,
             com.hazardhawk.di.repositoryModule,  // Enable repository module for AnalysisRepository
             // com.hazardhawk.di.domainModule,
-            // com.hazardhawk.di.networkModule
+            com.hazardhawk.di.networkModule,  // Network module for HTTP client (required for PTP)
+            com.hazardhawk.di.ptpModule { com.hazardhawk.ai.AIConfig.getGeminiApiKey() }  // PTP module with API key provider
         )
     } catch (e: Exception) {
         emptyList<org.koin.core.module.Module>()
@@ -64,6 +65,7 @@ object ModuleRegistry {
      */
     val safeModules = listOf(
         androidModule,              // Includes AI dependencies
+        androidSecurityModule,      // Security module with MetadataSettingsManager
         viewModelModule
     ) + availableSharedModules
     

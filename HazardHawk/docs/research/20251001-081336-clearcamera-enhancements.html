@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClearCamera Enhancements - Comprehensive Research Report</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #1C1C1E;
+            background: #F5F5F7;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+
+        .metadata {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            padding: 1.5rem 2rem;
+            background: #F7FAFC;
+            border-bottom: 1px solid #E2E8F0;
+        }
+
+        .metadata-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .metadata-label {
+            font-size: 0.85rem;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+
+        .metadata-value {
+            font-weight: 600;
+            color: #2D3748;
+        }
+
+        nav {
+            padding: 1.5rem 2rem;
+            background: #F7FAFC;
+            border-bottom: 1px solid #E2E8F0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav h2 {
+            font-size: 1rem;
+            color: #4A5568;
+            margin-bottom: 0.75rem;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        nav a {
+            color: #FF6B35;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            background: white;
+            border-radius: 6px;
+            transition: all 0.2s;
+            border: 1px solid #E2E8F0;
+        }
+
+        nav a:hover {
+            background: #FF6B35;
+            color: white;
+            border-color: #FF6B35;
+        }
+
+        main {
+            padding: 2rem;
+        }
+
+        section {
+            margin-bottom: 3rem;
+            scroll-margin-top: 100px;
+        }
+
+        h2 {
+            font-size: 2rem;
+            color: #1C1C1E;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid #FF6B35;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            color: #2D3748;
+            margin: 1.5rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1.2rem;
+            color: #4A5568;
+            margin: 1rem 0 0.5rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: #4A5568;
+        }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-left: 0.5rem;
+        }
+
+        .risk-low {
+            background: #C6F6D5;
+            color: #22543D;
+        }
+
+        .risk-medium {
+            background: #FED7D7;
+            color: #742A2A;
+        }
+
+        .risk-high {
+            background: #FBD38D;
+            color: #7C2D12;
+        }
+
+        .complexity-simple {
+            background: #C6F6D5;
+            color: #22543D;
+        }
+
+        .complexity-moderate {
+            background: #FED7D7;
+            color: #744210;
+        }
+
+        .complexity-complex {
+            background: #FBD38D;
+            color: #7C2D12;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            background: white;
+        }
+
+        th {
+            background: #F7FAFC;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            color: #2D3748;
+            border-bottom: 2px solid #E2E8F0;
+        }
+
+        td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #E2E8F0;
+        }
+
+        tr:hover {
+            background: #F7FAFC;
+        }
+
+        code {
+            background: #F7FAFC;
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9em;
+            color: #E53E3E;
+        }
+
+        pre {
+            background: #1C1C1E;
+            color: #F7FAFC;
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        pre code {
+            background: transparent;
+            color: inherit;
+            padding: 0;
+        }
+
+        .recommendation {
+            background: #EBF8FF;
+            border-left: 4px solid #3182CE;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+
+        .recommendation h4 {
+            color: #2C5282;
+            margin-top: 0;
+        }
+
+        .warning {
+            background: #FFF5F5;
+            border-left: 4px solid #E53E3E;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+
+        .warning h4 {
+            color: #C53030;
+            margin-top: 0;
+        }
+
+        .success {
+            background: #F0FFF4;
+            border-left: 4px solid #38A169;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+
+        .success h4 {
+            color: #276749;
+            margin-top: 0;
+        }
+
+        ul, ol {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+            color: #4A5568;
+        }
+
+        .architecture-section {
+            background: #F7FAFC;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+        }
+
+        footer {
+            background: #2D3748;
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .checklist {
+            list-style: none;
+            margin-left: 0;
+        }
+
+        .checklist li::before {
+            content: "□ ";
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            nav {
+                display: none;
+            }
+
+            .container {
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 ClearCamera Enhancements</h1>
+            <p class="subtitle">Comprehensive Research & Implementation Guide</p>
+        </header>
+
+        <div class="metadata">
+            <div class="metadata-item">
+                <span class="metadata-label">Project</span>
+                <span class="metadata-value">HazardHawk v0</span>
+            </div>
+            <div class="metadata-item">
+                <span class="metadata-label">Module</span>
+                <span class="metadata-value">ClearCamera (Minimalist UI)</span>
+            </div>
+            <div class="metadata-item">
+                <span class="metadata-label">Research Date</span>
+                <span class="metadata-value">October 1, 2025</span>
+            </div>
+            <div class="metadata-item">
+                <span class="metadata-label">Total Enhancements</span>
+                <span class="metadata-value">5 Features</span>
+            </div>
+            <div class="metadata-item">
+                <span class="metadata-label">Estimated Effort</span>
+                <span class="metadata-value">3-4.5 hours</span>
+            </div>
+            <div class="metadata-item">
+                <span class="metadata-label">Complexity</span>
+                <span class="metadata-value">Simple to Moderate</span>
+            </div>
+        </div>
+
+        <nav>
+            <h2>Table of Contents</h2>
+            <ul>
+                <li><a href="#executive-summary">Executive Summary</a></li>
+                <li><a href="#architecture">Architecture Analysis</a></li>
+                <li><a href="#documentation">Library Documentation</a></li>
+                <li><a href="#ux">UX Requirements</a></li>
+                <li><a href="#testing">Testing Strategy</a></li>
+                <li><a href="#security">Security & Compliance</a></li>
+                <li><a href="#implementation">Implementation Plan</a></li>
+                <li><a href="#risks">Risk Assessment</a></li>
+            </ul>
+        </nav>
+
+        <main>
+            <section id="executive-summary">
+                <h2>📋 Executive Summary</h2>
+
+                <p>This research document provides comprehensive analysis for implementing five enhancement features to the ClearCamera module in HazardHawk. The research was conducted through parallel agent deployment across architecture, documentation, UX, testing, and security domains.</p>
+
+                <h3>Features Overview</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Enhancement</th>
+                            <th>Complexity</th>
+                            <th>Effort</th>
+                            <th>Security Risk</th>
+                            <th>Priority</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1. Settings Toggle for Camera UI Preference</td>
+                            <td><span class="risk-badge complexity-simple">SIMPLE</span></td>
+                            <td>30 min</td>
+                            <td><span class="risk-badge risk-low">LOW</span></td>
+                            <td>⭐⭐⭐ High</td>
+                        </tr>
+                        <tr>
+                            <td>2. Project Management Dialog in ClearCamera</td>
+                            <td><span class="risk-badge complexity-simple">SIMPLE</span></td>
+                            <td>45 min</td>
+                            <td><span class="risk-badge risk-medium">MEDIUM</span></td>
+                            <td>⭐⭐⭐ High</td>
+                        </tr>
+                        <tr>
+                            <td>3. Tap-to-Focus Visual Indicator</td>
+                            <td><span class="risk-badge complexity-moderate">MODERATE</span></td>
+                            <td>1.5 hours</td>
+                            <td><span class="risk-badge risk-low">LOW</span></td>
+                            <td>⭐⭐ Medium</td>
+                        </tr>
+                        <tr>
+                            <td>4. Persist Camera UI Preference</td>
+                            <td><span class="risk-badge complexity-simple">SIMPLE</span></td>
+                            <td>20 min</td>
+                            <td><span class="risk-badge risk-low">LOW</span></td>
+                            <td>⭐⭐⭐ High</td>
+                        </tr>
+                        <tr>
+                            <td>5. Subtle Blur Effects (API 31+)</td>
+                            <td><span class="risk-badge complexity-moderate">MODERATE</span></td>
+                            <td>1.5 hours</td>
+                            <td><span class="risk-badge risk-low">LOW</span></td>
+                            <td>⭐ Low (Optional)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Key Findings</h3>
+
+                <ul>
+                    <li><strong>Architecture:</strong> Existing HazardHawk patterns support all enhancements with minimal new complexity</li>
+                    <li><strong>Library Support:</strong> All required APIs available in Jetpack Compose 1.8.0, CameraX 1.5.0, DataStore 1.1.7</li>
+                    <li><strong>UX Research:</strong> iOS-inspired patterns match construction worker mental models</li>
+                    <li><strong>Testing:</strong> 85-95% coverage achievable with existing test infrastructure</li>
+                    <li><strong>Security:</strong> One CRITICAL issue identified in project data serialization (requires fix)</li>
+                </ul>
+
+                <div class="recommendation">
+                    <h4>✅ Recommended Approach</h4>
+                    <p>Implement enhancements 1, 2, and 4 in Phase 1 (foundation), enhancement 3 in Phase 2 (visual polish), and consider deferring enhancement 5 (blur effects) as the existing translucent backgrounds already look excellent.</p>
+                </div>
+
+                <div class="warning">
+                    <h4>⚠️ Critical Security Finding</h4>
+                    <p><strong>Project Data Serialization Vulnerability:</strong> Current delimiter-based approach (<code>:::</code> and <code>|||</code>) vulnerable to injection. Must migrate to <code>kotlinx.serialization</code> before implementing project dialog enhancements.</p>
+                </div>
+            </section>
+
+            <section id="architecture">
+                <h2>🏗️ Architecture Analysis</h2>
+
+                <h3>Existing Patterns Summary</h3>
+
+                <div class="architecture-section">
+                    <h4>Settings Management</h4>
+                    <p><strong>Pattern:</strong> Dual-layer with MetadataSettingsManager (Android) and UISettingsRepository (KMP)</p>
+                    <p><strong>Storage:</strong> SharedPreferences with StateFlow reactive updates</p>
+                    <p><strong>Key Files:</strong></p>
+                    <ul>
+                        <li><code>MetadataSettings.kt</code> (Lines 76-606)</li>
+                        <li><code>UISettingsRepository.kt</code> (KMP shared module)</li>
+                    </ul>
+                </div>
+
+                <div class="architecture-section">
+                    <h4>Dialog Implementation</h4>
+                    <p><strong>Reference:</strong> ProjectManagementDialog in SafetyHUDCameraScreen.kt (Lines 1218-1300)</p>
+                    <p><strong>Pattern:</strong> AlertDialog with LazyColumn for scrollable forms</p>
+                    <p><strong>Reusability:</strong> Can be copied wholesale and restyled with ClearDesignTokens</p>
+                </div>
+
+                <div class="architecture-section">
+                    <h4>Camera Interaction</h4>
+                    <p><strong>Current:</strong> CameraX built-in tap-to-focus enabled</p>
+                    <p><strong>Enhancement:</strong> Add visual overlay with custom touch handler</p>
+                    <p><strong>Implementation:</strong> Modify AndroidView to intercept touches before CameraX</p>
+                </div>
+
+                <h3>Complexity Assessment</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Enhancement</th>
+                            <th>Rating</th>
+                            <th>Justification</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Settings Toggle</td>
+                            <td><span class="risk-badge complexity-simple">⭐ SIMPLE</span></td>
+                            <td>Exact pattern exists for "Lock Portrait Orientation" toggle</td>
+                        </tr>
+                        <tr>
+                            <td>Project Dialog</td>
+                            <td><span class="risk-badge complexity-simple">⭐ SIMPLE</span></td>
+                            <td>Copy-paste from SafetyHUDCameraScreen + restyle</td>
+                        </tr>
+                        <tr>
+                            <td>Tap-to-Focus Indicator</td>
+                            <td><span class="risk-badge complexity-moderate">⭐⭐ MODERATE</span></td>
+                            <td>Requires AndroidView modification + animation state</td>
+                        </tr>
+                        <tr>
+                            <td>Settings Persistence</td>
+                            <td><span class="risk-badge complexity-simple">⭐ SIMPLE</span></td>
+                            <td>Follow updateOrientationLock pattern exactly</td>
+                        </tr>
+                        <tr>
+                            <td>Blur Effects</td>
+                            <td><span class="risk-badge complexity-moderate">⭐⭐ MODERATE</span></td>
+                            <td>API level checks + fallback + performance testing</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>File Structure Impact</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Files to Create</th>
+                            <th>LOC</th>
+                            <th>Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>FocusIndicator.kt</code></td>
+                            <td>~80</td>
+                            <td>Animated tap-to-focus ring component</td>
+                        </tr>
+                        <tr>
+                            <td><code>ProjectManagementDialog.kt</code></td>
+                            <td>~150</td>
+                            <td>ClearCamera-styled project dialog (copy from SafetyHUD)</td>
+                        </tr>
+                        <tr>
+                            <td><code>BlurEffects.kt</code></td>
+                            <td>~60</td>
+                            <td>API 31+ blur helper (optional)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Files to Modify</th>
+                            <th>Lines Changed</th>
+                            <th>Changes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>UISettingsRepository.kt</code></td>
+                            <td>~30</td>
+                            <td>Add preferredCameraUI and subtleBlurEnabled fields</td>
+                        </tr>
+                        <tr>
+                            <td><code>SettingsScreen.kt</code></td>
+                            <td>~40</td>
+                            <td>Add Camera Interface section with toggles</td>
+                        </tr>
+                        <tr>
+                            <td><code>MainActivity.kt</code></td>
+                            <td>~20</td>
+                            <td>Update navigation logic with UI preference</td>
+                        </tr>
+                        <tr>
+                            <td><code>ClearCameraViewModel.kt</code></td>
+                            <td>~30</td>
+                            <td>Add focus indicator StateFlow</td>
+                        </tr>
+                        <tr>
+                            <td><code>ClearCameraScreen.kt</code></td>
+                            <td>~50</td>
+                            <td>Add touch listener, dialog, indicator overlay</td>
+                        </tr>
+                        <tr>
+                            <td><code>ClearDesignTokens.kt</code></td>
+                            <td>~5</td>
+                            <td>Add TapToFocusHoldMs constant</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section id="documentation">
+                <h2>📚 Library Documentation</h2>
+
+                <h3>Technology Stack (2025 Latest Versions)</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Library</th>
+                            <th>Version</th>
+                            <th>Release Date</th>
+                            <th>Key Features</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Jetpack Compose</td>
+                            <td>1.8.0</td>
+                            <td>April 2025</td>
+                            <td>Autofill, 50% fewer experimental APIs</td>
+                        </tr>
+                        <tr>
+                            <td>CameraX</td>
+                            <td>1.5.0</td>
+                            <td>Sept 10, 2025</td>
+                            <td>Compose support, tap-to-focus control</td>
+                        </tr>
+                        <tr>
+                            <td>DataStore</td>
+                            <td>1.1.7</td>
+                            <td>Current</td>
+                            <td>Async, type-safe preferences</td>
+                        </tr>
+                        <tr>
+                            <td>Material3</td>
+                            <td>Latest in BOM</td>
+                            <td>April 2025</td>
+                            <td>ModalBottomSheet improvements</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>CameraX Tap-to-Focus API</h3>
+
+                <div class="recommendation">
+                    <h4>Latest CameraX 1.5.0 Features</h4>
+                    <ul>
+                        <li>Native Jetpack Compose support via <code>camera-viewfinder-compose</code></li>
+                        <li>New: <code>CameraController#setTapToFocusAutoCancelDuration</code></li>
+                        <li>Default auto-cancellation: 5 seconds</li>
+                        <li>ListenableFuture-based success/failure callbacks</li>
+                    </ul>
+                </div>
+
+                <h4>Focus Metering Implementation</h4>
+
+                <pre><code>val meteringPoint = factory.createPoint(offset.x, offset.y)
+val action = FocusMeteringAction.Builder(meteringPoint).build()
+val future = cameraController.cameraControl?.startFocusAndMetering(action)
+
+future?.addListener({
+    val result = future.get()
+    onResult(result.isFocusSuccessful)
+}, ContextCompat.getMainExecutor(context))</code></pre>
+
+                <h3>DataStore Migration Pattern</h3>
+
+                <div class="success">
+                    <h4>✅ Official 2025 Recommendation: Migrate to DataStore</h4>
+                    <p>SharedPreferences is legacy - DataStore provides async, type-safe, Flow-based persistence</p>
+                </div>
+
+                <pre><code>val Context.dataStore: DataStore&lt;Preferences&gt; by preferencesDataStore(
+    name = "camera_settings",
+    produceMigrations = { context ->
+        listOf(
+            SharedPreferencesMigration(
+                context = context,
+                sharedPreferencesName = "camera_prefs"
+            )
+        )
+    }
+)</code></pre>
+
+                <h3>Blur Effects (RenderEffect API 31+)</h3>
+
+                <div class="warning">
+                    <h4>⚠️ Critical API Requirement</h4>
+                    <p><strong>Minimum API:</strong> Android 12 (API 31)</p>
+                    <p><strong>Fallback Required:</strong> HazardHawk targets API 26</p>
+                </div>
+
+                <pre><code>if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+    Modifier.graphicsLayer {
+        renderEffect = RenderEffect.createBlurEffect(
+            8f, 8f, Shader.TileMode.CLAMP
+        ).asComposeRenderEffect()
+    }
+} else {
+    Modifier.background(Color.Black.copy(alpha = 0.85f))
+}</code></pre>
+
+                <p><strong>Performance:</strong> Hardware-accelerated, ~60 FPS, GPU-based</p>
+                <p><strong>Memory:</strong> Offscreen buffer allocated when RenderEffect set</p>
+                <p><strong>Critical:</strong> Set to <code>null</code> to remove (NOT radius = 0, which crashes)</p>
+            </section>
+
+            <section id="ux">
+                <h2>🎨 UX Requirements</h2>
+
+                <h3>User-Centered Design Principles</h3>
+
+                <p>Research shows construction workers need:</p>
+                <ul>
+                    <li><strong>Speed:</strong> Every tap saved = better UX (gloved hands, urgent situations)</li>
+                    <li><strong>Predictability:</strong> Settings persist, no surprises</li>
+                    <li><strong>Visibility:</strong> High contrast for bright sunlight (orange #FF6B35)</li>
+                    <li><strong>Forgiveness:</strong> Easy undo, clear error messages</li>
+                </ul>
+
+                <h3>Enhancement 1: Settings Toggle</h3>
+
+                <div class="recommendation">
+                    <h4>✅ Top-Level Camera Section</h4>
+                    <p>Promote to primary navigation - camera UI choice is fundamental, not buried config</p>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>UX Decision</th>
+                            <th>Recommendation</th>
+                            <th>Rationale</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Location</td>
+                            <td>Settings → Camera Controls (top section)</td>
+                            <td>Fewer taps, glove-friendly</td>
+                        </tr>
+                        <tr>
+                            <td>Instant vs Restart</td>
+                            <td><strong>INSTANT SWITCH</strong></td>
+                            <td>Modern expectation (iOS pattern)</td>
+                        </tr>
+                        <tr>
+                            <td>Preview Design</td>
+                            <td>Visual preview cards with thumbnails</td>
+                            <td>Reduces decision anxiety</td>
+                        </tr>
+                        <tr>
+                            <td>Persistence</td>
+                            <td>Always persist (no checkbox)</td>
+                            <td>Zero cognitive load</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Enhancement 2: Project Dialog</h3>
+
+                <div class="recommendation">
+                    <h4>✅ Full-Screen Bottom Sheet (Not Standard Dialog)</h4>
+                    <p>More immersive, better keyboard handling, respects minimalism</p>
+                </div>
+
+                <h4>Two-Tier Form Design</h4>
+
+                <p><strong>Essential Tier (Always Visible):</strong></p>
+                <ul>
+                    <li>Project Name* (required)</li>
+                    <li>Site Address (optional but useful)</li>
+                </ul>
+
+                <p><strong>Advanced Tier (Collapsed):</strong></p>
+                <ul>
+                    <li>Tap "Show More Fields..." to expand</li>
+                    <li>Project Manager, Contractor, Safety Officer, Dates</li>
+                </ul>
+
+                <p><strong>Rationale:</strong> 80% of users only need project name. Minimize typing in field.</p>
+
+                <h3>Enhancement 3: Tap-to-Focus Indicator</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Design Element</th>
+                            <th>Specification</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Diameter</td>
+                            <td>80dp (touch-friendly)</td>
+                        </tr>
+                        <tr>
+                            <td>Stroke Width</td>
+                            <td>3dp</td>
+                        </tr>
+                        <tr>
+                            <td>Color</td>
+                            <td>Safety Orange #FF6B35 (90% opacity)</td>
+                        </tr>
+                        <tr>
+                            <td>Animation</td>
+                            <td>1000ms total (800ms hold + 200ms fade)</td>
+                        </tr>
+                        <tr>
+                            <td>Success State</td>
+                            <td>Scale 1.0 → 1.05 → 1.0 (bounce)</td>
+                        </tr>
+                        <tr>
+                            <td>Failure State</td>
+                            <td>Red #FF3B30 with X icon, double pulse</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4>Animation Timeline</h4>
+
+                <ul>
+                    <li><strong>0ms:</strong> Tap detected</li>
+                    <li><strong>0-100ms:</strong> Fade in + bounce (Spring animation)</li>
+                    <li><strong>100-800ms:</strong> Focusing state (spinning arc)</li>
+                    <li><strong>800ms:</strong> Focus lock (success bounce)</li>
+                    <li><strong>800-1000ms:</strong> Hold (solid ring)</li>
+                    <li><strong>1000-1200ms:</strong> Fade out</li>
+                </ul>
+
+                <h3>Enhancement 5: Blur Effects</h3>
+
+                <div class="warning">
+                    <h4>⚠️ Consider Skipping This Enhancement</h4>
+                    <p>Current translucent backgrounds already look excellent. Blur adds complexity without significant UX benefit for construction environment.</p>
+                </div>
+
+                <p><strong>If Implementing:</strong></p>
+                <ul>
+                    <li>Apply ONLY to bottom bar (not top bar or zoom panel)</li>
+                    <li>Use Medium blur (12dp) - subtle but noticeable</li>
+                    <li>Default OFF (opt-in setting)</li>
+                    <li>Graceful fallback: Darker opacity (85% vs 60%) for API < 31</li>
+                </ul>
+            </section>
+
+            <section id="testing">
+                <h2>🧪 Testing Strategy</h2>
+
+                <h3>Coverage Goals</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Enhancement</th>
+                            <th>Unit</th>
+                            <th>Integration</th>
+                            <th>UI</th>
+                            <th>Performance</th>
+                            <th>Overall</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Settings Toggle</td>
+                            <td>90%+</td>
+                            <td>85%+</td>
+                            <td>80%+</td>
+                            <td>N/A</td>
+                            <td><strong>85%+</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Project Dialog</td>
+                            <td>85%+</td>
+                            <td>90%+</td>
+                            <td>85%+</td>
+                            <td>N/A</td>
+                            <td><strong>85%+</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Tap-to-Focus</td>
+                            <td>90%+</td>
+                            <td>85%+</td>
+                            <td>90%+</td>
+                            <td>95%+</td>
+                            <td><strong>90%+</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Persistence</td>
+                            <td>95%+</td>
+                            <td>90%+</td>
+                            <td>N/A</td>
+                            <td>N/A</td>
+                            <td><strong>95%+</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Blur Effects</td>
+                            <td>85%+</td>
+                            <td>80%+</td>
+                            <td>90%+</td>
+                            <td>95%+</td>
+                            <td><strong>85%+</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Test Frameworks</h3>
+
+                <ul>
+                    <li><strong>Unit Tests:</strong> JUnit 4 + MockK + Turbine (Flow testing)</li>
+                    <li><strong>Integration Tests:</strong> AndroidJUnit4 + Robolectric</li>
+                    <li><strong>UI Tests:</strong> Compose Testing Library + Semantics</li>
+                    <li><strong>Performance:</strong> Jetpack Macrobenchmark</li>
+                    <li><strong>Visual Regression:</strong> Paparazzi or Shot</li>
+                </ul>
+
+                <h3>Critical Edge Cases</h3>
+
+                <h4>Settings Toggle</h4>
+                <ul class="checklist">
+                    <li>Rapid toggling 50 times - maintains state consistency</li>
+                    <li>Toggling during navigation - applies correctly</li>
+                    <li>Corrupted SharedPreferences - falls back to default</li>
+                    <li>Concurrent access from multiple viewmodels - thread-safe</li>
+                </ul>
+
+                <h4>Project Dialog</h4>
+                <ul class="checklist">
+                    <li>Project name with emoji - handles correctly</li>
+                    <li>Project name 255 characters - truncates gracefully</li>
+                    <li>Special characters (quotes, apostrophes) - escapes properly</li>
+                    <li>Duplicate detection - case insensitive</li>
+                    <li>Concurrent project creation - prevents race conditions</li>
+                </ul>
+
+                <h4>Tap-to-Focus</h4>
+                <ul class="checklist">
+                    <li>Rapid taps - handles 10 taps/second without lag</li>
+                    <li>Tap at screen edge - indicator fully visible</li>
+                    <li>Tap during capture - indicator blocked</li>
+                    <li>100 consecutive taps - no frame drops</li>
+                    <li>Animation smoothness - maintains 60fps</li>
+                </ul>
+
+                <h3>Performance Benchmarks</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Target</th>
+                            <th>Test Method</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Settings toggle response</td>
+                            <td>&lt; 50ms</td>
+                            <td>Macrobenchmark</td>
+                        </tr>
+                        <tr>
+                            <td>Dialog open animation</td>
+                            <td>&lt; 200ms</td>
+                            <td>Animation timing test</td>
+                        </tr>
+                        <tr>
+                            <td>Tap-to-indicator latency</td>
+                            <td>&lt; 16ms (1 frame)</td>
+                            <td>Frame callback timing</td>
+                        </tr>
+                        <tr>
+                            <td>Focus indicator FPS</td>
+                            <td>60fps sustained</td>
+                            <td>FrameMetrics</td>
+                        </tr>
+                        <tr>
+                            <td>Blur render time</td>
+                            <td>&lt; 5ms/frame</td>
+                            <td>Systrace</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section id="security">
+                <h2>🔒 Security & Compliance</h2>
+
+                <h3>Risk Summary</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Enhancement</th>
+                            <th>Risk Level</th>
+                            <th>Key Concerns</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Settings Toggle</td>
+                            <td><span class="risk-badge risk-low">LOW</span></td>
+                            <td>No sensitive data, MODE_PRIVATE sufficient</td>
+                        </tr>
+                        <tr>
+                            <td>Project Dialog</td>
+                            <td><span class="risk-badge risk-medium">MEDIUM → LOW</span></td>
+                            <td>Injection vulnerability (requires fix)</td>
+                        </tr>
+                        <tr>
+                            <td>Tap-to-Focus</td>
+                            <td><span class="risk-badge risk-low">LOW</span></td>
+                            <td>No data collection or privacy concerns</td>
+                        </tr>
+                        <tr>
+                            <td>Persistence</td>
+                            <td><span class="risk-badge risk-low">LOW</span></td>
+                            <td>Standard Android security sufficient</td>
+                        </tr>
+                        <tr>
+                            <td>Blur Effects</td>
+                            <td><span class="risk-badge risk-low">LOW</span></td>
+                            <td>System-managed, prevents DoS</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>CRITICAL: Project Data Serialization Fix</h3>
+
+                <div class="warning">
+                    <h4>⚠️ HIGH PRIORITY: Security Vulnerability</h4>
+
+                    <p><strong>Current Implementation (VULNERABLE):</strong></p>
+                    <pre><code>// Delimiter-based serialization
+val projectsJson = projects.joinToString("|||") { project ->
+    "${project.projectId}::${project.projectName}::..."
+}</code></pre>
+
+                    <p><strong>Attack Vector:</strong> Project name containing <code>::</code> or <code>|||</code> corrupts data</p>
+
+                    <p><strong>Required Fix (SECURE):</strong></p>
+                    <pre><code>// Use kotlinx.serialization
+val json = Json { ignoreUnknownKeys = true }
+val projectsJson = json.encodeToString(projects)</code></pre>
+                </div>
+
+                <h3>GDPR Compliance</h3>
+
+                <p><strong>Personal Data Identified:</strong></p>
+                <ul>
+                    <li>Project manager names</li>
+                    <li>Safety officer names</li>
+                    <li>Contractor information</li>
+                </ul>
+
+                <p><strong>Required Implementations:</strong></p>
+                <ul>
+                    <li>✅ Article 15: Data export function</li>
+                    <li>✅ Article 16: Data rectification (edit functionality)</li>
+                    <li>⚠️ Article 17: Right to erasure - LIMITED by OSHA 30-year retention</li>
+                </ul>
+
+                <div class="recommendation">
+                    <h4>Solution: Anonymization Instead of Deletion</h4>
+                    <p>OSHA requires 30-year retention (29 CFR 1910.1020). Implement anonymization for GDPR compliance while maintaining safety record structure.</p>
+                </div>
+
+                <h3>OSHA Compliance</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Document Type</th>
+                            <th>Retention Period</th>
+                            <th>Regulation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>General safety docs</td>
+                            <td>5 years</td>
+                            <td>29 CFR 1904</td>
+                        </tr>
+                        <tr>
+                            <td>Incident records</td>
+                            <td>5 years</td>
+                            <td>29 CFR 1904</td>
+                        </tr>
+                        <tr>
+                            <td>Exposure records</td>
+                            <td>30 years</td>
+                            <td>29 CFR 1910.1020</td>
+                        </tr>
+                        <tr>
+                            <td>Photos with critical hazards</td>
+                            <td>30 years</td>
+                            <td>29 CFR 1910.1020</td>
+                        </tr>
+                        <tr>
+                            <td>Project metadata</td>
+                            <td>30 years</td>
+                            <td>29 CFR 1910.1020</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section id="implementation">
+                <h2>🛠️ Implementation Plan</h2>
+
+                <h3>Phased Rollout</h3>
+
+                <div class="architecture-section">
+                    <h4>Phase 1: Foundation (45 minutes) - WEEK 1</h4>
+                    <ul class="checklist">
+                        <li>Enhancement 1 + 4: Settings toggle + persistence</li>
+                        <li>Add <code>preferredCameraUI</code> to UISettings</li>
+                        <li>Create toggle in SettingsScreen</li>
+                        <li>Update MainActivity navigation logic</li>
+                        <li>Test: Navigation switching between camera UIs</li>
+                    </ul>
+                </div>
+
+                <div class="architecture-section">
+                    <h4>Phase 2: Project Management (45 minutes) - WEEK 1</h4>
+                    <ul class="checklist">
+                        <li>Enhancement 2: Port ProjectManagementDialog to ClearCamera</li>
+                        <li>Fix serialization vulnerability (kotlinx.serialization)</li>
+                        <li>Implement ProjectValidator with regex</li>
+                        <li>Add GDPR data export/anonymization</li>
+                        <li>Test: Project CRUD operations</li>
+                    </ul>
+                </div>
+
+                <div class="architecture-section">
+                    <h4>Phase 3: Visual Polish (1.5 hours) - WEEK 2</h4>
+                    <ul class="checklist">
+                        <li>Enhancement 3: Tap-to-focus indicator</li>
+                        <li>Create FocusIndicator component</li>
+                        <li>Add touch listener to AndroidView</li>
+                        <li>Implement animation state machine</li>
+                        <li>Test: Focus accuracy and indicator timing</li>
+                    </ul>
+                </div>
+
+                <div class="architecture-section">
+                    <h4>Phase 4: Optional Enhancement (1.5 hours) - WEEK 2-3</h4>
+                    <ul class="checklist">
+                        <li>Enhancement 5: Blur effects (IF TRULY DESIRED)</li>
+                        <li>Create BlurEffects helper</li>
+                        <li>Add API level checks and fallbacks</li>
+                        <li>Apply to ElegantBottomBar only</li>
+                        <li>Test: Performance on target devices</li>
+                    </ul>
+                </div>
+
+                <h3>Total Estimated Time</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Phase</th>
+                            <th>Enhancements</th>
+                            <th>Estimated Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Phase 1</td>
+                            <td>Settings + Persistence</td>
+                            <td>45 minutes</td>
+                        </tr>
+                        <tr>
+                            <td>Phase 2</td>
+                            <td>Project Dialog + Security Fixes</td>
+                            <td>45 minutes</td>
+                        </tr>
+                        <tr>
+                            <td>Phase 3</td>
+                            <td>Tap-to-Focus</td>
+                            <td>1.5 hours</td>
+                        </tr>
+                        <tr>
+                            <td>Phase 4</td>
+                            <td>Blur Effects (Optional)</td>
+                            <td>1.5 hours</td>
+                        </tr>
+                        <tr>
+                            <td colspan="2"><strong>TOTAL (without blur)</strong></td>
+                            <td><strong>2.75 hours</strong></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2"><strong>TOTAL (with blur)</strong></td>
+                            <td><strong>4.25 hours</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section id="risks">
+                <h2>⚠️ Risk Assessment</h2>
+
+                <h3>Technical Risks</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Risk</th>
+                            <th>Probability</th>
+                            <th>Impact</th>
+                            <th>Mitigation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Project data corruption</td>
+                            <td>HIGH</td>
+                            <td>HIGH</td>
+                            <td>Migrate to kotlinx.serialization immediately</td>
+                        </tr>
+                        <tr>
+                            <td>Tap-to-focus lag on old devices</td>
+                            <td>MEDIUM</td>
+                            <td>MEDIUM</td>
+                            <td>Performance test on Pixel 3a (2019 device)</td>
+                        </tr>
+                        <tr>
+                            <td>Blur effects kill battery</td>
+                            <td>LOW</td>
+                            <td>MEDIUM</td>
+                            <td>Hardware-accelerated, opt-in, auto-disable on battery saver</td>
+                        </tr>
+                        <tr>
+                            <td>Settings don't persist after app kill</td>
+                            <td>LOW</td>
+                            <td>HIGH</td>
+                            <td>Integration tests + manual QA on real devices</td>
+                        </tr>
+                        <tr>
+                            <td>GDPR violation (data deletion)</td>
+                            <td>MEDIUM</td>
+                            <td>HIGH</td>
+                            <td>Implement anonymization + update privacy policy</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>User Experience Risks</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Risk</th>
+                            <th>Probability</th>
+                            <th>Impact</th>
+                            <th>Mitigation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Users can't find settings toggle</td>
+                            <td>MEDIUM</td>
+                            <td>MEDIUM</td>
+                            <td>Promote to top-level Camera section</td>
+                        </tr>
+                        <tr>
+                            <td>Focus indicator obscures hazards</td>
+                            <td>LOW</td>
+                            <td>LOW</td>
+                            <td>80dp size, 1s duration, fades before capture</td>
+                        </tr>
+                        <tr>
+                            <td>Project dialog keyboard covers fields</td>
+                            <td>HIGH</td>
+                            <td>MEDIUM</td>
+                            <td>Use ModalBottomSheet with imePadding</td>
+                        </tr>
+                        <tr>
+                            <td>Blur makes UI unreadable in sunlight</td>
+                            <td>MEDIUM</td>
+                            <td>HIGH</td>
+                            <td>Fallback to darker opacity, opt-in only</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Success Criteria</h3>
+
+                <ul class="checklist">
+                    <li>All enhancements compile without errors</li>
+                    <li>Unit test coverage ≥ 85% for all new code</li>
+                    <li>Integration tests pass on CI</li>
+                    <li>Manual QA on at least 3 devices (new flagship, mid-range, old budget)</li>
+                    <li>Security vulnerability patched (kotlinx.serialization)</li>
+                    <li>GDPR compliance documented</li>
+                    <li>Performance benchmarks met (60fps, <50ms response)</li>
+                    <li>User testing with ≥ 3 construction workers shows positive feedback</li>
+                </ul>
+            </section>
+        </main>
+
+        <footer>
+            <p><strong>HazardHawk v0 - ClearCamera Enhancements Research</strong></p>
+            <p>Generated: October 1, 2025 | Research Agents: 5 (Architecture, Docs, UX, Testing, Security)</p>
+            <p>Document Version: 1.0 | Status: Ready for Implementation</p>
+        </footer>
+    </div>
+</body>
+</html>

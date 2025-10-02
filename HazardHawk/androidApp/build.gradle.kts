@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.kotlinAndroid)
@@ -21,6 +23,15 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        // Load API key from local.properties (gitignored)
+        val localProperties = Properties()
+        val localPropertiesFile = rootProject.file("../local.properties")
+        if (localPropertiesFile.exists()) {
+            localPropertiesFile.inputStream().use { localProperties.load(it) }
+        }
+        val geminiApiKey = localProperties.getProperty("GEMINI_API_KEY") ?: ""
+        buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
     }
 
     buildTypes {

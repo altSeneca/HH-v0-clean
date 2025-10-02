@@ -1,5 +1,6 @@
 package com.hazardhawk.ui.camera.hud
 
+import com.hazardhawk.platform.currentTimeMillis
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -65,7 +66,7 @@ enum class AspectRatio {
 data class MetadataOverlayState(
     val companyName: String = "",
     val projectName: String = "",
-    val timestamp: Long = System.currentTimeMillis(),
+    val timestamp: Long = currentTimeMillis(),
     val gpsCoordinates: String = "",
     val address: String = "",
     val visible: Boolean = true
@@ -80,7 +81,7 @@ data class HUDPhotoAnalysis(
     val aiTags: List<AITag> = emptyList(),
     val confidenceScore: Float = 0f,
     val hazardDetected: Boolean = false,
-    val analysisTimestamp: Long = System.currentTimeMillis()
+    val analysisTimestamp: Long = currentTimeMillis()
 )
 
 /**

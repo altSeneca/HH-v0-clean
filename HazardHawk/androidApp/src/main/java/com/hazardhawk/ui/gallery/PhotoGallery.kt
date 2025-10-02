@@ -333,6 +333,10 @@ fun PhotoGallery(
 
     val viewModel = rememberGalleryState(photoRepository, reportGenerationManager)
 
+    // Metadata embedder for reprocessing photos
+    val metadataEmbedder = remember { com.hazardhawk.camera.MetadataEmbedder(context) }
+    var showReprocessDialog by remember { mutableStateOf(false) }
+
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -465,7 +469,8 @@ fun PhotoGallery(
                                 onBack = onBack,
                                 onSelectAll = viewModel::selectAll,
                                 onClearSelection = viewModel::clearSelection,
-                                onDeleteSelected = viewModel::deleteSelectedPhotos
+                                onDeleteSelected = viewModel::deleteSelectedPhotos,
+                                onReprocessSelected = { showReprocessDialog = true }
                             )
                             
                             // Photo grid
@@ -584,6 +589,19 @@ fun PhotoGallery(
             onDismiss = { /* Cannot dismiss during generation */ }
         )
     }
+
+    // Batch reprocess dialog
+    if (showReprocessDialog) {
+        val selectedPhotos = state.photos.filter { state.selectedPhotos.contains(it.id) }
+        BatchReprocessDialog(
+            photos = selectedPhotos,
+            onDismiss = {
+                showReprocessDialog = false
+                viewModel.clearSelection()
+            },
+            metadataEmbedder = metadataEmbedder
+        )
+    }
 }
 
 /**
@@ -597,7 +615,8 @@ private fun GalleryTopBar(
     onBack: () -> Unit,
     onSelectAll: () -> Unit,
     onClearSelection: () -> Unit,
-    onDeleteSelected: () -> Unit
+    onDeleteSelected: () -> Unit,
+    onReprocessSelected: () -> Unit = {}
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -636,7 +655,7 @@ private fun GalleryTopBar(
                     fontWeight = FontWeight.Bold
                 )
             }
-            
+
             // Title/Selection Count
             Text(
                 text = if (state.isSelectionMode) {
@@ -648,7 +667,7 @@ private fun GalleryTopBar(
                 fontWeight = FontWeight.Bold,
                 color = if (state.isSelectionMode) Color.White else SafetyOrange
             )
-            
+
             // Action Buttons (only in selection mode)
             if (state.isSelectionMode && state.selectedPhotos.isNotEmpty()) {
                 Row(
@@ -665,7 +684,17 @@ private fun GalleryTopBar(
                             fontWeight = FontWeight.Medium
                         )
                     }
-                    
+
+                    IconButton(
+                        onClick = onReprocessSelected
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Update,
+                            contentDescription = "Add timestamps",
+                            tint = Color.White
+                        )
+                    }
+
                     IconButton(
                         onClick = onDeleteSelected
                     ) {

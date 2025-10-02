@@ -1,5 +1,6 @@
 package com.hazardhawk.security.storage
 
+import com.hazardhawk.platform.currentTimeMillis
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -39,7 +40,7 @@ class ManualEntryStorage : SecureStorage {
         
         // If not found, request manual entry
         val request = ManualEntryRequest(
-            id = "get_${key}_${System.currentTimeMillis()}",
+            id = "get_${key}_${currentTimeMillis()}",
             key = key,
             operation = ManualEntryOperation.GET,
             description = getKeyDescription(key),
@@ -219,5 +220,5 @@ data class ManualEntryRequest(
     val operation: ManualEntryOperation,
     val description: String,
     val isRequired: Boolean,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = currentTimeMillis()
 )

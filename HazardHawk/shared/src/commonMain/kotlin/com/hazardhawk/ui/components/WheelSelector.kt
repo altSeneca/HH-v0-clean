@@ -163,7 +163,7 @@ object ZoomLevels {
             val label = when {
                 zoom < 1f -> "${(zoom * 10).toInt() / 10f}×"
                 zoom == zoom.toInt().toFloat() -> "${zoom.toInt()}×"
-                else -> "${String.format("%.1f", zoom)}×"
+                else -> "${(zoom * 10).toInt() / 10f}×"
             }
             
             items.add(WheelItem(

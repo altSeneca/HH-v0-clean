@@ -218,7 +218,7 @@ private fun AnalysisStatusIndicator(
         when {
             analysis == null -> {
                 Text(
-                    text = "🔍 Analyzing...",
+                    text = "Analyzing...",
                     style = com.hazardhawk.ui.theme.ConstructionTypography.cameraControl,
                     color = com.hazardhawk.ui.theme.HazardColors.TEXT_SECONDARY
                 )
@@ -239,7 +239,7 @@ private fun AnalysisStatusIndicator(
             }
             else -> {
                 Text(
-                    text = "⚠️ ${analysis.hazards.size} Issue${if (analysis.hazards.size > 1) "s" else ""}",
+                    text = "${analysis.hazards.size} Issue${if (analysis.hazards.size > 1) "s" else ""},
                     style = com.hazardhawk.ui.theme.ConstructionTypography.cameraControl,
                     color = com.hazardhawk.ui.theme.HazardColors.getSeverityColor(
                         analysis.hazards.maxByOrNull { it.severity.ordinal }?.severity ?: Severity.LOW

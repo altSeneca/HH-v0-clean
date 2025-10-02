@@ -244,9 +244,9 @@ class StorageManager(
                 lastError = e
                 
                 // Increment failure count
-                val currentFailures = failureCounts.getOrDefault(storage.securityLevel, 0) + 1
+                val currentFailures = (failureCounts[storage.securityLevel] ?: 0) + 1
                 failureCounts[storage.securityLevel] = currentFailures
-                
+
                 // If too many failures, move to next storage
                 if (currentFailures >= MAX_FAILURES_BEFORE_FALLBACK) {
                     currentStorageIndex = (currentStorageIndex + 1) % storageProviders.size

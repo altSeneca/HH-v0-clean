@@ -160,42 +160,8 @@ fun SettingsScreen(
                 )
             }
 
-            // Glass Interface Settings
-            SettingsSection(title = "Glass Interface") {
-                // Glass Toggle
-                SettingsToggleItem(
-                    title = "Enable Glass Effects",
-                    subtitle = "Turn on glass morphism UI components for a premium visual experience",
-                    icon = Icons.Default.AutoAwesome,
-                    checked = uiSettings.glassEnabled,
-                    onCheckedChange = { enabled ->
-                        coroutineScope.launch {
-                            uiSettingsRepository.updateGlassEnabled(enabled)
-                        }
-                        onGlassToggle(enabled)
-                    }
-                )
-                
-                // Performance Tier Selection
-                AnimatedVisibility(
-                    visible = uiSettings.glassEnabled,
-                    enter = expandVertically() + fadeIn(),
-                    exit = shrinkVertically() + fadeOut()
-                ) {
-                    SettingsDropdownItem(
-                        title = "Performance Tier",
-                        subtitle = "Adjust glass effects based on device capability",
-                        icon = Icons.Default.Speed,
-                        selectedValue = uiSettings.performanceTier,
-                        options = listOf("AUTO", "HIGH", "MEDIUM", "LOW", "EMERGENCY"),
-                        onValueChange = { tier ->
-                            coroutineScope.launch {
-                                uiSettingsRepository.updatePerformanceTier(tier)
-                            }
-                        }
-                    )
-                }
-            }
+            // Glass Interface Settings - DEPRECATED AND REMOVED
+            // NOTE: Glass effects and performance tier have been removed per UNIFIED_SETTINGS_RECOMMENDATIONS.md
 
             // Startup Settings
             SettingsSection(title = "Startup Settings") {
@@ -219,29 +185,7 @@ fun SettingsScreen(
 
             // Safety & Accessibility Settings
             SettingsSection(title = "Safety & Accessibility") {
-                SettingsToggleItem(
-                    title = "Emergency Mode",
-                    subtitle = "High contrast, solid backgrounds for safety alerts",
-                    icon = Icons.Default.Warning,
-                    checked = uiSettings.emergencyMode,
-                    onCheckedChange = { enabled ->
-                        coroutineScope.launch {
-                            uiSettingsRepository.updateEmergencyMode(enabled)
-                        }
-                    }
-                )
-
-                SettingsToggleItem(
-                    title = "High Contrast Mode",
-                    subtitle = "Increased contrast for outdoor visibility",
-                    icon = Icons.Default.Contrast,
-                    checked = uiSettings.highContrastMode,
-                    onCheckedChange = { enabled ->
-                        coroutineScope.launch {
-                            uiSettingsRepository.updateHighContrastMode(enabled)
-                        }
-                    }
-                )
+                // NOTE: Emergency Mode and High Contrast Mode have been REMOVED (deprecated)
 
                 SettingsToggleItem(
                     title = "AR Safety Mode",
@@ -250,8 +194,7 @@ fun SettingsScreen(
                     checked = uiSettings.arEnabled,
                     onCheckedChange = { enabled ->
                         coroutineScope.launch {
-                            val currentSettings = uiSettingsRepository.loadSettings()
-                            val updatedSettings = currentSettings.copy(arEnabled = enabled)
+                            val updatedSettings = uiSettings.copy(arEnabled = enabled)
                             uiSettingsRepository.saveSettings(updatedSettings)
                         }
                     }
@@ -273,8 +216,7 @@ fun SettingsScreen(
                             checked = uiSettings.facialAnonymizationEnabled,
                             onCheckedChange = { enabled ->
                                 coroutineScope.launch {
-                                    val currentSettings = uiSettingsRepository.loadSettings()
-                                    val updatedSettings = currentSettings.copy(facialAnonymizationEnabled = enabled)
+                                    val updatedSettings = uiSettings.copy(facialAnonymizationEnabled = enabled)
                                     uiSettingsRepository.saveSettings(updatedSettings)
                                 }
                             }
@@ -288,8 +230,7 @@ fun SettingsScreen(
                             options = listOf("MINIMAL", "STANDARD", "MAXIMUM"),
                             onValueChange = { level ->
                                 coroutineScope.launch {
-                                    val currentSettings = uiSettingsRepository.loadSettings()
-                                    val updatedSettings = currentSettings.copy(privacyProtectionLevel = level)
+                                    val updatedSettings = uiSettings.copy(privacyProtectionLevel = level)
                                     uiSettingsRepository.saveSettings(updatedSettings)
                                 }
                             }
@@ -304,8 +245,7 @@ fun SettingsScreen(
                             onValueChange = { retention ->
                                 val days = retention.replace(" days", "").toIntOrNull() ?: 30
                                 coroutineScope.launch {
-                                    val currentSettings = uiSettingsRepository.loadSettings()
-                                    val updatedSettings = currentSettings.copy(arDataRetentionDays = days)
+                                    val updatedSettings = uiSettings.copy(arDataRetentionDays = days)
                                     uiSettingsRepository.saveSettings(updatedSettings)
                                 }
                             }
@@ -313,21 +253,9 @@ fun SettingsScreen(
                     }
                 }
             }
-            
-            // Glass Preview Section
-            AnimatedVisibility(
-                visible = uiSettings.glassEnabled,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut()
-            ) {
-                SettingsSection(title = "Glass Preview") {
-                    GlassPreviewCard(
-                        performanceTier = uiSettings.performanceTier,
-                        emergencyMode = uiSettings.emergencyMode,
-                        highContrastMode = uiSettings.highContrastMode
-                    )
-                }
-            }
+
+            // Glass Preview Section - DEPRECATED AND REMOVED
+            // NOTE: Glass preview removed per UNIFIED_SETTINGS_RECOMMENDATIONS.md
             
             // About Section
             SettingsSection(title = "About") {

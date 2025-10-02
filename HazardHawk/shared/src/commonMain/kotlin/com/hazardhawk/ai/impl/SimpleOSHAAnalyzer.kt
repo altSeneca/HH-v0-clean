@@ -3,6 +3,7 @@ package com.hazardhawk.ai.impl
 import com.hazardhawk.ai.core.OSHAPhotoAnalyzer
 import com.hazardhawk.models.*
 import com.hazardhawk.domain.entities.WorkType
+import com.hazardhawk.platform.currentTimeMillis
 import kotlinx.coroutines.delay
 
 /**
@@ -185,7 +186,7 @@ class SimpleOSHAAnalyzer : OSHAPhotoAnalyzer {
         }
 
         return OSHAAnalysisResult(
-            analysisId = "osha_analysis_${System.currentTimeMillis()}",
+            analysisId = "osha_analysis_${currentTimeMillis()}",
             overallCompliance = overallCompliance,
             safetyHazards = hazards,
             oshaViolations = violations,

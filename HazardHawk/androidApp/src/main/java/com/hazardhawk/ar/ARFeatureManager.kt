@@ -80,10 +80,11 @@ class ARFeatureManager(
 
     /**
      * Check if emergency mode is active (AR should be disabled).
+     * NOTE: Emergency mode has been deprecated and removed. Always returns false.
      */
     private suspend fun isEmergencyMode(): Boolean {
-        val settings = uiSettingsRepository.loadSettings()
-        return settings.emergencyMode
+        // Emergency mode deprecated - always return false
+        return false
     }
 
     /**

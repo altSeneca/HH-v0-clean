@@ -22,6 +22,9 @@ gradle-app.setting
 !gradle-wrapper.properties
 !gradle/wrapper/gradle-wrapper.properties
 
+# Local configuration (API keys, secrets)
+local.properties
+
 # Android Studio and IntelliJ IDEA
 .idea/
 *.iml

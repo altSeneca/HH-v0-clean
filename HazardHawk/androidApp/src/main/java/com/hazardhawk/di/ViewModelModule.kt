@@ -2,6 +2,8 @@ package com.hazardhawk.di
 
 import com.hazardhawk.gallery.GalleryViewModel
 import com.hazardhawk.ui.gallery.state.AnalysisWorkflowViewModel
+import com.hazardhawk.ui.safety.ptp.PTPListViewModel
+import com.hazardhawk.ui.safety.ptp.PTPViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
@@ -34,10 +36,28 @@ val viewModelModule = module {
         AnalysisWorkflowViewModel(
             aiService = get(),
             oshaRepository = get(),
-            analysisRepository = get()
+            analysisRepository = get(),
+            secureKeyManager = get(),
+            metadataSettings = get()
         )
     }
-    
+
+    // PTP List ViewModel for Pre-Task Plan list screen
+    viewModel<PTPListViewModel> {
+        PTPListViewModel(
+            ptpRepository = get()
+        )
+    }
+
+    // PTP ViewModel for Pre-Task Plan creation, editing, and PDF export
+    viewModel<PTPViewModel> {
+        PTPViewModel(
+            ptpRepository = get(),
+            pdfGenerator = get(),
+            fileStorageUtil = get()
+        )
+    }
+
     // Tag ViewModel for safety tag management
     // viewModel<TagViewModel> {
     //     TagViewModel(
@@ -71,7 +91,7 @@ val viewModelModule = module {
     //         preferencesManager = get()
     //     )
     // }
-    
+
     // Main ViewModel for app-level state management
     // viewModel<MainViewModel> {
     //     MainViewModel(
@@ -80,6 +100,12 @@ val viewModelModule = module {
     //         applicationScope = getApplicationScope()
     //     )
     // }
+
+    // Pre-Task Plan ViewModels (registered in PTPModule)
+    // viewModel<PTPViewModel> { PTPViewModel(get(), get(), get()) }
+    // viewModel<PTPCreationViewModel> { PTPCreationViewModel(get(), get()) }
+    // viewModel<PTPEditorViewModel> { PTPEditorViewModel(get(), get()) }
+    // viewModel<HazardCorrectionViewModel> { HazardCorrectionViewModel(get(), get()) }
 }
 
 /**

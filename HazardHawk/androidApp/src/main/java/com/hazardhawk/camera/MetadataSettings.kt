@@ -47,6 +47,7 @@ data class CameraSettings(
     val saveOriginalWithoutWatermark: Boolean = false,
     val compressionLevel: Int = 95, // JPEG compression 1-100
     val aspectRatio: String = "16:9", // Camera aspect ratio
+    val timerDelay: Int = 0, // Timer delay in seconds (0 = off, 3, 5, 10)
     val showGPSOverlay: Boolean = true, // Show GPS overlay on viewfinder
     val aiAnalysisEnabled: Boolean = false // Enable AI safety analysis for captured photos - OFF by default
 )
@@ -158,6 +159,7 @@ class MetadataSettingsManager(
         private const val KEY_SAVE_ORIGINAL_WITHOUT_WATERMARK = "save_original_without_watermark"
         private const val KEY_COMPRESSION_LEVEL = "compression_level"
         private const val KEY_ASPECT_RATIO = "camera_aspect_ratio"
+        private const val KEY_TIMER_DELAY = "camera_timer_delay"
         private const val KEY_SHOW_GPS_OVERLAY = "show_gps_overlay"
         private const val KEY_AI_ANALYSIS_ENABLED = "ai_analysis_enabled"
         
@@ -269,6 +271,7 @@ class MetadataSettingsManager(
             putBoolean(KEY_SAVE_ORIGINAL_WITHOUT_WATERMARK, settings.cameraSettings.saveOriginalWithoutWatermark)
             putInt(KEY_COMPRESSION_LEVEL, settings.cameraSettings.compressionLevel)
             putString(KEY_ASPECT_RATIO, settings.cameraSettings.aspectRatio)
+            putInt(KEY_TIMER_DELAY, settings.cameraSettings.timerDelay)
             putBoolean(KEY_SHOW_GPS_OVERLAY, settings.cameraSettings.showGPSOverlay)
             putBoolean(KEY_AI_ANALYSIS_ENABLED, settings.cameraSettings.aiAnalysisEnabled)
             
@@ -322,6 +325,7 @@ class MetadataSettingsManager(
             saveOriginalWithoutWatermark = sharedPrefs.getBoolean(KEY_SAVE_ORIGINAL_WITHOUT_WATERMARK, false),
             compressionLevel = sharedPrefs.getInt(KEY_COMPRESSION_LEVEL, 95),
             aspectRatio = sharedPrefs.getString(KEY_ASPECT_RATIO, "16:9") ?: "16:9",
+            timerDelay = sharedPrefs.getInt(KEY_TIMER_DELAY, 0),
             showGPSOverlay = sharedPrefs.getBoolean(KEY_SHOW_GPS_OVERLAY, true),
             aiAnalysisEnabled = sharedPrefs.getBoolean(KEY_AI_ANALYSIS_ENABLED, false)
         )
@@ -552,7 +556,15 @@ class MetadataSettingsManager(
         )
         updateAppSettings(updatedSettings)
     }
-    
+
+    fun updateTimerDelay(delaySeconds: Int) {
+        val currentSettings = _appSettings.value
+        val updatedSettings = currentSettings.copy(
+            cameraSettings = currentSettings.cameraSettings.copy(timerDelay = delaySeconds)
+        )
+        updateAppSettings(updatedSettings)
+    }
+
     fun updateShowGPSOverlay(show: Boolean) {
         val currentSettings = _appSettings.value
         val updatedSettings = currentSettings.copy(

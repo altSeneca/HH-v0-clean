@@ -8,6 +8,8 @@ import com.hazardhawk.data.repositories.OSHARegulationRepository
 import com.hazardhawk.domain.entities.Photo
 import com.hazardhawk.domain.entities.WorkType
 import com.hazardhawk.domain.repositories.AnalysisRepository
+import com.hazardhawk.security.SecureKeyManager
+import com.hazardhawk.camera.MetadataSettingsManager
 import com.hazardhawk.models.OSHAAnalysisResult
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -29,7 +31,9 @@ import java.io.File
 class AnalysisWorkflowViewModel(
     private val aiService: GeminiVisionAnalyzer,
     private val oshaRepository: OSHARegulationRepository,
-    private val analysisRepository: AnalysisRepository
+    private val analysisRepository: AnalysisRepository,
+    private val secureKeyManager: SecureKeyManager,
+    private val metadataSettings: MetadataSettingsManager
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SafetyAnalysisState())
@@ -43,6 +47,20 @@ class AnalysisWorkflowViewModel(
 
     private val _configuration = MutableStateFlow(AnalysisConfiguration())
     val configuration: StateFlow<AnalysisConfiguration> = _configuration.asStateFlow()
+
+    // Settings integration
+    val isAIAnalysisEnabled: StateFlow<Boolean> =
+        metadataSettings.appSettings.map { it.cameraSettings.aiAnalysisEnabled }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    val hasValidApiKey: StateFlow<Boolean> =
+        flow { emit(secureKeyManager.hasValidApiKey()) }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    val canAnalyze: StateFlow<Boolean> =
+        combine(isAIAnalysisEnabled, hasValidApiKey, _state) { enabled, hasKey, state ->
+            enabled && hasKey && !state.isAnalyzing
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     // Current photo being analyzed
     private var currentPhoto: Photo? = null
@@ -175,9 +193,33 @@ class AnalysisWorkflowViewModel(
      * Start AI analysis process
      */
     fun startAIAnalysis() {
-        if (_state.value.canProceedToAIAnalysis) {
+        if (canAnalyze.value) {
             dispatch(SafetyAnalysisAction.StartAIAnalysis)
+        } else {
+            Log.w("AnalysisWorkflowViewModel", "Cannot start AI analysis: ${getDisabledReason()}")
         }
+    }
+
+    /**
+     * Get user-friendly reason why analysis is disabled
+     */
+    fun getDisabledReason(): String? {
+        return when {
+            !isAIAnalysisEnabled.value ->
+                "AI Analysis is disabled in camera settings"
+            !hasValidApiKey.value ->
+                "Gemini API key not configured in secure storage"
+            _state.value.isAnalyzing ->
+                "Analysis already in progress"
+            else -> null
+        }
+    }
+
+    /**
+     * Check if analysis setup is complete
+     */
+    fun isAnalysisSetupComplete(): Boolean {
+        return isAIAnalysisEnabled.value && hasValidApiKey.value
     }
 
     /**
@@ -313,6 +355,12 @@ class AnalysisWorkflowViewModel(
         )
         
         try {
+            // Verify API key availability before starting
+            if (!secureKeyManager.hasValidApiKey()) {
+                dispatch(SafetyAnalysisAction.SetAIError("Gemini API key not configured"))
+                return
+            }
+
             updateAnalysisSession { session ->
                 session.copy(
                     aiAnalysisData = session.aiAnalysisData.copy(
@@ -320,7 +368,7 @@ class AnalysisWorkflowViewModel(
                     )
                 )
             }
-            
+
             aiService.initialize()
             
             updateAnalysisProgress(

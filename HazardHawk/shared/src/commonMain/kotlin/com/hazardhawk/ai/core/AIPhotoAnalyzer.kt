@@ -1,6 +1,7 @@
 package com.hazardhawk.ai.core
 
 import com.hazardhawk.domain.entities.WorkType
+import com.hazardhawk.platform.currentTimeMillis
 
 /**
  * Interface for AI photo analysis services in HazardHawk.
@@ -42,7 +43,7 @@ data class SafetyAnalysis(
     val complianceScore: Float = 0.0f,
     val confidence: Float = 0.0f,
     val recommendations: List<String> = emptyList(),
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = currentTimeMillis()
 )
 
 /**

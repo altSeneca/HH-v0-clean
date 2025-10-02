@@ -86,11 +86,12 @@ class ModelDownloadManager(
     
     /**
      * Download specific model
+     * Note: Uses Dispatchers.Default for commonMain compatibility
      */
     suspend fun downloadModel(
         model: ModelInfo,
         onProgress: (DownloadProgress) -> Unit = {}
-    ): Result<String> = withContext(Dispatchers.IO) {
+    ): Result<String> = withContext(Dispatchers.Default) {
         try {
             onProgress(DownloadProgress.Starting)
             

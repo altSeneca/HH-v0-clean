@@ -67,6 +67,8 @@ import com.hazardhawk.performance.PhotoViewerPerformanceTracker
 import com.hazardhawk.performance.ConstructionPhotoMemoryManager
 import com.hazardhawk.performance.PerformanceTracker
 import com.hazardhawk.performance.TouchPerformanceWrapper
+import com.hazardhawk.ui.gallery.components.SafetyAnalysisPanel
+import com.hazardhawk.ui.gallery.components.HazardOverlay
 
 /**
  * Construction-Grade Photo Viewer
@@ -160,6 +162,11 @@ fun PhotoViewerScreen(
     var currentIndex by remember { mutableIntStateOf(initialPhotoIndex.coerceIn(0, photos.size - 1)) }
     val hapticFeedback = LocalHapticFeedback.current
 
+    // Lift AI analysis state to this level so it persists across navigation and is accessible to the photo viewer
+    val currentPhoto = photos.getOrNull(currentIndex)
+    var aiAnalysisResult by remember(currentPhoto?.id) { mutableStateOf<PhotoAnalysisWithTags?>(null) }
+    var showBoundingBoxes by remember(currentPhoto?.id) { mutableStateOf(false) }
+
     // UI visibility state for immersive photo viewing
     var isUiVisible by remember { mutableStateOf(true) }
     var lastInteractionTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
@@ -193,8 +200,6 @@ fun PhotoViewerScreen(
             }
         }
     }
-
-    val currentPhoto = photos.getOrNull(currentIndex)
 
     // Stable navigation state for optimized recomposition
     val navigationState = remember(currentIndex, photos.size) {
@@ -252,6 +257,10 @@ fun PhotoViewerScreen(
                 PhotoInfoSection(
                     photo = currentPhoto,
                     navigationState = navigationState,
+                    aiAnalysisResult = aiAnalysisResult,
+                    showBoundingBoxes = showBoundingBoxes,
+                    onAIAnalysisResult = { result -> aiAnalysisResult = result },
+                    onShowBoundingBoxesChanged = { show -> showBoundingBoxes = show },
                     onTagsUpdated = onTagsUpdated,
                     performanceTracker = performanceTracker,
                     modifier = Modifier
@@ -268,9 +277,10 @@ fun PhotoViewerScreen(
                     .fillMaxSize()
                     .background(ConstructionBlack)
             ) {
-            // Photo viewer with tap-to-toggle UI
+            // Photo viewer with tap-to-toggle UI and hazard overlay
             ConstructionPhotoViewer(
                 photo = currentPhoto,
+                hazardDetections = if (showBoundingBoxes) aiAnalysisResult?.hazardDetections ?: emptyList() else emptyList(),
                 onPhotoTap = {
                     isUiVisible = !isUiVisible
                     lastInteractionTime = System.currentTimeMillis()
@@ -320,6 +330,7 @@ fun PhotoViewerScreen(
 @Composable
 private fun ConstructionPhotoViewer(
     photo: Photo,
+    hazardDetections: List<ConstructionHazardDetection> = emptyList(),
     onPhotoTap: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -327,32 +338,47 @@ private fun ConstructionPhotoViewer(
     val imageLoader: ImageLoader = koinInject()
     val memoryManager: ConstructionPhotoMemoryManager = koinInject()
 
-    // Performance-optimized image loading for construction photography with tap support
-    AsyncImage(
-        model = ImageRequest.Builder(context)
-            .data(photo.filePath)
-            .size(Size.ORIGINAL) // Load full resolution for construction documentation
-            .memoryCacheKey("construction_photo_${photo.id}") // Stable cache key
-            .diskCacheKey("construction_photo_${photo.id}")
-            .build(),
-        imageLoader = imageLoader,
-        contentDescription = "Construction Photo: ${photo.fileName}",
-        modifier = modifier
-            .fillMaxSize()
-            .clickable(
-                indication = null,
-                interactionSource = remember { MutableInteractionSource() }
-            ) {
-                onPhotoTap()
+    // Performance-optimized image loading for construction photography with hazard overlay
+    Box(modifier = modifier.fillMaxSize()) {
+        // Photo image
+        AsyncImage(
+            model = ImageRequest.Builder(context)
+                .data(photo.filePath)
+                .size(Size.ORIGINAL) // Load full resolution for construction documentation
+                .memoryCacheKey("construction_photo_${photo.id}") // Stable cache key
+                .diskCacheKey("construction_photo_${photo.id}")
+                .build(),
+            imageLoader = imageLoader,
+            contentDescription = "Construction Photo: ${photo.fileName}",
+            modifier = Modifier
+                .fillMaxSize()
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() }
+                ) {
+                    onPhotoTap()
+                },
+            contentScale = ContentScale.Fit,
+            onSuccess = {
+                Log.d("ConstructionPhotoViewer", "Successfully loaded photo: ${photo.fileName}")
             },
-        contentScale = ContentScale.Fit,
-        onSuccess = {
-            Log.d("ConstructionPhotoViewer", "Successfully loaded photo: ${photo.fileName}")
-        },
-        onError = { error ->
-            Log.e("ConstructionPhotoViewer", "Failed to load photo: ${photo.fileName}, error: $error")
+            onError = { error ->
+                Log.e("ConstructionPhotoViewer", "Failed to load photo: ${photo.fileName}, error: $error")
+            }
+        )
+
+        // Hazard detection overlay
+        if (hazardDetections.isNotEmpty()) {
+            HazardOverlay(
+                hazards = hazardDetections,
+                onHazardTap = { hazard ->
+                    Log.d("ConstructionPhotoViewer", "Hazard tapped: ${hazard.hazardType.name} with confidence ${hazard.boundingBox.confidence}")
+                    // Optional: Show hazard details dialog or navigation
+                },
+                modifier = Modifier.fillMaxSize()
+            )
         }
-    )
+    }
 
     // Track memory usage after image load
     LaunchedEffect(photo.id) {
@@ -481,12 +507,16 @@ private fun TopControlsBar(
 private fun PhotoInfoSection(
     photo: Photo,
     navigationState: PhotoNavigationState,
+    aiAnalysisResult: PhotoAnalysisWithTags?,
+    showBoundingBoxes: Boolean,
+    onAIAnalysisResult: (PhotoAnalysisWithTags?) -> Unit,
+    onShowBoundingBoxesChanged: (Boolean) -> Unit,
     onTagsUpdated: (String, List<String>) -> Unit,
     performanceTracker: PhotoViewerPerformanceTracker,
     modifier: Modifier = Modifier
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Info", "Tags", "AI Analysis", "OSHA")
+    val tabs = listOf("Analysis", "Info")
 
     // Stable tab switching with performance tracking
     val tabSwitchHandler = remember {
@@ -497,8 +527,6 @@ private fun PhotoInfoSection(
         }
     }
 
-    // Lift AI analysis state to this level so it persists across tab navigation
-    var aiAnalysisResult by remember(photo.id) { mutableStateOf<PhotoAnalysisWithTags?>(null) }
 
     Surface(
         modifier = modifier,
@@ -516,7 +544,7 @@ private fun PhotoInfoSection(
                     Tab(
                         selected = selectedTab == index,
                         onClick = { tabSwitchHandler(index) },
-                        modifier = Modifier.height(48.dp)
+                        modifier = Modifier.height(56.dp) // Construction-grade height
                     ) {
                         Text(
                             text = title,
@@ -527,32 +555,40 @@ private fun PhotoInfoSection(
                 }
             }
 
-            // Tab content with fixed height to prevent bottom sheet movement
+            // Tab content with adaptive height
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(360.dp) // Fixed content height for consistent positioning
+                    .heightIn(min = 360.dp, max = 600.dp) // Adaptive height
                     .padding(16.dp)
             ) {
                 when (selectedTab) {
-                    0 -> PhotoMetadataPanel(
+                    0 -> SafetyAnalysisPanel(
                         photo = photo,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                    1 -> PhotoTagsPanel(
-                        photo = photo,
-                        onTagsUpdated = onTagsUpdated,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                    2 -> AIAnalysisPanel(
-                        photo = photo,
-                        analysisResult = aiAnalysisResult,
-                        onAnalysisResult = { result -> aiAnalysisResult = result },
+                        analysisState = com.hazardhawk.ui.gallery.state.SafetyAnalysisState(
+                            aiAnalysis = aiAnalysisResult,
+                            showBoundingBoxes = showBoundingBoxes
+                        ),
+                        oshaAnalysis = null, // TODO: Get from ViewModel
+                        isAnalyzingOSHA = false, // TODO: Get from ViewModel
+                        onAction = { action ->
+                            when (action) {
+                                is com.hazardhawk.ui.gallery.state.SafetyAnalysisAction.SetBoundingBoxesVisible -> {
+                                    onShowBoundingBoxesChanged(action.visible)
+                                }
+                                is com.hazardhawk.ui.gallery.state.SafetyAnalysisAction.StartAIAnalysis -> {
+                                    // TODO: Trigger AI analysis and update aiAnalysisResult via onAIAnalysisResult
+                                }
+                                else -> {
+                                    // Handle other actions as needed
+                                }
+                            }
+                        },
                         onTagsUpdated = onTagsUpdated,
                         performanceTracker = performanceTracker,
                         modifier = Modifier.fillMaxSize()
                     )
-                    3 -> OSHACodesPanel(
+                    1 -> PhotoMetadataPanel(
                         photo = photo,
                         modifier = Modifier.fillMaxSize()
                     )

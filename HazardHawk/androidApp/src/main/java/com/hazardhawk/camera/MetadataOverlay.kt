@@ -138,14 +138,12 @@ fun MetadataOverlay(
                             value = "${String.format("%.6f", metadata.locationData.latitude)}, ${String.format("%.6f", metadata.locationData.longitude)}",
                             maxLines = 1
                         )
-                    } else {
-                        // User prefers human-readable address
+                    } else if (metadata.locationData.address.isNotBlank()) {
+                        // User prefers human-readable address (only show if address is available)
                         MetadataItem(
                             icon = "📍",
                             label = "Location",
-                            value = metadata.locationData.address.ifBlank {
-                                "${String.format("%.6f", metadata.locationData.latitude)}, ${String.format("%.6f", metadata.locationData.longitude)}"
-                            },
+                            value = metadata.locationData.address,
                             maxLines = 2
                         )
                     }

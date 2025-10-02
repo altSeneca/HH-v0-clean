@@ -5,6 +5,7 @@ import com.hazardhawk.ui.components.AspectRatios
 import com.hazardhawk.ui.components.ZoomLevels
 import com.hazardhawk.data.models.CameraSettings
 import com.hazardhawk.data.repositories.CameraSettingsRepository
+import com.hazardhawk.platform.currentTimeMillis
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -116,7 +117,7 @@ class CameraStateManager(
             _aspectRatioChangeEvents.value = AspectRatioChangeEvent(
                 ratio = item.value as? Float ?: 0f,
                 ratioItem = item,
-                timestamp = System.currentTimeMillis()
+                timestamp = currentTimeMillis()
             )
         }
     }
@@ -154,7 +155,7 @@ class CameraStateManager(
             zoom = clampedZoom,
             isLive = isLive,
             snapItem = snapToItem,
-            timestamp = System.currentTimeMillis()
+            timestamp = currentTimeMillis()
         )
     }
     
