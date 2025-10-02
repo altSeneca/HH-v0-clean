@@ -33,6 +33,8 @@ import com.hazardhawk.ui.gallery.PhotoGallery
 // import com.hazardhawk.ui.camera.ElegantCameraScreen  // Disabled - has dependency issues
 // Import new Safety HUD Camera interface
 import com.hazardhawk.ui.camera.hud.SafetyHUDCameraScreen
+// Import ClearCamera interface (minimalist design)
+import com.hazardhawk.ui.camera.clear.ClearCameraScreen
 // Import AR Camera functionality
 import com.hazardhawk.ui.camera.ARCameraPreview
 import com.hazardhawk.ui.settings.SettingsScreen
@@ -126,16 +128,19 @@ fun HazardHawkNavigation(
     val currentProject by metadataSettingsManager.currentProject.collectAsStateWithLifecycle()
 
     // Calculate dynamic start destination
+    // ClearCamera is now the default camera interface (minimalist design)
+    // Users can switch to SafetyHUD camera via Settings if they prefer the HUD interface
     val startDestination = remember(appSettings, userProfile, currentProject) {
         val hasData = userProfile.company.isNotBlank() && currentProject.projectName.isNotBlank()
         val showOnLaunch = appSettings.startup.showCompanyProjectOnLaunch
         val firstToday = appStateManager.isFirstLaunchToday()
 
+        // ClearCamera is the default - provides minimalist, distraction-free capture
         when {
             !hasData -> "company_project_entry"  // First time setup
-            !showOnLaunch -> "camera"            // Setting disabled
+            !showOnLaunch -> "clear_camera"      // Setting disabled - use ClearCamera (default)
             firstToday -> "company_project_entry" // First launch today
-            else -> "camera"                     // Subsequent launches
+            else -> "clear_camera"               // Subsequent launches - ClearCamera default
         }.also {
             Log.d("HazardHawk", "Navigation decision: hasData=$hasData, showOnLaunch=$showOnLaunch, firstToday=$firstToday -> $it")
         }
@@ -174,10 +179,27 @@ fun HazardHawkNavigation(
             }
         }
         
-        // Safety HUD Camera interface - New professional camera UI
+        // Main camera route - uses ClearCamera (minimalist design)
         composable("camera") {
-            Log.d("HazardHawk", "Showing Safety HUD camera screen")
-            SafetyHUDCameraScreen(
+            Log.d("HazardHawk", "Showing Clear camera screen (minimalist design)")
+            ClearCameraScreen(
+                onNavigateToGallery = {
+                    navController.navigate("gallery")
+                },
+                onNavigateToSettings = {
+                    navController.navigate("settings")
+                },
+                onNavigateToAR = {
+                    navController.navigate("ar_camera")
+                },
+                onSetVolumeCaptureCallback = onSetVolumeCaptureCallback
+            )
+        }
+
+        // ClearCamera interface - Minimalist design (Jony Ive-inspired)
+        composable("clear_camera") {
+            Log.d("HazardHawk", "Showing Clear camera screen (minimalist design)")
+            ClearCameraScreen(
                 onNavigateToGallery = {
                     navController.navigate("gallery")
                 },
@@ -219,25 +241,26 @@ fun HazardHawkNavigation(
                 photoRepository = photoRepository,
                 reportGenerationManager = reportGenerationManager,
                 onNavigateToCamera = {
-                    navController.navigate("camera")
+                    // Navigate to ClearCamera (now the default)
+                    navController.navigate("clear_camera")
                 },
                 onBack = {
-                    // Navigate back to camera instead of home
-                    navController.navigate("camera") {
-                        popUpTo("camera") { inclusive = false }
+                    // Navigate back to ClearCamera instead of SafetyHUD
+                    navController.navigate("clear_camera") {
+                        popUpTo("clear_camera") { inclusive = false }
                     }
                 }
             )
         }
         
         
-        // Settings Screen
+        // Settings Screen - Unified Settings (No Glass Effects, Emergency Mode, or High Contrast)
         composable("settings") {
-            SettingsScreen(
+            com.hazardhawk.ui.settings.UnifiedSettingsScreen(
                 onNavigateBack = {
-                    // Navigate back to camera instead of home
-                    navController.navigate("camera") {
-                        popUpTo("camera") { inclusive = false }
+                    // Navigate back to Clear Camera (default camera screen)
+                    navController.navigate("clear_camera") {
+                        popUpTo("clear_camera") { inclusive = false }
                     }
                 }
             )
