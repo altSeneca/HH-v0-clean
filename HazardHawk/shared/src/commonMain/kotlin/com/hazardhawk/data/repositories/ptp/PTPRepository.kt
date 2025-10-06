@@ -10,6 +10,9 @@ import kotlinx.serialization.json.Json
  * Repository for Pre-Task Plan data operations
  */
 interface PTPRepository {
+    // AI Generation
+    suspend fun generatePtpWithAI(request: PtpAIRequest): Result<PtpAIResponse>
+
     // PTP CRUD operations
     suspend fun createPtp(ptp: PreTaskPlan): Result<String>
     suspend fun getPtpById(id: String): Result<PreTaskPlan?>
@@ -56,11 +59,16 @@ interface PTPRepository {
  * operations are needed.
  */
 class SQLDelightPTPRepository(
+    private val ptpAIService: com.hazardhawk.domain.services.ptp.PTPAIService,
     private val json: Json = Json {
         prettyPrint = false
         ignoreUnknownKeys = true
     }
 ) : PTPRepository {
+
+    override suspend fun generatePtpWithAI(request: PtpAIRequest): Result<PtpAIResponse> {
+        return ptpAIService.generatePtp(request)
+    }
 
     override suspend fun createPtp(ptp: PreTaskPlan): Result<String> {
         return try {

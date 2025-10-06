@@ -56,7 +56,7 @@ class GeminiPTPAIService(
 
     companion object {
         private const val GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta"
-        private const val MODEL_NAME = "gemini-1.5-pro-latest"
+        private const val MODEL_NAME = "gemini-2.5-flash" // Using Gemini 2.5 Flash for faster, cost-effective generation
         private const val REQUEST_TIMEOUT_SECONDS = 60
 
         // OSHA code regex pattern: 1926.XXX or 1926.XXX(x)(x)

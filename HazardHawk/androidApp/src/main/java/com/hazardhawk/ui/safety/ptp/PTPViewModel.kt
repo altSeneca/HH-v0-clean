@@ -157,41 +157,81 @@ class PTPViewModel(
             _uiState.update { it.copy(isLoading = true) }
 
             try {
-                // Create new PTP
-                val ptp = PreTaskPlan(
-                    id = "ptp_${System.currentTimeMillis()}",
-                    projectId = null, // TODO: Get from context
-                    createdBy = "current_user", // TODO: Get from auth
-                    createdAt = System.currentTimeMillis(),
-                    updatedAt = System.currentTimeMillis(),
+                val ptpId = "ptp_${System.currentTimeMillis()}"
+
+                // Build AI request from questionnaire
+                val questionnaire = PtpQuestionnaire(
                     workType = state.workType,
-                    workScope = state.taskDescription,
-                    crewSize = state.crewSize,
-                    status = PtpStatus.DRAFT,
-                    aiGeneratedContent = null, // Will be generated
-                    userModifiedContent = null,
+                    specificTasks = listOf(state.taskDescription), // Convert description to task list
                     toolsEquipment = state.toolsEquipment.split(",").map { it.trim() },
-                    emergencyContacts = emptyList(), // TODO: Add from questionnaire
-                    nearestHospital = null,
-                    evacuationRoutes = null,
-                    pdfPath = null,
-                    cloudStorageUrl = null,
-                    signatureSupervisor = null
+                    mechanicalEquipment = state.mechanicalEquipment,
+                    environmentalConditions = state.environmentalConditions,
+                    materialsInvolved = state.materialsInvolved,
+                    crewSize = state.crewSize ?: 1,
+                    workingAtHeight = state.workingAtHeight,
+                    maximumHeight = state.maximumHeight?.toDouble(),
+                    fallProtection = emptyList(), // TODO: Add from questionnaire if available
+                    nearPowerLines = state.nearPowerLines,
+                    confinedSpace = state.confinedSpace,
+                    hazardousMaterials = state.hazardousMaterials,
+                    additionalNotes = state.additionalNotes
                 )
 
-                // Save to repository
-                ptpRepository.createPtp(ptp)
-                    .onSuccess { ptpId ->
-                        _generationState.value = GenerationState.Success(ptpId)
-                        _uiState.update { it.copy(isLoading = false) }
-                        onSuccess(ptpId)
+                val aiRequest = PtpAIRequest(
+                    questionnaire = questionnaire,
+                    photoAnalysisResults = emptyList(), // TODO: Add photo analysis if available
+                    projectHistory = emptyList(), // TODO: Add project history if available
+                    includeSpanish = false
+                )
+
+                // Call AI service to generate PTP content
+                val aiResult = ptpRepository.generatePtpWithAI(aiRequest)
+
+                aiResult
+                    .onSuccess { aiResponse ->
+                        // Create PTP with AI-generated content
+                        val ptp = PreTaskPlan(
+                            id = ptpId,
+                            projectId = null, // TODO: Get from context
+                            createdBy = "current_user", // TODO: Get from auth
+                            createdAt = System.currentTimeMillis(),
+                            updatedAt = System.currentTimeMillis(),
+                            workType = state.workType,
+                            workScope = state.taskDescription,
+                            crewSize = state.crewSize,
+                            status = PtpStatus.DRAFT,
+                            aiGeneratedContent = aiResponse.content,
+                            userModifiedContent = null,
+                            toolsEquipment = state.toolsEquipment.split(",").map { it.trim() },
+                            emergencyContacts = emptyList(), // TODO: Add from questionnaire
+                            nearestHospital = null,
+                            evacuationRoutes = null,
+                            pdfPath = null,
+                            cloudStorageUrl = null,
+                            signatureSupervisor = null
+                        )
+
+                        // Save to repository
+                        ptpRepository.createPtp(ptp)
+                            .onSuccess {
+                                _generationState.value = GenerationState.Success(ptpId)
+                                _uiState.update { it.copy(isLoading = false) }
+                                onSuccess(ptpId)
+                            }
+                            .onFailure { error ->
+                                _generationState.value = GenerationState.Error(
+                                    error.message ?: "Failed to save PTP"
+                                )
+                                _uiState.update { it.copy(isLoading = false, error = error.message) }
+                                onError(error.message ?: "Failed to save PTP")
+                            }
                     }
                     .onFailure { error ->
                         _generationState.value = GenerationState.Error(
-                            error.message ?: "Failed to save PTP"
+                            error.message ?: "AI generation failed"
                         )
                         _uiState.update { it.copy(isLoading = false, error = error.message) }
-                        onError(error.message ?: "Failed to save PTP")
+                        onError(error.message ?: "AI generation failed")
                     }
             } catch (e: Exception) {
                 val errorMsg = e.message ?: "Unknown error occurred"

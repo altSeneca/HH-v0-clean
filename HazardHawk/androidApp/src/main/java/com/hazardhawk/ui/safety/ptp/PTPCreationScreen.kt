@@ -43,7 +43,7 @@ fun PTPCreationScreen(
         listOf(
             "Roofing", "Electrical", "Plumbing", "Excavation",
             "Concrete", "Framing", "HVAC", "Demolition",
-            "Scaffolding", "Other"
+            "Scaffolding", "Ironworking", "Other"
         )
     }
 
