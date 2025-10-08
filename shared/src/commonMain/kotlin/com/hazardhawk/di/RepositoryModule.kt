@@ -56,7 +56,7 @@ val repositoryModule = module {
     //         database = get()
     //     )
     // }
-    
+
     // Report Repository - manages safety reports and document generation
     // TODO: Create ReportRepository interface and implementation
     // single<ReportRepository> {
@@ -65,6 +65,53 @@ val repositoryModule = module {
     //         pdfGenerator = get()
     //     )
     // }
+
+    // ===== Crew Management Repositories =====
+
+    // Worker Repository - manages worker profiles, roles, and assignments
+    single<com.hazardhawk.domain.repositories.WorkerRepository> {
+        com.hazardhawk.data.repositories.crew.WorkerRepositoryImpl()
+    }
+
+    // Crew Repository - manages crew creation, member assignments, and rosters
+    single<com.hazardhawk.domain.repositories.CrewRepository> {
+        com.hazardhawk.data.repositories.crew.CrewRepositoryImpl(
+            workerRepository = get()
+        )
+    }
+
+    // Certification Repository - manages certifications, verification, and expiration tracking
+    single<com.hazardhawk.domain.repositories.CertificationRepository> {
+        com.hazardhawk.data.repositories.crew.CertificationRepositoryImpl()
+    }
+
+    // Company Repository - centralized source of truth for company information
+    single<com.hazardhawk.domain.repositories.CompanyRepository> {
+        com.hazardhawk.data.repositories.crew.CompanyRepositoryImpl()
+    }
+
+    // Project Repository (Crew) - centralized source of truth for project information
+    // Note: This shadows the existing ProjectRepository for now
+    // TODO: Consolidate with existing ProjectRepository
+    single<com.hazardhawk.domain.repositories.ProjectRepository>(qualifier = org.koin.core.qualifier.named("crew")) {
+        com.hazardhawk.data.repositories.crew.ProjectRepositoryImpl(
+            companyRepository = get(),
+            workerRepository = get()
+        )
+    }
+
+    // Dashboard Repositories - Phase 1 Home Dashboard Redesign
+    single {
+        com.hazardhawk.data.repositories.dashboard.ActivityRepositoryImpl()
+    }
+
+    single {
+        com.hazardhawk.data.repositories.dashboard.UserProfileRepositoryImpl()
+    }
+
+    single {
+        com.hazardhawk.data.repositories.dashboard.WeatherRepositoryImpl()
+    }
 }
 
 /**

@@ -40,13 +40,15 @@ interface PTPPDFGenerator {
 
 /**
  * Metadata for customizing the PDF document appearance and branding.
+ * NOTE: Most fields are now auto-populated from PreTaskPlan model. This class is being
+ * phased out in favor of using the centralized data directly from the PTP model.
  *
- * @property companyName Name of the company generating the document
- * @property companyLogo Optional company logo as raw image bytes (PNG/JPEG)
- * @property projectName Name of the project this PTP belongs to
- * @property projectLocation Physical location of the project
- * @property taskDescription Brief description of the task (shown in footer)
- * @property competentPerson Name of the competent person overseeing the work
+ * @property companyName Name of the company generating the document (deprecated - use PTP.companyName)
+ * @property companyLogo Optional company logo as raw image bytes (PNG/JPEG) (deprecated - use PTP.companyLogoUrl)
+ * @property projectName Name of the project this PTP belongs to (deprecated - use PTP.projectName)
+ * @property projectLocation Physical location of the project (deprecated - use PTP.projectAddress)
+ * @property taskDescription Brief description of the task (deprecated - use PTP.workScope)
+ * @property competentPerson Name of the competent person overseeing the work (deprecated - use PTP.foremanName)
  * @property generatedBy Application name that generated the PDF (default: "HazardHawk")
  * @property generatedAt Timestamp when the PDF was generated (epoch milliseconds)
  */

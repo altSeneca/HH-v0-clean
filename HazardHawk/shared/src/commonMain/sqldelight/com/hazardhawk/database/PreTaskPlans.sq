@@ -33,7 +33,31 @@ CREATE TABLE pre_task_plans (
     -- Emergency information
     emergency_contacts TEXT, -- JSON array
     nearest_hospital TEXT,
-    evacuation_routes TEXT
+    evacuation_routes TEXT,
+
+    -- Crew Management Integration (auto-populated from centralized sources)
+    crew_id TEXT, -- ID of assigned crew
+    crew_name TEXT, -- Name of assigned crew
+    foreman_id TEXT, -- Selected foreman (may differ from crew default)
+    foreman_name TEXT, -- Name of selected foreman
+
+    -- Company info (auto-populated, no re-entry needed)
+    company_id TEXT,
+    company_name TEXT,
+    company_address TEXT,
+    company_phone TEXT,
+    company_logo_url TEXT,
+
+    -- Project info (auto-populated, no re-entry needed)
+    project_name TEXT,
+    project_number TEXT,
+    project_address TEXT,
+    client_name TEXT,
+    general_contractor TEXT,
+    superintendent_name TEXT,
+
+    -- Crew roster sign-in sheet (JSON array of CrewRosterEntry)
+    crew_roster TEXT
 
     -- Note: project_id is a string field for future project management feature
     -- No foreign key constraint since projects table doesn't exist yet
@@ -114,8 +138,11 @@ INSERT INTO pre_task_plans (
     cloud_storage_url, signature_supervisor_blob, signature_supervisor_name,
     signature_date, tools_equipment, mechanical_equipment, environmental_conditions,
     materials_involved, specific_tasks, emergency_contacts, nearest_hospital,
-    evacuation_routes
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+    evacuation_routes, crew_id, crew_name, foreman_id, foreman_name,
+    company_id, company_name, company_address, company_phone, company_logo_url,
+    project_name, project_number, project_address, client_name, general_contractor,
+    superintendent_name, crew_roster
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 -- Get PTP by ID
 selectPreTaskPlanById:

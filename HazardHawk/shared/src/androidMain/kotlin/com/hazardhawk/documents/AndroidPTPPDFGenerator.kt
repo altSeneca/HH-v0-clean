@@ -69,14 +69,16 @@ class AndroidPTPPDFGenerator : PTPPDFGenerator {
             var canvas = page.canvas
             var currentY = PDFLayoutConfig.MARGIN_TOP
 
-            // Compact header
-            currentY = drawHeaderCompact(canvas, metadata, currentY)
+            // Compact header (use PTP data if available, fallback to metadata)
+            currentY = drawHeaderCompactWithPTP(canvas, ptp, metadata, currentY)
             currentY += 10f
 
-            // Compact project info (single line)
+            // Compact project info (single line) - use centralized data
             val projectInfoPaint = createTextPaint(PDFLayoutConfig.FONT_SIZE_BODY, PDFLayoutConfig.COLOR_DARK_GRAY, false)
+            val location = ptp.projectAddress ?: metadata.projectLocation
+            val crewInfo = if (ptp.crewName != null) "Crew: ${ptp.crewName} (${ptp.crewSize ?: "TBD"})" else "Crew: ${ptp.crewSize ?: "TBD"}"
             canvas.drawText(
-                "Work: ${ptp.workType} | Crew: ${ptp.crewSize ?: "TBD"} | ${metadata.projectLocation}",
+                "Work: ${ptp.workType} | $crewInfo | $location",
                 PDFLayoutConfig.MARGIN_LEFT,
                 currentY + PDFLayoutConfig.FONT_SIZE_BODY,
                 projectInfoPaint
@@ -226,6 +228,36 @@ class AndroidPTPPDFGenerator : PTPPDFGenerator {
 
             drawFooterCompact(canvas, PDFLayoutConfig.PAGE_HEIGHT - 30f, metadata.projectName, 3)
             document.finishPage(page)
+
+            // PAGE 4 (Optional): Crew Roster Sign-In Sheet
+            // Only add this page if crew roster data is available
+            if (ptp.crewRoster.isNotEmpty()) {
+                pageInfo = PdfDocument.PageInfo.Builder(PDFLayoutConfig.PAGE_WIDTH.toInt(), PDFLayoutConfig.PAGE_HEIGHT.toInt(), 4).create()
+                page = document.startPage(pageInfo)
+                canvas = page.canvas
+                currentY = PDFLayoutConfig.MARGIN_TOP
+
+                // Draw crew roster sign-in sheet
+                val rosterResult = drawCrewRosterSignIn(
+                    canvas,
+                    ptp.crewRoster,
+                    currentY,
+                    PDFLayoutConfig.PAGE_HEIGHT - PDFLayoutConfig.MARGIN_BOTTOM
+                )
+
+                // Note about crew roster
+                currentY = rosterResult.endY + 15f
+                val notePaint = createTextPaint(PDFLayoutConfig.FONT_SIZE_SMALL, PDFLayoutConfig.COLOR_DARK_GRAY, false)
+                canvas.drawText(
+                    "Note: Crew roster auto-populated from crew assignment. All members must sign daily.",
+                    PDFLayoutConfig.MARGIN_LEFT,
+                    currentY + PDFLayoutConfig.FONT_SIZE_SMALL,
+                    notePaint
+                )
+
+                drawFooterCompact(canvas, PDFLayoutConfig.PAGE_HEIGHT - 30f, metadata.projectName, 4)
+                document.finishPage(page)
+            }
 
             // Convert to ByteArray
             val outputStream = ByteArrayOutputStream()
@@ -477,6 +509,142 @@ class AndroidPTPPDFGenerator : PTPPDFGenerator {
     }
 
     /**
+     * Draw crew roster sign-in sheet with certifications.
+     * Auto-populated from crew management system - no duplicate data entry.
+     */
+    private fun drawCrewRosterSignIn(
+        canvas: Canvas,
+        crewRoster: List<com.hazardhawk.domain.models.ptp.CrewRosterEntry>,
+        y: Float,
+        maxY: Float
+    ): DrawResultGeneric {
+        var currentY = y
+        val overflowEntries = mutableListOf<com.hazardhawk.domain.models.ptp.CrewRosterEntry>()
+
+        // Section header
+        val sectionPaint = createTextPaint(PDFLayoutConfig.FONT_SIZE_HEADING, PDFLayoutConfig.COLOR_PRIMARY, true)
+        canvas.drawText(
+            "CREW ROSTER & SIGN-IN",
+            PDFLayoutConfig.MARGIN_LEFT,
+            currentY + PDFLayoutConfig.FONT_SIZE_HEADING,
+            sectionPaint
+        )
+        currentY += PDFLayoutConfig.LINE_SPACING_HEADING + 10f
+
+        // Table column widths
+        val colEmpNum = 60f
+        val colName = 140f
+        val colRole = 100f
+        val colCerts = 120f
+        val colSignature = 140f
+        val tableWidth = colEmpNum + colName + colRole + colCerts + colSignature
+
+        // Draw table header
+        val headerBgPaint = Paint().apply {
+            color = PDFLayoutConfig.COLOR_LIGHT_GRAY
+            style = Paint.Style.FILL
+        }
+        canvas.drawRect(
+            PDFLayoutConfig.MARGIN_LEFT,
+            currentY,
+            PDFLayoutConfig.MARGIN_LEFT + tableWidth,
+            currentY + 20f,
+            headerBgPaint
+        )
+
+        val headerTextPaint = createTextPaint(PDFLayoutConfig.FONT_SIZE_SMALL, PDFLayoutConfig.COLOR_BLACK, true)
+        canvas.drawText("Emp #", PDFLayoutConfig.MARGIN_LEFT + 5f, currentY + 15f, headerTextPaint)
+        canvas.drawText("Name", PDFLayoutConfig.MARGIN_LEFT + colEmpNum + 5f, currentY + 15f, headerTextPaint)
+        canvas.drawText("Role", PDFLayoutConfig.MARGIN_LEFT + colEmpNum + colName + 5f, currentY + 15f, headerTextPaint)
+        canvas.drawText("Certifications", PDFLayoutConfig.MARGIN_LEFT + colEmpNum + colName + colRole + 5f, currentY + 15f, headerTextPaint)
+        canvas.drawText("Signature", PDFLayoutConfig.MARGIN_LEFT + colEmpNum + colName + colRole + colCerts + 5f, currentY + 15f, headerTextPaint)
+
+        currentY += 22f
+
+        // Draw table rows
+        crewRoster.forEachIndexed { index, entry ->
+            // Check if entry fits on page
+            val estimatedHeight = 30f
+            if (currentY + estimatedHeight > maxY) {
+                overflowEntries.addAll(crewRoster.drop(index))
+                return DrawResultGeneric(currentY, index, overflowEntries)
+            }
+
+            val rowStartY = currentY
+            val rowHeight = 30f
+
+            val cellPaint = createTextPaint(PDFLayoutConfig.FONT_SIZE_SMALL, PDFLayoutConfig.COLOR_BLACK, false)
+            val borderPaint = Paint().apply {
+                color = PDFLayoutConfig.COLOR_DARK_GRAY
+                strokeWidth = 0.5f
+                style = Paint.Style.STROKE
+            }
+
+            // Column 1: Employee Number
+            canvas.drawText(
+                entry.employeeNumber,
+                PDFLayoutConfig.MARGIN_LEFT + 5f,
+                currentY + 18f,
+                cellPaint
+            )
+
+            // Column 2: Name
+            canvas.drawText(
+                entry.name,
+                PDFLayoutConfig.MARGIN_LEFT + colEmpNum + 5f,
+                currentY + 18f,
+                cellPaint
+            )
+
+            // Column 3: Role
+            canvas.drawText(
+                entry.role,
+                PDFLayoutConfig.MARGIN_LEFT + colEmpNum + colName + 5f,
+                currentY + 18f,
+                cellPaint
+            )
+
+            // Column 4: Certifications (comma-separated)
+            val certs = entry.certifications.joinToString(", ")
+            val certsResult = drawMultilineText(
+                canvas, certs,
+                PDFLayoutConfig.MARGIN_LEFT + colEmpNum + colName + colRole + 5f,
+                currentY + 5f,
+                colCerts - 10f,
+                createTextPaint(PDFLayoutConfig.FONT_SIZE_SMALL - 1f, PDFLayoutConfig.COLOR_BLACK, false),
+                PDFLayoutConfig.LINE_SPACING_SMALL,
+                maxLines = 2
+            )
+
+            // Column 5: Signature (empty box for on-site signing)
+            // Just draw the border - will be filled manually on-site
+
+            // Draw row border
+            canvas.drawRect(
+                PDFLayoutConfig.MARGIN_LEFT,
+                rowStartY,
+                PDFLayoutConfig.MARGIN_LEFT + tableWidth,
+                rowStartY + rowHeight,
+                borderPaint
+            )
+
+            // Vertical dividers
+            canvas.drawLine(PDFLayoutConfig.MARGIN_LEFT + colEmpNum, rowStartY,
+                PDFLayoutConfig.MARGIN_LEFT + colEmpNum, rowStartY + rowHeight, borderPaint)
+            canvas.drawLine(PDFLayoutConfig.MARGIN_LEFT + colEmpNum + colName, rowStartY,
+                PDFLayoutConfig.MARGIN_LEFT + colEmpNum + colName, rowStartY + rowHeight, borderPaint)
+            canvas.drawLine(PDFLayoutConfig.MARGIN_LEFT + colEmpNum + colName + colRole, rowStartY,
+                PDFLayoutConfig.MARGIN_LEFT + colEmpNum + colName + colRole, rowStartY + rowHeight, borderPaint)
+            canvas.drawLine(PDFLayoutConfig.MARGIN_LEFT + colEmpNum + colName + colRole + colCerts, rowStartY,
+                PDFLayoutConfig.MARGIN_LEFT + colEmpNum + colName + colRole + colCerts, rowStartY + rowHeight, borderPaint)
+
+            currentY += rowHeight
+        }
+
+        return DrawResultGeneric(currentY, crewRoster.size, emptyList())
+    }
+
+    /**
      * Draw compact signature table for crew members and competent person.
      */
     private fun drawSignaturesCompact(
@@ -595,6 +763,69 @@ class AndroidPTPPDFGenerator : PTPPDFGenerator {
     /**
      * Draw compact header without redundant information.
      */
+    /**
+     * Draw compact header with title and metadata using centralized PTP data.
+     */
+    private fun drawHeaderCompactWithPTP(
+        canvas: Canvas,
+        ptp: PreTaskPlan,
+        metadata: PDFMetadata,
+        startY: Float
+    ): Float {
+        var y = startY
+
+        // Title (simple, compact)
+        val titlePaint = createTextPaint(
+            PDFLayoutConfig.FONT_SIZE_TITLE,
+            PDFLayoutConfig.COLOR_PRIMARY,
+            true
+        )
+        canvas.drawText(
+            "PRE-TASK SAFETY PLAN",
+            PDFLayoutConfig.MARGIN_LEFT,
+            y + PDFLayoutConfig.FONT_SIZE_TITLE,
+            titlePaint
+        )
+
+        y += PDFLayoutConfig.LINE_SPACING_TITLE + 5f
+
+        // Metadata line (company, project) - use centralized PTP data
+        val metaPaint = createTextPaint(
+            PDFLayoutConfig.FONT_SIZE_SMALL,
+            PDFLayoutConfig.COLOR_DARK_GRAY,
+            false
+        )
+
+        val companyName = ptp.companyName ?: metadata.companyName
+        val projectName = ptp.projectName ?: metadata.projectName
+
+        val metadataText = buildString {
+            append(companyName)
+            if (ptp.companyPhone != null) {
+                append(" • ")
+                append(ptp.companyPhone)
+            }
+            append(" | Project: ")
+            append(projectName)
+            if (ptp.projectNumber != null) {
+                append(" (#")
+                append(ptp.projectNumber)
+                append(")")
+            }
+        }
+
+        canvas.drawText(
+            metadataText,
+            PDFLayoutConfig.MARGIN_LEFT,
+            y + PDFLayoutConfig.FONT_SIZE_SMALL,
+            metaPaint
+        )
+
+        y += PDFLayoutConfig.LINE_SPACING_SMALL + PDFLayoutConfig.SECTION_SPACING
+
+        return y
+    }
+
     private fun drawHeaderCompact(canvas: Canvas, metadata: PDFMetadata, startY: Float): Float {
         var y = startY
 

@@ -117,7 +117,27 @@ class SQLDelightPTPRepository(
                 specific_tasks = null, // Not in PreTaskPlan model
                 emergency_contacts = json.encodeToString(ptp.emergencyContacts),
                 nearest_hospital = ptp.nearestHospital,
-                evacuation_routes = ptp.evacuationRoutes
+                evacuation_routes = ptp.evacuationRoutes,
+                // Crew Management Integration
+                crew_id = ptp.crewId,
+                crew_name = ptp.crewName,
+                foreman_id = ptp.foremanId,
+                foreman_name = ptp.foremanName,
+                // Company info (auto-populated)
+                company_id = ptp.companyId,
+                company_name = ptp.companyName,
+                company_address = ptp.companyAddress,
+                company_phone = ptp.companyPhone,
+                company_logo_url = ptp.companyLogoUrl,
+                // Project info (auto-populated)
+                project_name = ptp.projectName,
+                project_number = ptp.projectNumber,
+                project_address = ptp.projectAddress,
+                client_name = ptp.clientName,
+                general_contractor = ptp.generalContractor,
+                superintendent_name = ptp.superintendentName,
+                // Crew roster
+                crew_roster = json.encodeToString(ptp.crewRoster)
             )
 
             println("PTPRepository: PTP '${ptp.id}' saved successfully")
@@ -208,7 +228,29 @@ class SQLDelightPTPRepository(
                     supervisorName = dbPtp.signature_supervisor_name ?: "",
                     signatureDate = dbPtp.signature_date ?: 0L
                 )
-            } else null
+            } else null,
+            // Crew Management Integration
+            crewId = dbPtp.crew_id,
+            crewName = dbPtp.crew_name,
+            foremanId = dbPtp.foreman_id,
+            foremanName = dbPtp.foreman_name,
+            // Company info
+            companyId = dbPtp.company_id,
+            companyName = dbPtp.company_name,
+            companyAddress = dbPtp.company_address,
+            companyPhone = dbPtp.company_phone,
+            companyLogoUrl = dbPtp.company_logo_url,
+            // Project info
+            projectName = dbPtp.project_name,
+            projectNumber = dbPtp.project_number,
+            projectAddress = dbPtp.project_address,
+            clientName = dbPtp.client_name,
+            generalContractor = dbPtp.general_contractor,
+            superintendentName = dbPtp.superintendent_name,
+            // Crew roster
+            crewRoster = dbPtp.crew_roster?.let {
+                json.decodeFromString<List<com.hazardhawk.domain.models.ptp.CrewRosterEntry>>(it)
+            } ?: emptyList()
         )
     }
 
