@@ -43,7 +43,27 @@ class AndroidPTPPDFGenerator : PTPPDFGenerator {
         photos: List<PhotoData>,
         metadata: PDFMetadata
     ): Result<ByteArray> = withContext(Dispatchers.IO) {
+
+        val errors = mutableListOf<String>()
+        val warnings = mutableListOf<String>()
+
         try {
+            // Optimize photos upfront if there are many
+            val optimizedPhotos = if (photos.size > 5) {
+                optimizePhotoData(photos)
+            } else {
+                photos
+            }
+
+            // Early validation
+            val content = ptp.userModifiedContent ?: ptp.aiGeneratedContent
+            if (content == null) {
+                paintCache.clear()
+                return@withContext Result.failure(
+                    IllegalStateException("PTP has no content to generate PDF")
+                )
+            }
+
             val document = PdfDocument()
             val pageInfo = PdfDocument.PageInfo.Builder(
                 PDFLayoutConfig.PAGE_WIDTH.toInt(),
@@ -52,91 +72,125 @@ class AndroidPTPPDFGenerator : PTPPDFGenerator {
             ).create()
 
             var currentPage = 1
+            val hazards = content.hazards
 
-            val content = ptp.userModifiedContent ?: ptp.aiGeneratedContent
-            val hazards = content?.hazards ?: emptyList()
-
-            // Page 1: Executive Summary - 5 minute overview
-            val summaryPage = document.startPage(pageInfo)
-            var yPosition = drawHeader(summaryPage.canvas, metadata, currentPage)
-            yPosition = drawExecutiveSummary(summaryPage.canvas, ptp, hazards, metadata, yPosition)
-            drawFooter(summaryPage.canvas, currentPage, metadata)
-            document.finishPage(summaryPage)
-            currentPage++
-
-            // Page 2: Full Project Info + Work Scope + Hazards (part 1)
-            val page2 = document.startPage(pageInfo)
-            yPosition = drawHeader(page2.canvas, metadata, currentPage)
-            yPosition = drawProjectInfo(page2.canvas, ptp, metadata, yPosition)
-            yPosition = drawWorkScope(page2.canvas, ptp, yPosition)
-
-            if (hazards.isNotEmpty()) {
-                yPosition = drawHazardsSection(page2.canvas, hazards, yPosition, page2.info.pageHeight.toFloat())
+            // Page 1: Executive Summary - 5 minute overview (critical)
+            try {
+                val summaryPage = document.startPage(pageInfo)
+                var yPosition = drawHeader(summaryPage.canvas, metadata, currentPage)
+                yPosition = drawExecutiveSummary(summaryPage.canvas, ptp, hazards, metadata, yPosition)
+                drawFooter(summaryPage.canvas, currentPage, metadata)
+                document.finishPage(summaryPage)
+                currentPage++
+            } catch (e: Exception) {
+                errors.add("Executive summary page failed: ${e.message}")
+                // Critical section - log but continue with remaining pages
             }
 
-            drawFooter(page2.canvas, currentPage, metadata)
-            document.finishPage(page2)
-            currentPage++
+            // Page 2: Full Project Info + Work Scope + Hazards (part 1) (critical)
+            try {
+                val page2 = document.startPage(pageInfo)
+                var yPosition = drawHeader(page2.canvas, metadata, currentPage)
+                yPosition = drawProjectInfo(page2.canvas, ptp, metadata, yPosition)
+                yPosition = drawWorkScope(page2.canvas, ptp, yPosition)
 
-            // Additional pages for remaining hazards if needed
-            if (hazards.isNotEmpty()) {
-                val hazardsPerPage = calculateHazardsPerPage()
-                val remainingHazards = hazards.drop(hazardsPerPage)
-
-                for (hazardChunk in remainingHazards.chunked(hazardsPerPage + 2)) {
-                    val hazardPage = document.startPage(pageInfo)
-                    var hazardY = PDFLayoutConfig.MARGIN_TOP
-                    hazardY = drawSectionHeader(hazardPage.canvas, "Identified Hazards (continued)", hazardY)
-                    drawHazardList(hazardPage.canvas, hazardChunk, hazardY, hazardPage.info.pageHeight.toFloat())
-                    drawFooter(hazardPage.canvas, currentPage, metadata)
-                    document.finishPage(hazardPage)
-                    currentPage++
+                if (hazards.isNotEmpty()) {
+                    yPosition = drawHazardsSection(page2.canvas, hazards, yPosition, page2.info.pageHeight.toFloat())
                 }
+
+                drawFooter(page2.canvas, currentPage, metadata)
+                document.finishPage(page2)
+                currentPage++
+            } catch (e: Exception) {
+                errors.add("Project info/hazards page failed: ${e.message}")
             }
 
-            // Job Steps pages
-            val jobSteps = content?.jobSteps ?: emptyList()
-            if (jobSteps.isNotEmpty()) {
-                val stepsPerPage = 4
-                for (stepsChunk in jobSteps.chunked(stepsPerPage)) {
-                    val stepsPage = document.startPage(pageInfo)
-                    var stepsY = PDFLayoutConfig.MARGIN_TOP
-                    stepsY = drawSectionHeader(stepsPage.canvas, "Job Steps & Safety Controls", stepsY)
-                    drawJobSteps(stepsPage.canvas, stepsChunk, stepsY)
-                    drawFooter(stepsPage.canvas, currentPage, metadata)
-                    document.finishPage(stepsPage)
-                    currentPage++
+            // Additional pages for remaining hazards if needed (critical)
+            try {
+                if (hazards.isNotEmpty()) {
+                    val hazardsPerPage = calculateHazardsPerPage()
+                    val remainingHazards = hazards.drop(hazardsPerPage)
+
+                    for (hazardChunk in remainingHazards.chunked(hazardsPerPage + 2)) {
+                        val hazardPage = document.startPage(pageInfo)
+                        var hazardY = PDFLayoutConfig.MARGIN_TOP
+                        hazardY = drawSectionHeader(hazardPage.canvas, "Identified Hazards (continued)", hazardY)
+                        drawHazardList(hazardPage.canvas, hazardChunk, hazardY, hazardPage.info.pageHeight.toFloat())
+                        drawFooter(hazardPage.canvas, currentPage, metadata)
+                        document.finishPage(hazardPage)
+                        currentPage++
+                    }
                 }
+            } catch (e: Exception) {
+                warnings.add("Some hazards pages skipped: ${e.message}")
             }
 
-            // Photo pages (2 photos per page)
-            if (photos.isNotEmpty()) {
-                for (photoGroup in photos.chunked(PDFLayoutConfig.PHOTOS_PER_PAGE)) {
-                    val photoPage = document.startPage(pageInfo)
-                    var photoY = PDFLayoutConfig.MARGIN_TOP
-                    photoY = drawSectionHeader(photoPage.canvas, "Photo Documentation", photoY)
-                    drawPhotos(photoPage.canvas, photoGroup, photoY)
-                    drawFooter(photoPage.canvas, currentPage, metadata)
-                    document.finishPage(photoPage)
-                    currentPage++
+            // Job Steps pages (non-critical)
+            try {
+                val jobSteps = content.jobSteps
+                if (jobSteps.isNotEmpty()) {
+                    val stepsPerPage = 4
+                    for (stepsChunk in jobSteps.chunked(stepsPerPage)) {
+                        val stepsPage = document.startPage(pageInfo)
+                        var stepsY = PDFLayoutConfig.MARGIN_TOP
+                        stepsY = drawSectionHeader(stepsPage.canvas, "Job Steps & Safety Controls", stepsY)
+                        drawJobSteps(stepsPage.canvas, stepsChunk, stepsY)
+                        drawFooter(stepsPage.canvas, currentPage, metadata)
+                        document.finishPage(stepsPage)
+                        currentPage++
+                    }
                 }
+            } catch (e: Exception) {
+                warnings.add("Job steps section skipped: ${e.message}")
             }
 
-            // Final page: Emergency Procedures + Signatures
-            val finalPage = document.startPage(pageInfo)
-            var finalY = PDFLayoutConfig.MARGIN_TOP
-            finalY = drawEmergencyProcedures(finalPage.canvas, ptp, content, finalY)
-            drawSignatures(finalPage.canvas, ptp, finalY)
-            drawFooter(finalPage.canvas, currentPage, metadata)
-            document.finishPage(finalPage)
+            // Photo pages (2 photos per page) (non-critical)
+            try {
+                if (optimizedPhotos.isNotEmpty()) {
+                    for (photoGroup in optimizedPhotos.chunked(PDFLayoutConfig.PHOTOS_PER_PAGE)) {
+                        val photoPage = document.startPage(pageInfo)
+                        var photoY = PDFLayoutConfig.MARGIN_TOP
+                        photoY = drawSectionHeader(photoPage.canvas, "Photo Documentation", photoY)
+                        drawPhotos(photoPage.canvas, photoGroup, photoY)
+                        drawFooter(photoPage.canvas, currentPage, metadata)
+                        document.finishPage(photoPage)
+                        currentPage++
+                    }
+                }
+            } catch (e: Exception) {
+                warnings.add("Photo section skipped: ${e.message}")
+            }
+
+            // Final page: Emergency Procedures + Signatures (non-critical)
+            try {
+                val finalPage = document.startPage(pageInfo)
+                var finalY = PDFLayoutConfig.MARGIN_TOP
+                finalY = drawEmergencyProcedures(finalPage.canvas, ptp, content, finalY)
+                drawSignatures(finalPage.canvas, ptp, finalY)
+                drawFooter(finalPage.canvas, currentPage, metadata)
+                document.finishPage(finalPage)
+            } catch (e: Exception) {
+                warnings.add("Emergency/signatures page skipped: ${e.message}")
+            }
 
             // Convert to ByteArray
             val outputStream = ByteArrayOutputStream()
             document.writeTo(outputStream)
             document.close()
 
+            // Clear paint cache after generation
+            paintCache.clear()
+
+            // Log errors/warnings if any
+            if (errors.isNotEmpty() || warnings.isNotEmpty()) {
+                println("PDF generated with issues:")
+                errors.forEach { println("ERROR: $it") }
+                warnings.forEach { println("WARNING: $it") }
+            }
+
             Result.success(outputStream.toByteArray())
         } catch (e: Exception) {
+            paintCache.clear()
             Result.failure(e)
         }
     }
@@ -243,7 +297,7 @@ class AndroidPTPPDFGenerator : PTPPDFGenerator {
 
             // Simple description
             val descPaint = createTextPaint(PDFLayoutConfig.FONT_SIZE_BODY, PDFLayoutConfig.COLOR_BLACK, false)
-            y = drawMultilineText(
+            val descResult = drawMultilineText(
                 canvas,
                 simplifyForWorkers(hazard.description),
                 PDFLayoutConfig.MARGIN_LEFT + 50f,
@@ -252,7 +306,7 @@ class AndroidPTPPDFGenerator : PTPPDFGenerator {
                 descPaint,
                 PDFLayoutConfig.LINE_SPACING_BODY
             )
-            y += 5f
+            y = descResult.endY + 5f
 
             // Top 2 controls as action steps
             val controlPaint = createTextPaint(PDFLayoutConfig.FONT_SIZE_BODY, PDFLayoutConfig.COLOR_BLACK, true)
@@ -332,49 +386,106 @@ class AndroidPTPPDFGenerator : PTPPDFGenerator {
 
     /**
      * Draw the document header with company logo and title.
+     * Enhanced with colored header band and professional branding.
      */
     private fun drawHeader(canvas: Canvas, metadata: PDFMetadata, pageNumber: Int): Float {
-        var y = PDFLayoutConfig.MARGIN_TOP
+        var y = 0f
+
+        // Colored header band
+        val headerBarPaint = Paint().apply {
+            color = PDFLayoutConfig.COLOR_PRIMARY
+            style = Paint.Style.FILL
+        }
+        canvas.drawRect(
+            0f, 0f,
+            PDFLayoutConfig.PAGE_WIDTH,
+            60f,
+            headerBarPaint
+        )
 
         // Company logo (if provided)
         metadata.companyLogo?.let { logoBytes ->
             try {
-                val bitmap = BitmapFactory.decodeByteArray(logoBytes, 0, logoBytes.size)
-                val logoHeight = 40f
-                val logoWidth = (logoHeight / bitmap.height) * bitmap.width
-                val destRect = RectF(PDFLayoutConfig.MARGIN_LEFT, y,
-                    PDFLayoutConfig.MARGIN_LEFT + logoWidth, y + logoHeight)
-                canvas.drawBitmap(bitmap, null, destRect, null)
-                bitmap.recycle()
+                // White circle background for logo
+                val circlePaint = Paint().apply {
+                    color = Color.WHITE
+                    style = Paint.Style.FILL
+                    isAntiAlias = true
+                }
+                canvas.drawCircle(
+                    PDFLayoutConfig.MARGIN_LEFT + 20f,
+                    30f,
+                    22f,
+                    circlePaint
+                )
+
+                // Draw logo
+                drawBitmapSafe(
+                    canvas,
+                    logoBytes,
+                    RectF(
+                        PDFLayoutConfig.MARGIN_LEFT + 2f,
+                        12f,
+                        PDFLayoutConfig.MARGIN_LEFT + 38f,
+                        48f
+                    ),
+                    placeholder = null
+                )
             } catch (e: Exception) {
-                // Skip logo if decoding fails
+                // Fallback: Company initials
+                val initialsPaint = createTextPaint(16f, Color.WHITE, true)
+                val initials = metadata.companyName
+                    .split(" ")
+                    .take(2)
+                    .mapNotNull { it.firstOrNull() }
+                    .joinToString("")
+                canvas.drawText(
+                    initials,
+                    PDFLayoutConfig.MARGIN_LEFT + 12f,
+                    35f,
+                    initialsPaint
+                )
             }
         }
 
-        // Title
-        val titlePaint = createTextPaint(PDFLayoutConfig.FONT_SIZE_TITLE, PDFLayoutConfig.COLOR_HEADER, true)
-        val titleX = if (metadata.companyLogo != null) {
-            PDFLayoutConfig.MARGIN_LEFT + 120f
-        } else {
-            PDFLayoutConfig.MARGIN_LEFT
-        }
-        canvas.drawText("PRE-TASK PLAN", titleX, y + 24f, titlePaint)
-        y += 50f
+        // Title (white text on colored bar)
+        val titlePaint = createTextPaint(
+            PDFLayoutConfig.FONT_SIZE_TITLE,
+            Color.WHITE,
+            true
+        )
+        canvas.drawText(
+            "PRE-TASK SAFETY PLAN",
+            PDFLayoutConfig.MARGIN_LEFT + 60f,
+            35f,
+            titlePaint
+        )
 
-        // Company and project info
-        val infoPaint = createTextPaint(PDFLayoutConfig.FONT_SIZE_SMALL, PDFLayoutConfig.COLOR_DARK_GRAY, false)
-        canvas.drawText("${metadata.companyName} | ${metadata.projectName}", PDFLayoutConfig.MARGIN_LEFT, y, infoPaint)
-        y += PDFLayoutConfig.LINE_SPACING_SMALL
+        y = 70f
 
-        // Divider line
-        val linePaint = Paint().apply {
-            color = PDFLayoutConfig.COLOR_LIGHT_GRAY
-            strokeWidth = 1f
-            style = Paint.Style.STROKE
+        // Metadata line (below header bar)
+        val metaPaint = createTextPaint(
+            PDFLayoutConfig.FONT_SIZE_SMALL,
+            PDFLayoutConfig.COLOR_DARK_GRAY,
+            false
+        )
+
+        val metadataText = buildString {
+            append(metadata.companyName)
+            append(" | ")
+            append(metadata.projectName)
+            append(" | ")
+            append(metadata.projectLocation)
         }
-        canvas.drawLine(PDFLayoutConfig.MARGIN_LEFT, y,
-            PDFLayoutConfig.PAGE_WIDTH - PDFLayoutConfig.MARGIN_RIGHT, y, linePaint)
-        y += PDFLayoutConfig.SECTION_SPACING
+
+        canvas.drawText(
+            metadataText,
+            PDFLayoutConfig.MARGIN_LEFT,
+            y,
+            metaPaint
+        )
+
+        y += PDFLayoutConfig.LINE_SPACING_SMALL + PDFLayoutConfig.SECTION_SPACING
 
         return y
     }
@@ -418,8 +529,9 @@ class AndroidPTPPDFGenerator : PTPPDFGenerator {
         val bodyPaint = createTextPaint(PDFLayoutConfig.FONT_SIZE_BODY, PDFLayoutConfig.COLOR_BLACK, false)
 
         // Work scope description
-        y = drawMultilineText(canvas, ptp.workScope, PDFLayoutConfig.MARGIN_LEFT, y,
+        val scopeResult = drawMultilineText(canvas, ptp.workScope, PDFLayoutConfig.MARGIN_LEFT, y,
             PDFLayoutConfig.CONTENT_WIDTH, bodyPaint, PDFLayoutConfig.LINE_SPACING_BODY)
+        y = scopeResult.endY
 
         y += PDFLayoutConfig.SUBSECTION_SPACING
 
@@ -446,31 +558,67 @@ class AndroidPTPPDFGenerator : PTPPDFGenerator {
     private fun drawHazardsSection(canvas: Canvas, hazards: List<PtpHazard>, startY: Float, pageHeight: Float): Float {
         var y = drawSectionHeader(canvas, "Identified Hazards", startY)
 
-        // Calculate how many hazards fit on this page
-        val hazardsPerPage = calculateHazardsPerPage()
-        val hazardsToShow = hazards.take(hazardsPerPage)
-
-        return drawHazardList(canvas, hazardsToShow, y, pageHeight)
+        // Draw hazards with overflow detection
+        val result = drawHazardList(canvas, hazards, y, pageHeight)
+        return result.endY
     }
 
     /**
      * Draw a list of hazards with color-coded severity and proper page handling.
+     *
+     * @return DrawResult containing final Y position, count of drawn hazards, and overflow items
      */
-    private fun drawHazardList(canvas: Canvas, hazards: List<PtpHazard>, startY: Float, pageHeight: Float): Float {
+    private fun drawHazardList(canvas: Canvas, hazards: List<PtpHazard>, startY: Float, pageHeight: Float): DrawResult {
         var y = startY
         val maxY = pageHeight - PDFLayoutConfig.MARGIN_BOTTOM - 50f // Leave room for footer
+        val drawnHazards = mutableListOf<PtpHazard>()
+        val overflowHazards = mutableListOf<PtpHazard>()
 
         for (hazard in hazards) {
-            // Calculate exact height needed for this hazard
+            // Pre-calculate exact height needed for this hazard
             val boxHeight = calculateHazardBoxHeight(hazard)
 
-            // Check if hazard fits on current page - if not, stop (will continue on next page)
-            if (y + boxHeight > maxY) {
-                break
+            // Check if hazard fits on page with buffer - if not, add to overflow
+            if (y + boxHeight + PDFLayoutConfig.SUBSECTION_SPACING > maxY) {
+                overflowHazards.add(hazard)
+                continue
             }
 
-            // Draw hazard box with colored border
-            val boxPaint = Paint().apply {
+            val boxTop = y
+            val boxLeft = PDFLayoutConfig.MARGIN_LEFT
+            val boxRight = PDFLayoutConfig.PAGE_WIDTH - PDFLayoutConfig.MARGIN_RIGHT
+            val boxBottom = boxTop + boxHeight
+
+            // Background color based on severity
+            val bgPaint = Paint().apply {
+                color = when (hazard.severity) {
+                    HazardSeverity.CRITICAL -> PDFLayoutConfig.COLOR_BG_CRITICAL
+                    HazardSeverity.MAJOR -> PDFLayoutConfig.COLOR_BG_MAJOR
+                    HazardSeverity.MINOR -> PDFLayoutConfig.COLOR_BG_MINOR
+                }
+                style = Paint.Style.FILL
+            }
+            canvas.drawRect(boxLeft, boxTop, boxRight, boxBottom, bgPaint)
+
+            // Colored left edge badge (8f width)
+            val badgePaint = Paint().apply {
+                color = when (hazard.severity) {
+                    HazardSeverity.CRITICAL -> PDFLayoutConfig.COLOR_CRITICAL
+                    HazardSeverity.MAJOR -> PDFLayoutConfig.COLOR_MAJOR
+                    HazardSeverity.MINOR -> PDFLayoutConfig.COLOR_MINOR
+                }
+                style = Paint.Style.FILL
+            }
+            canvas.drawRect(
+                boxLeft,
+                boxTop,
+                boxLeft + 8f,
+                boxBottom,
+                badgePaint
+            )
+
+            // Border
+            val borderPaint = Paint().apply {
                 color = when (hazard.severity) {
                     HazardSeverity.CRITICAL -> PDFLayoutConfig.COLOR_CRITICAL
                     HazardSeverity.MAJOR -> PDFLayoutConfig.COLOR_MAJOR
@@ -479,82 +627,132 @@ class AndroidPTPPDFGenerator : PTPPDFGenerator {
                 style = Paint.Style.STROKE
                 strokeWidth = PDFLayoutConfig.HAZARD_BOX_BORDER_WIDTH
             }
+            canvas.drawRect(boxLeft, boxTop, boxRight, boxBottom, borderPaint)
 
-            val boxTop = y
-            val boxRect = RectF(
-                PDFLayoutConfig.MARGIN_LEFT,
-                boxTop,
-                PDFLayoutConfig.PAGE_WIDTH - PDFLayoutConfig.MARGIN_RIGHT,
-                boxTop + boxHeight
-            )
+            // Content (indented from left edge)
+            val contentLeft = boxLeft + 20f
+            val contentRight = boxRight - PDFLayoutConfig.HAZARD_BOX_PADDING
+            val contentWidth = contentRight - contentLeft
 
-            // Background fill
-            val bgPaint = Paint().apply {
-                color = 0xFFF5F5F5.toInt() // Light gray background
-                style = Paint.Style.FILL
-            }
-            canvas.drawRoundRect(boxRect, PDFLayoutConfig.HAZARD_BOX_BORDER_RADIUS, PDFLayoutConfig.HAZARD_BOX_BORDER_RADIUS, bgPaint)
+            var boxY = boxTop + PDFLayoutConfig.HAZARD_BOX_PADDING
 
-            // Draw colored border on top
-            canvas.drawRoundRect(boxRect, PDFLayoutConfig.HAZARD_BOX_BORDER_RADIUS, PDFLayoutConfig.HAZARD_BOX_BORDER_RADIUS, boxPaint)
-
-            // Content inside box with proper padding
-            var boxY = boxTop + PDFLayoutConfig.HAZARD_BOX_PADDING_TOP
-            val contentX = PDFLayoutConfig.MARGIN_LEFT + PDFLayoutConfig.HAZARD_BOX_PADDING_LEFT
-
-            // Visual severity icon + OSHA Code
-            val icon = when(hazard.severity) {
-                HazardSeverity.CRITICAL -> "⚠"
-                HazardSeverity.MAJOR -> "⚡"
-                HazardSeverity.MINOR -> "ℹ"
-            }
-            val headerPaint = createTextPaint(PDFLayoutConfig.FONT_SIZE_LARGE, PDFLayoutConfig.COLOR_BLACK, true)
-            canvas.drawText("$icon OSHA ${hazard.oshaCode}", contentX, boxY, headerPaint)
-
-            val severityPaint = createTextPaint(PDFLayoutConfig.FONT_SIZE_LARGE,
+            // Severity badge text
+            val severityPaint = createTextPaint(
+                PDFLayoutConfig.FONT_SIZE_SMALL,
                 when (hazard.severity) {
                     HazardSeverity.CRITICAL -> PDFLayoutConfig.COLOR_CRITICAL
                     HazardSeverity.MAJOR -> PDFLayoutConfig.COLOR_MAJOR
                     HazardSeverity.MINOR -> PDFLayoutConfig.COLOR_MINOR
-                }, true)
-            canvas.drawText(hazard.severity.name, contentX + 250f, boxY, severityPaint)
-            boxY += PDFLayoutConfig.LINE_SPACING_BODY + 5f
+                },
+                true
+            )
 
-            // Description with proper text wrapping and simplified language
-            val bodyPaint = createTextPaint(PDFLayoutConfig.FONT_SIZE_BODY, PDFLayoutConfig.COLOR_BLACK, false)
-            val descriptionWidth = PDFLayoutConfig.CONTENT_WIDTH - PDFLayoutConfig.HAZARD_BOX_PADDING_LEFT - PDFLayoutConfig.HAZARD_BOX_PADDING_RIGHT
-            boxY = drawMultilineText(canvas, simplifyForWorkers(hazard.description), contentX, boxY,
-                descriptionWidth, bodyPaint, PDFLayoutConfig.LINE_SPACING_BODY)
-            boxY += PDFLayoutConfig.SUBSECTION_SPACING
-
-            // Controls as numbered action steps
-            if (hazard.controls.isNotEmpty()) {
-                val labelPaint = createTextPaint(PDFLayoutConfig.FONT_SIZE_BODY, 0xFF006600.toInt(), true)
-                canvas.drawText("SAFETY STEPS - DO THESE:", contentX, boxY, labelPaint)
-                boxY += PDFLayoutConfig.LINE_SPACING_BODY
-
-                val smallPaint = createTextPaint(PDFLayoutConfig.FONT_SIZE_BODY, PDFLayoutConfig.COLOR_BLACK, false)
-                val controlWidth = descriptionWidth - 30f // Account for number indent
-                for ((index, control) in hazard.controls.withIndex()) {
-                    val actionControl = makeActionOriented(simplifyForWorkers(control))
-                    boxY = drawMultilineText(canvas, "${index + 1}. $actionControl", contentX + 10f, boxY,
-                        controlWidth, smallPaint, PDFLayoutConfig.LINE_SPACING_BODY)
-                }
+            val severityText = when (hazard.severity) {
+                HazardSeverity.CRITICAL -> "⚠️ CRITICAL HAZARD"
+                HazardSeverity.MAJOR -> "⚡ MAJOR HAZARD"
+                HazardSeverity.MINOR -> "ℹ️ MINOR HAZARD"
             }
 
-            // Required PPE
+            canvas.drawText(severityText, contentLeft, boxY, severityPaint)
+            boxY += PDFLayoutConfig.LINE_SPACING_HEADING
+
+            // OSHA code
+            hazard.oshaCode?.let { code ->
+                val codePaint = createTextPaint(
+                    PDFLayoutConfig.FONT_SIZE_HEADING,
+                    PDFLayoutConfig.COLOR_BLACK,
+                    true
+                )
+                canvas.drawText(code, contentLeft, boxY, codePaint)
+                boxY += PDFLayoutConfig.LINE_SPACING_HEADING
+            }
+
+            // Hazard description label removed - going straight to description content
+
+            // Description section
+            val descLabelPaint = createTextPaint(
+                PDFLayoutConfig.FONT_SIZE_BODY,
+                PDFLayoutConfig.COLOR_DARK_GRAY,
+                true
+            )
+            canvas.drawText("📋 HAZARD:", contentLeft, boxY, descLabelPaint)
+            boxY += PDFLayoutConfig.LINE_SPACING_BODY
+
+            val descPaint = createTextPaint(
+                PDFLayoutConfig.FONT_SIZE_BODY,
+                PDFLayoutConfig.COLOR_BLACK,
+                false
+            )
+
+            val descResult = drawMultilineText(
+                canvas,
+                hazard.description,
+                contentLeft,
+                boxY,
+                contentWidth,
+                descPaint,
+                PDFLayoutConfig.LINE_SPACING_BODY
+            )
+            boxY = descResult.endY + 12f
+
+            // Controls section
+            if (hazard.controls.isNotEmpty()) {
+                canvas.drawText("✅ CONTROLS:", contentLeft, boxY, descLabelPaint)
+                boxY += PDFLayoutConfig.LINE_SPACING_BODY
+
+                for ((index, control) in hazard.controls.withIndex()) {
+                    val controlText = "${index + 1}. $control"
+                    val controlResult = drawMultilineText(
+                        canvas,
+                        controlText,
+                        contentLeft,
+                        boxY,
+                        contentWidth,
+                        descPaint,
+                        PDFLayoutConfig.LINE_SPACING_BODY
+                    )
+                    boxY = controlResult.endY
+                }
+                boxY += 12f
+            }
+
+            // PPE section
             if (hazard.requiredPpe.isNotEmpty()) {
-                boxY += 2f
-                val labelPaint = createTextPaint(PDFLayoutConfig.FONT_SIZE_SMALL, PDFLayoutConfig.COLOR_DARK_GRAY, true)
-                canvas.drawText("Required PPE: ${hazard.requiredPpe.joinToString(", ")}",
-                    contentX, boxY, labelPaint)
+                canvas.drawText("🦺 REQUIRED PPE:", contentLeft, boxY, descLabelPaint)
+                boxY += PDFLayoutConfig.LINE_SPACING_BODY
+
+                val ppeText = hazard.requiredPpe.joinToString("\n") { "• $it" }
+                val ppeResult = drawMultilineText(
+                    canvas,
+                    ppeText,
+                    contentLeft,
+                    boxY,
+                    contentWidth,
+                    descPaint,
+                    PDFLayoutConfig.LINE_SPACING_BODY
+                )
+                boxY = ppeResult.endY + 8f
             }
 
             y = boxTop + boxHeight + PDFLayoutConfig.SUBSECTION_SPACING
+            drawnHazards.add(hazard)
         }
 
-        return y
+        return DrawResult(
+            endY = y,
+            itemsDrawn = drawnHazards.size,
+            overflowItems = overflowHazards
+        )
     }
+
+    /**
+     * Result of drawing operation with overflow tracking.
+     */
+    private data class DrawResult(
+        val endY: Float,
+        val itemsDrawn: Int,
+        val overflowItems: List<PtpHazard> = emptyList()
+    )
 
     /**
      * Calculate accurate height needed for a hazard box by measuring actual text.
@@ -693,19 +891,22 @@ class AndroidPTPPDFGenerator : PTPPDFGenerator {
         var y = startY + PDFLayoutConfig.SUBSECTION_SPACING
 
         for (photo in photos) {
-            // Draw photo on left side
-            try {
-                val bitmap = BitmapFactory.decodeByteArray(photo.imageBytes, 0, photo.imageBytes.size)
-                val scaledHeight = PDFLayoutConfig.PHOTO_HEIGHT
-                val scaledWidth = (scaledHeight / bitmap.height) * bitmap.width
-                val photoRect = RectF(
-                    PDFLayoutConfig.MARGIN_LEFT,
-                    y,
-                    PDFLayoutConfig.MARGIN_LEFT + scaledWidth.coerceAtMost(PDFLayoutConfig.PHOTO_WIDTH),
-                    y + scaledHeight
-                )
-                canvas.drawBitmap(bitmap, null, photoRect, null)
-                bitmap.recycle()
+            // Draw photo on left side with safe bitmap handling
+            val photoRect = RectF(
+                PDFLayoutConfig.MARGIN_LEFT,
+                y,
+                PDFLayoutConfig.MARGIN_LEFT + PDFLayoutConfig.PHOTO_WIDTH,
+                y + PDFLayoutConfig.PHOTO_HEIGHT
+            )
+
+            val photoDrawn = drawBitmapSafe(
+                canvas,
+                photo.imageBytes,
+                photoRect,
+                "Photo"
+            )
+
+            if (photoDrawn) {
 
                 // Draw metadata on right side
                 val metadataX = PDFLayoutConfig.MARGIN_LEFT + PDFLayoutConfig.PHOTO_WIDTH + 20f
@@ -751,18 +952,88 @@ class AndroidPTPPDFGenerator : PTPPDFGenerator {
                     metadataY += 4f
                     canvas.drawText("Caption:", metadataX, metadataY, labelPaint)
                     metadataY += PDFLayoutConfig.LINE_SPACING_SMALL
-                    drawMultilineText(canvas, it, metadataX, metadataY,
+                    val captionResult = drawMultilineText(canvas, it, metadataX, metadataY,
                         PDFLayoutConfig.PHOTO_METADATA_WIDTH, valuePaint, PDFLayoutConfig.LINE_SPACING_SMALL)
                 }
-
-                y += PDFLayoutConfig.PHOTO_HEIGHT + PDFLayoutConfig.SECTION_SPACING
-            } catch (e: Exception) {
-                // Skip photo if decoding fails
-                y += 20f
             }
+
+            y += PDFLayoutConfig.PHOTO_HEIGHT + PDFLayoutConfig.SECTION_SPACING
         }
 
         return y
+    }
+
+    /**
+     * Safely draw a bitmap with automatic resource cleanup.
+     *
+     * @param canvas Canvas to draw on
+     * @param imageBytes Raw image bytes
+     * @param destRect Destination rectangle for the bitmap
+     * @param placeholder Optional placeholder text if bitmap fails to load
+     * @return true if bitmap was drawn successfully, false otherwise
+     */
+    private fun drawBitmapSafe(
+        canvas: Canvas,
+        imageBytes: ByteArray,
+        destRect: RectF,
+        placeholder: String? = null
+    ): Boolean {
+        var bitmap: Bitmap? = null
+        return try {
+            // Validate image bytes
+            if (imageBytes.isEmpty()) {
+                drawPlaceholder(canvas, destRect, placeholder ?: "⚠ Photo data missing")
+                return false
+            }
+
+            // Decode bitmap
+            bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+
+            if (bitmap == null) {
+                drawPlaceholder(canvas, destRect, placeholder ?: "⚠ Photo corrupted")
+                return false
+            }
+
+            // Draw bitmap
+            canvas.drawBitmap(bitmap, null, destRect, null)
+            true
+
+        } catch (e: OutOfMemoryError) {
+            drawPlaceholder(canvas, destRect, "⚠ Photo too large")
+            false
+        } catch (e: Exception) {
+            drawPlaceholder(canvas, destRect, "⚠ Photo error")
+            false
+        } finally {
+            bitmap?.recycle()
+        }
+    }
+
+    /**
+     * Draw a placeholder rectangle when an image fails to load.
+     */
+    private fun drawPlaceholder(
+        canvas: Canvas,
+        rect: RectF,
+        message: String
+    ) {
+        val paint = Paint().apply {
+            color = PDFLayoutConfig.COLOR_LIGHT_GRAY
+            style = Paint.Style.FILL
+        }
+        canvas.drawRect(rect, paint)
+
+        val textPaint = createTextPaint(
+            PDFLayoutConfig.FONT_SIZE_BODY,
+            PDFLayoutConfig.COLOR_DARK_GRAY,
+            false
+        )
+
+        val textWidth = textPaint.measureText(message)
+        val textX = rect.centerX() - (textWidth / 2)
+        val textY = rect.centerY()
+
+        canvas.drawText(message, textX, textY, textPaint)
     }
 
     /**
@@ -799,9 +1070,9 @@ class AndroidPTPPDFGenerator : PTPPDFGenerator {
         ptp.evacuationRoutes?.let {
             canvas.drawText("Evacuation Routes:", PDFLayoutConfig.MARGIN_LEFT, y, labelPaint)
             y += PDFLayoutConfig.LINE_SPACING_BODY
-            y = drawMultilineText(canvas, it, PDFLayoutConfig.MARGIN_LEFT + 20f, y,
+            val evacResult = drawMultilineText(canvas, it, PDFLayoutConfig.MARGIN_LEFT + 20f, y,
                 PDFLayoutConfig.CONTENT_WIDTH - 20f, bodyPaint, PDFLayoutConfig.LINE_SPACING_BODY)
-            y += PDFLayoutConfig.SUBSECTION_SPACING
+            y = evacResult.endY + PDFLayoutConfig.SUBSECTION_SPACING
         }
 
         // Emergency procedures from AI
@@ -842,18 +1113,16 @@ class AndroidPTPPDFGenerator : PTPPDFGenerator {
 
             // If signature blob exists, try to draw it
             signature.signatureBlob?.let { blob ->
-                try {
-                    val bitmap = BitmapFactory.decodeByteArray(blob, 0, blob.size)
-                    val sigRect = RectF(
-                        PDFLayoutConfig.MARGIN_LEFT + 20f,
-                        y,
-                        PDFLayoutConfig.MARGIN_LEFT + 220f,
-                        y + PDFLayoutConfig.SIGNATURE_LINE_HEIGHT
-                    )
-                    canvas.drawBitmap(bitmap, null, sigRect, null)
-                    bitmap.recycle()
+                val sigRect = RectF(
+                    PDFLayoutConfig.MARGIN_LEFT + 20f,
+                    y,
+                    PDFLayoutConfig.MARGIN_LEFT + 220f,
+                    y + PDFLayoutConfig.SIGNATURE_LINE_HEIGHT
+                )
+                val sigDrawn = drawBitmapSafe(canvas, blob, sigRect, signature.supervisorName)
+                if (sigDrawn) {
                     y += PDFLayoutConfig.SIGNATURE_LINE_HEIGHT + 10f
-                } catch (e: Exception) {
+                } else {
                     // Fall back to text signature
                     canvas.drawText("Signature: ${signature.supervisorName}",
                         PDFLayoutConfig.MARGIN_LEFT + 20f, y, bodyPaint)
@@ -932,38 +1201,81 @@ class AndroidPTPPDFGenerator : PTPPDFGenerator {
 
     /**
      * Draw page footer with page number and generation info.
+     * Enhanced with professional layout and branding.
      */
     private fun drawFooter(canvas: Canvas, pageNumber: Int, metadata: PDFMetadata) {
-        val footerY = PDFLayoutConfig.PAGE_HEIGHT - PDFLayoutConfig.MARGIN_BOTTOM + 10f
+        val footerY = PDFLayoutConfig.PAGE_HEIGHT - PDFLayoutConfig.MARGIN_BOTTOM + 15f
 
-        // Divider line
+        // Divider line (thicker, colored)
         val linePaint = Paint().apply {
-            color = PDFLayoutConfig.COLOR_LIGHT_GRAY
-            strokeWidth = 1f
+            color = PDFLayoutConfig.COLOR_PRIMARY
+            strokeWidth = 2f
             style = Paint.Style.STROKE
         }
         canvas.drawLine(
             PDFLayoutConfig.MARGIN_LEFT,
-            footerY - 10f,
+            footerY - 15f,
             PDFLayoutConfig.PAGE_WIDTH - PDFLayoutConfig.MARGIN_RIGHT,
-            footerY - 10f,
+            footerY - 15f,
             linePaint
         )
 
-        val footerPaint = createTextPaint(PDFLayoutConfig.FONT_SIZE_SMALL, PDFLayoutConfig.COLOR_DARK_GRAY, false)
+        val footerPaint = createTextPaint(
+            PDFLayoutConfig.FONT_SIZE_SMALL,
+            PDFLayoutConfig.COLOR_DARK_GRAY,
+            false
+        )
 
-        // Page number (center)
+        val boldFooterPaint = createTextPaint(
+            PDFLayoutConfig.FONT_SIZE_SMALL,
+            PDFLayoutConfig.COLOR_PRIMARY,
+            true
+        )
+
+        // Left: Project name and task description
+        val projectText = "${metadata.projectName} - ${metadata.taskDescription ?: "Pre-Task Plan"}"
+        canvas.drawText(
+            projectText,
+            PDFLayoutConfig.MARGIN_LEFT,
+            footerY,
+            footerPaint
+        )
+
+        // Center: Page number (bold, colored)
         val pageText = "Page $pageNumber"
-        canvas.drawText(pageText, PDFLayoutConfig.PAGE_WIDTH / 2 - 30f, footerY, footerPaint)
+        val pageTextWidth = boldFooterPaint.measureText(pageText)
+        canvas.drawText(
+            pageText,
+            (PDFLayoutConfig.PAGE_WIDTH - pageTextWidth) / 2,
+            footerY,
+            boldFooterPaint
+        )
 
-        // Generated by (left)
-        canvas.drawText("Generated by ${metadata.generatedBy}", PDFLayoutConfig.MARGIN_LEFT, footerY, footerPaint)
-
-        // Generation date (right)
+        // Right: Generation date
         val dateText = formatDate(metadata.generatedAt)
         val dateTextWidth = footerPaint.measureText(dateText)
-        canvas.drawText(dateText, PDFLayoutConfig.PAGE_WIDTH - PDFLayoutConfig.MARGIN_RIGHT - dateTextWidth,
-            footerY, footerPaint)
+        canvas.drawText(
+            dateText,
+            PDFLayoutConfig.PAGE_WIDTH - PDFLayoutConfig.MARGIN_RIGHT - dateTextWidth,
+            footerY,
+            footerPaint
+        )
+
+        // Bottom right: Branding (subtle)
+        val brandingY = footerY + 12f
+        val brandingPaint = createTextPaint(
+            PDFLayoutConfig.FONT_SIZE_SMALL - 2f,
+            PDFLayoutConfig.COLOR_MEDIUM_GRAY,
+            false
+        )
+        val brandingText = "Powered by HazardHawk AI"
+        val brandingWidth = brandingPaint.measureText(brandingText)
+        canvas.drawText(
+            brandingText,
+            PDFLayoutConfig.PAGE_WIDTH - PDFLayoutConfig.MARGIN_RIGHT - brandingWidth,
+            brandingY,
+            brandingPaint
+        )
     }
 
     /**
@@ -987,7 +1299,17 @@ class AndroidPTPPDFGenerator : PTPPDFGenerator {
     }
 
     /**
-     * Draw multiline text with word wrapping.
+     * Draw multiline text with word wrapping and enhanced edge case handling.
+     *
+     * @param canvas Canvas to draw on
+     * @param text Text to draw (supports empty strings, long words, multiple spaces)
+     * @param x X position to start drawing
+     * @param startY Y position to start drawing
+     * @param maxWidth Maximum width before wrapping
+     * @param paint Paint to use for text
+     * @param lineSpacing Line spacing between lines
+     * @param maxLines Maximum number of lines to draw (optional)
+     * @return TextDrawResult containing final Y position, lines drawn, and truncation info
      */
     private fun drawMultilineText(
         canvas: Canvas,
@@ -996,79 +1318,222 @@ class AndroidPTPPDFGenerator : PTPPDFGenerator {
         startY: Float,
         maxWidth: Float,
         paint: Paint,
-        lineSpacing: Float
-    ): Float {
+        lineSpacing: Float,
+        maxLines: Int = Int.MAX_VALUE
+    ): TextDrawResult {
+        // Handle empty/blank text
+        if (text.isBlank()) {
+            return TextDrawResult(
+                endY = startY,
+                linesDrawn = 0,
+                truncated = false,
+                drawnText = ""
+            )
+        }
+
         var y = startY
-        val words = text.split(" ")
+        val words = text.trim().split(Regex("\\s+")) // Handle multiple spaces
         var currentLine = ""
+        var linesDrawn = 0
+        val drawnLines = mutableListOf<String>()
 
         for (word in words) {
             val testLine = if (currentLine.isEmpty()) word else "$currentLine $word"
-            val textWidth = paint.measureText(testLine)
+            val testWidth = paint.measureText(testLine)
 
-            if (textWidth > maxWidth) {
-                // Draw current line if not empty
-                if (currentLine.isNotEmpty()) {
-                    canvas.drawText(currentLine, x, y, paint)
-                    y += lineSpacing
-                }
-
-                // Handle word that's too long - break at character level
-                if (paint.measureText(word) > maxWidth) {
-                    var remainingWord = word
-                    while (remainingWord.isNotEmpty()) {
-                        var charCount = 0
-                        var fittingText = ""
-
-                        // Find max characters that fit
-                        for (char in remainingWord) {
-                            val test = fittingText + char
-                            if (paint.measureText(test) <= maxWidth) {
-                                fittingText = test
-                                charCount++
-                            } else {
-                                break
-                            }
-                        }
-
-                        if (charCount > 0) {
-                            canvas.drawText(fittingText, x, y, paint)
-                            y += lineSpacing
-                            remainingWord = remainingWord.substring(charCount)
-                        } else {
-                            // Single character exceeds width - force draw anyway
-                            canvas.drawText(remainingWord.take(1), x, y, paint)
-                            y += lineSpacing
-                            remainingWord = remainingWord.drop(1)
-                        }
+            if (testWidth > maxWidth) {
+                if (currentLine.isEmpty()) {
+                    // Word too long - break it character by character
+                    val (brokenWord, remainder) = breakLongWord(word, maxWidth, paint)
+                    if (linesDrawn < maxLines) {
+                        canvas.drawText(brokenWord, x, y, paint)
+                        drawnLines.add(brokenWord)
+                        y += lineSpacing
+                        linesDrawn++
                     }
-                    currentLine = ""
+                    currentLine = remainder
                 } else {
+                    // Draw current line
+                    if (linesDrawn < maxLines) {
+                        canvas.drawText(currentLine, x, y, paint)
+                        drawnLines.add(currentLine)
+                        y += lineSpacing
+                        linesDrawn++
+                    }
                     currentLine = word
                 }
             } else {
                 currentLine = testLine
             }
+
+            // Check if we've reached max lines
+            if (linesDrawn >= maxLines) {
+                break
+            }
         }
 
-        if (currentLine.isNotEmpty()) {
+        // Draw last line
+        if (currentLine.isNotEmpty() && linesDrawn < maxLines) {
             canvas.drawText(currentLine, x, y, paint)
+            drawnLines.add(currentLine)
             y += lineSpacing
+            linesDrawn++
         }
 
-        return y
+        val truncated = linesDrawn >= maxLines &&
+                        drawnLines.joinToString(" ").length < text.length
+
+        return TextDrawResult(
+            endY = y,
+            linesDrawn = linesDrawn,
+            truncated = truncated,
+            drawnText = drawnLines.joinToString("\n")
+        )
     }
 
     /**
+     * Result of drawing multiline text.
+     */
+    private data class TextDrawResult(
+        val endY: Float,
+        val linesDrawn: Int,
+        val truncated: Boolean,
+        val drawnText: String = ""
+    )
+
+    /**
+     * Break a long word that doesn't fit on a single line.
+     *
+     * @param word Word to break
+     * @param maxWidth Maximum width available
+     * @param paint Paint to measure text with
+     * @return Pair of (fitting part, remainder)
+     */
+    private fun breakLongWord(
+        word: String,
+        maxWidth: Float,
+        paint: Paint
+    ): Pair<String, String> {
+        var breakPoint = word.length
+
+        while (breakPoint > 0 && paint.measureText(word.substring(0, breakPoint)) > maxWidth) {
+            breakPoint--
+        }
+
+        return if (breakPoint > 0) {
+            word.substring(0, breakPoint) to word.substring(breakPoint)
+        } else {
+            word to ""
+        }
+    }
+
+    /**
+     * Paint cache to reduce object allocation during PDF generation.
+     * Reuses Paint objects for common text styles.
+     */
+    private class PaintCache {
+        private val cache = mutableMapOf<PaintKey, Paint>()
+
+        data class PaintKey(
+            val size: Float,
+            val color: Int,
+            val bold: Boolean
+        )
+
+        fun getPaint(size: Float, color: Int, bold: Boolean): Paint {
+            val key = PaintKey(size, color, bold)
+            return cache.getOrPut(key) {
+                Paint().apply {
+                    textSize = size
+                    this.color = color
+                    typeface = if (bold) {
+                        Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+                    } else {
+                        Typeface.DEFAULT
+                    }
+                    isAntiAlias = true
+                }
+            }
+        }
+
+        fun clear() {
+            cache.clear()
+        }
+    }
+
+    private val paintCache = PaintCache()
+
+    /**
      * Create a Paint object for text with specified properties.
+     * Uses cache to reduce object allocation.
      */
     private fun createTextPaint(size: Float, color: Int, bold: Boolean): Paint {
-        return Paint().apply {
-            textSize = size
-            this.color = color
-            isAntiAlias = true
-            typeface = if (bold) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+        return paintCache.getPaint(size, color, bold)
+    }
+
+    /**
+     * Optimize photo data by downsampling large images.
+     * Reduces memory usage while maintaining acceptable print quality.
+     */
+    private fun optimizePhotoData(photos: List<PhotoData>): List<PhotoData> {
+        return photos.map { photo ->
+            try {
+                val options = BitmapFactory.Options().apply {
+                    inJustDecodeBounds = true
+                }
+                BitmapFactory.decodeByteArray(photo.imageBytes, 0, photo.imageBytes.size, options)
+
+                val maxDimension = 1200
+                val sampleSize = calculateInSampleSize(
+                    options.outWidth,
+                    options.outHeight,
+                    maxDimension,
+                    maxDimension
+                )
+
+                if (sampleSize == 1) return@map photo
+
+                val decodeOptions = BitmapFactory.Options().apply {
+                    inSampleSize = sampleSize
+                }
+
+                val bitmap = BitmapFactory.decodeByteArray(
+                    photo.imageBytes, 0, photo.imageBytes.size, decodeOptions
+                ) ?: return@map photo
+
+                val outputStream = ByteArrayOutputStream()
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 85, outputStream)
+                bitmap.recycle()
+
+                photo.copy(imageBytes = outputStream.toByteArray())
+            } catch (e: Exception) {
+                photo
+            }
         }
+    }
+
+    /**
+     * Calculate appropriate sample size for image downsampling.
+     */
+    private fun calculateInSampleSize(
+        width: Int,
+        height: Int,
+        reqWidth: Int,
+        reqHeight: Int
+    ): Int {
+        var inSampleSize = 1
+
+        if (height > reqHeight || width > reqWidth) {
+            val halfHeight = height / 2
+            val halfWidth = width / 2
+
+            while ((halfHeight / inSampleSize) >= reqHeight &&
+                   (halfWidth / inSampleSize) >= reqWidth) {
+                inSampleSize *= 2
+            }
+        }
+
+        return inSampleSize
     }
 
     /**
@@ -1078,5 +1543,172 @@ class AndroidPTPPDFGenerator : PTPPDFGenerator {
         val instant = Instant.fromEpochMilliseconds(epochMillis)
         val dateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
         return "${dateTime.month.name.take(3)} ${dateTime.dayOfMonth}, ${dateTime.year}"
+    }
+
+    /**
+     * Format epoch milliseconds to human-readable date and time.
+     */
+    private fun formatDateTime(epochMillis: Long): String {
+        val instant = Instant.fromEpochMilliseconds(epochMillis)
+        val dateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
+        val hour = if (dateTime.hour > 12) dateTime.hour - 12 else if (dateTime.hour == 0) 12 else dateTime.hour
+        val amPm = if (dateTime.hour >= 12) "PM" else "AM"
+        return "${dateTime.month.name.take(3)} ${dateTime.dayOfMonth}, ${dateTime.year} at $hour:${dateTime.minute.toString().padStart(2, '0')} $amPm"
+    }
+
+    /**
+     * Draw professional cover page for PTP document.
+     */
+    private fun drawCoverPage(
+        canvas: Canvas,
+        ptp: PreTaskPlan,
+        metadata: PDFMetadata
+    ) {
+        var y = PDFLayoutConfig.PAGE_HEIGHT * 0.15f
+
+        // Company logo (larger, centered)
+        metadata.companyLogo?.let { logoBytes ->
+            val logoSize = 80f
+            val logoX = (PDFLayoutConfig.PAGE_WIDTH - logoSize) / 2
+
+            drawBitmapSafe(
+                canvas,
+                logoBytes,
+                RectF(logoX, y, logoX + logoSize, y + logoSize),
+                placeholder = null
+            )
+
+            y += logoSize + 30f
+        }
+
+        // Title
+        val titlePaint = createTextPaint(
+            28f,
+            PDFLayoutConfig.COLOR_PRIMARY,
+            true
+        )
+        titlePaint.textAlign = Paint.Align.CENTER
+
+        canvas.drawText(
+            "PRE-TASK SAFETY PLAN",
+            PDFLayoutConfig.PAGE_WIDTH / 2,
+            y,
+            titlePaint
+        )
+
+        y += 50f
+
+        // Divider
+        val linePaint = Paint().apply {
+            color = PDFLayoutConfig.COLOR_PRIMARY
+            strokeWidth = 3f
+            style = Paint.Style.STROKE
+        }
+        canvas.drawLine(
+            PDFLayoutConfig.PAGE_WIDTH * 0.25f,
+            y,
+            PDFLayoutConfig.PAGE_WIDTH * 0.75f,
+            y,
+            linePaint
+        )
+
+        y += 40f
+
+        // Project details
+        val detailsPaint = createTextPaint(
+            14f,
+            PDFLayoutConfig.COLOR_BLACK,
+            false
+        )
+        detailsPaint.textAlign = Paint.Align.CENTER
+
+        val centerX = PDFLayoutConfig.PAGE_WIDTH / 2
+
+        canvas.drawText("Project: ${metadata.projectName}", centerX, y, detailsPaint)
+        y += 24f
+
+        canvas.drawText("Work Type: ${ptp.workType}", centerX, y, detailsPaint)
+        y += 24f
+
+        canvas.drawText("Date: ${formatDate(ptp.createdAt)}", centerX, y, detailsPaint)
+        y += 24f
+
+        canvas.drawText("Crew Size: ${ptp.crewSize ?: "TBD"}", centerX, y, detailsPaint)
+        y += 50f
+
+        // Competent person
+        val boldDetailsPaint = createTextPaint(14f, PDFLayoutConfig.COLOR_BLACK, true)
+        boldDetailsPaint.textAlign = Paint.Align.CENTER
+
+        canvas.drawText("Competent Person:", centerX, y, boldDetailsPaint)
+        y += 20f
+
+        canvas.drawText(
+            metadata.competentPerson ?: "TBD",
+            centerX,
+            y,
+            detailsPaint
+        )
+
+        y += 50f
+
+        // Hazard summary
+        val content = ptp.userModifiedContent ?: ptp.aiGeneratedContent
+        content?.let {
+            val hazardCounts = it.hazards.groupBy { h -> h.severity }
+
+            // Critical hazards
+            hazardCounts[HazardSeverity.CRITICAL]?.size?.let { count ->
+                val criticalPaint = createTextPaint(16f, PDFLayoutConfig.COLOR_CRITICAL, true)
+                criticalPaint.textAlign = Paint.Align.CENTER
+                canvas.drawText("⚠️ CRITICAL HAZARDS: $count", centerX, y, criticalPaint)
+                y += 28f
+            }
+
+            // Major hazards
+            hazardCounts[HazardSeverity.MAJOR]?.size?.let { count ->
+                val majorPaint = createTextPaint(16f, PDFLayoutConfig.COLOR_MAJOR, true)
+                majorPaint.textAlign = Paint.Align.CENTER
+                canvas.drawText("⚡ MAJOR HAZARDS: $count", centerX, y, majorPaint)
+                y += 28f
+            }
+
+            // Minor hazards
+            hazardCounts[HazardSeverity.MINOR]?.size?.let { count ->
+                val minorPaint = createTextPaint(16f, PDFLayoutConfig.COLOR_MINOR, true)
+                minorPaint.textAlign = Paint.Align.CENTER
+                canvas.drawText("ℹ️ MINOR HAZARDS: $count", centerX, y, minorPaint)
+                y += 28f
+            }
+
+            y += 20f
+
+            // Document stats
+            canvas.drawText("📋 Total Job Steps: ${it.jobSteps.size}", centerX, y, detailsPaint)
+            y += 24f
+        }
+
+        // Footer with generation info
+        val footerY = PDFLayoutConfig.PAGE_HEIGHT - 80f
+        val footerPaint = createTextPaint(
+            PDFLayoutConfig.FONT_SIZE_SMALL,
+            PDFLayoutConfig.COLOR_MEDIUM_GRAY,
+            false
+        )
+        footerPaint.textAlign = Paint.Align.CENTER
+
+        canvas.drawText(
+            "Generated by HazardHawk AI",
+            centerX,
+            footerY,
+            footerPaint
+        )
+
+        canvas.drawText(
+            formatDateTime(metadata.generatedAt),
+            centerX,
+            footerY + 16f,
+            footerPaint
+        )
     }
 }

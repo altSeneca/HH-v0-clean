@@ -77,14 +77,19 @@ class GeminiPTPAIService(
             // Call Gemini API
             println("PTPAIService: Calling Gemini API")
             val geminiResponse = callGeminiAPI(prompt)
-            println("PTPAIService: Received Gemini response, length: ${geminiResponse.length}")
+            println("PTPAIService: Received Gemini response, length: ${geminiResponse.textContent.length}")
 
             // Parse the response
             println("PTPAIService: Parsing Gemini response")
-            val content = parseGeminiResponse(geminiResponse)
+            val content = parseGeminiResponse(geminiResponse.textContent)
             println("PTPAIService: Successfully parsed content with ${content.hazards.size} hazards")
 
             val processingTime = currentTimeMillis() - startTime
+
+            // Log token usage if available
+            geminiResponse.tokenUsage?.let { usage ->
+                println("PTPAIService: Token usage - Input: ${usage.promptTokenCount}, Output: ${usage.candidatesTokenCount}, Total: ${usage.totalTokenCount}, Cost: $${String.format("%.4f", usage.estimatedCost)}")
+            }
 
             Result.success(
                 PtpAIResponse(
@@ -92,7 +97,8 @@ class GeminiPTPAIService(
                     content = content,
                     confidence = calculateConfidence(content),
                     processingTimeMs = processingTime,
-                    warnings = validateContent(content)
+                    warnings = validateContent(content),
+                    tokenUsage = geminiResponse.tokenUsage
                 )
             )
         } catch (e: Exception) {
@@ -121,7 +127,7 @@ class GeminiPTPAIService(
             val geminiResponse = callGeminiAPI(prompt)
 
             // Parse the response
-            val content = parseGeminiResponse(geminiResponse)
+            val content = parseGeminiResponse(geminiResponse.textContent)
 
             val processingTime = currentTimeMillis() - startTime
 
@@ -131,7 +137,8 @@ class GeminiPTPAIService(
                     content = content,
                     confidence = calculateConfidence(content),
                     processingTimeMs = processingTime,
-                    warnings = validateContent(content)
+                    warnings = validateContent(content),
+                    tokenUsage = geminiResponse.tokenUsage
                 )
             )
         } catch (e: Exception) {
@@ -148,9 +155,17 @@ class GeminiPTPAIService(
     }
 
     /**
+     * Data class to hold Gemini API response including token usage
+     */
+    private data class GeminiAPIResponse(
+        val textContent: String,
+        val tokenUsage: TokenUsageMetadata?
+    )
+
+    /**
      * Call Gemini API with the constructed prompt
      */
-    private suspend fun callGeminiAPI(prompt: String): String {
+    private suspend fun callGeminiAPI(prompt: String): GeminiAPIResponse {
         val endpoint = "$GEMINI_API_BASE/models/$MODEL_NAME:generateContent"
         println("PTPAIService: Endpoint: $endpoint")
 
@@ -218,6 +233,16 @@ class GeminiPTPAIService(
         val responseBody = response.bodyAsText()
         val responseJson = json.parseToJsonElement(responseBody).jsonObject
 
+        // Extract token usage metadata
+        val usageMetadata = responseJson["usageMetadata"]?.jsonObject?.let { metadata ->
+            TokenUsageMetadata(
+                promptTokenCount = metadata["promptTokenCount"]?.jsonPrimitive?.int ?: 0,
+                candidatesTokenCount = metadata["candidatesTokenCount"]?.jsonPrimitive?.int ?: 0,
+                totalTokenCount = metadata["totalTokenCount"]?.jsonPrimitive?.int ?: 0,
+                modelVersion = MODEL_NAME
+            )
+        }
+
         // Extract the generated text from Gemini response
         val candidates = responseJson["candidates"]?.jsonArray
         if (candidates.isNullOrEmpty()) {
@@ -235,7 +260,10 @@ class GeminiPTPAIService(
         val text = parts[0].jsonObject["text"]?.jsonPrimitive?.content
             ?: throw Exception("No text in Gemini response")
 
-        return text
+        return GeminiAPIResponse(
+            textContent = text,
+            tokenUsage = usageMetadata
+        )
     }
 
     /**
@@ -260,8 +288,8 @@ class GeminiPTPAIService(
             }.let {
                 // Fix Gemini's occasional trailing commas in arrays/objects
                 // Replace ",]" with "]" and ",}" with "}"
-                it.replace(Regex(",\\s*]"), "]")
-                  .replace(Regex(",\\s*}"), "}")
+                it.replace(Regex(",\\s*\\]"), "]")
+                  .replace(Regex(",\\s*\\}"), "}")
             }
 
             println("PTPAIService: Cleaned JSON length: ${cleaned.length}")

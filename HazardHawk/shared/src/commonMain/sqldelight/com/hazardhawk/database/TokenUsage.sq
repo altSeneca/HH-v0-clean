@@ -1,0 +1,96 @@
+-- Token Usage Tracking
+-- Stores AI token consumption and cost data for PTP generation
+
+CREATE TABLE IF NOT EXISTS token_usage (
+    id TEXT PRIMARY KEY NOT NULL,
+    ptp_id TEXT NOT NULL,
+    prompt_tokens INTEGER NOT NULL,
+    completion_tokens INTEGER NOT NULL,
+    total_tokens INTEGER NOT NULL,
+    estimated_cost REAL NOT NULL,
+    model_name TEXT NOT NULL,
+    timestamp INTEGER NOT NULL,
+    successful INTEGER NOT NULL DEFAULT 1,
+    FOREIGN KEY (ptp_id) REFERENCES pre_task_plans(id) ON DELETE CASCADE
+);
+
+-- Index for quick lookup by PTP ID
+CREATE INDEX IF NOT EXISTS idx_token_usage_ptp_id ON token_usage(ptp_id);
+
+-- Index for time-based queries (daily/monthly usage)
+CREATE INDEX IF NOT EXISTS idx_token_usage_timestamp ON token_usage(timestamp);
+
+-- Get token usage for a specific PTP
+selectByPtpId:
+SELECT * FROM token_usage
+WHERE ptp_id = ?
+ORDER BY timestamp DESC;
+
+-- Get daily token usage summary
+selectDailyUsage:
+SELECT
+    SUM(total_tokens) AS total_tokens,
+    SUM(estimated_cost) AS total_cost,
+    COUNT(*) AS request_count
+FROM token_usage
+WHERE timestamp >= ? AND timestamp < ?;
+
+-- Get monthly token usage summary
+selectMonthlyUsage:
+SELECT
+    SUM(total_tokens) AS total_tokens,
+    SUM(estimated_cost) AS total_cost,
+    COUNT(*) AS request_count
+FROM token_usage
+WHERE timestamp >= ? AND timestamp < ?;
+
+-- Get recent token usage (for analytics dashboard)
+selectRecentUsage:
+SELECT * FROM token_usage
+ORDER BY timestamp DESC
+LIMIT ?;
+
+-- Get total usage across all PTPs
+selectTotalUsage:
+SELECT
+    SUM(total_tokens) AS total_tokens,
+    SUM(estimated_cost) AS total_cost,
+    COUNT(*) AS request_count
+FROM token_usage;
+
+-- Get usage by date range
+selectUsageByDateRange:
+SELECT * FROM token_usage
+WHERE timestamp >= ? AND timestamp <= ?
+ORDER BY timestamp DESC;
+
+-- Insert new token usage record
+insertTokenUsage:
+INSERT INTO token_usage(
+    id, ptp_id, prompt_tokens, completion_tokens,
+    total_tokens, estimated_cost, model_name, timestamp, successful
+)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+-- Delete token usage for a specific PTP (cascade will handle this, but explicit for clarity)
+deleteByPtpId:
+DELETE FROM token_usage WHERE ptp_id = ?;
+
+-- Get average cost per PTP
+selectAverageCost:
+SELECT AVG(estimated_cost) AS average_cost
+FROM token_usage
+WHERE successful = 1;
+
+-- Get token usage statistics
+selectUsageStatistics:
+SELECT
+    COUNT(*) AS total_requests,
+    SUM(total_tokens) AS total_tokens,
+    SUM(estimated_cost) AS total_cost,
+    AVG(total_tokens) AS avg_tokens_per_request,
+    AVG(estimated_cost) AS avg_cost_per_request,
+    MIN(estimated_cost) AS min_cost,
+    MAX(estimated_cost) AS max_cost
+FROM token_usage
+WHERE successful = 1;

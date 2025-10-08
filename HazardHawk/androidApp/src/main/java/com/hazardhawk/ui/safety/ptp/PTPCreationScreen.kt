@@ -155,6 +155,26 @@ fun PTPCreationScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // Token Usage Estimate (pre-generation)
+                if (generationState !is GenerationState.Success && questionnaireState.taskDescription.isNotBlank()) {
+                    com.hazardhawk.ui.safety.ptp.components.TokenCostEstimateCard(
+                        taskDescription = questionnaireState.taskDescription
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
+                // Token Usage Receipt (post-generation)
+                if (generationState is GenerationState.Success) {
+                    val successState = generationState as GenerationState.Success
+                    successState.tokenUsage?.let { tokenUsage ->
+                        com.hazardhawk.ui.safety.ptp.components.TokenUsageReceiptCard(
+                            tokenUsage = tokenUsage,
+                            processingTimeMs = successState.processingTimeMs
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+                }
+
                 // Generate Button
                 Button(
                     onClick = {

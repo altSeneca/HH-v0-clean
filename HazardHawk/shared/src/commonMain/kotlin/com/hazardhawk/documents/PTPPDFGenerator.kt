@@ -45,6 +45,8 @@ interface PTPPDFGenerator {
  * @property companyLogo Optional company logo as raw image bytes (PNG/JPEG)
  * @property projectName Name of the project this PTP belongs to
  * @property projectLocation Physical location of the project
+ * @property taskDescription Brief description of the task (shown in footer)
+ * @property competentPerson Name of the competent person overseeing the work
  * @property generatedBy Application name that generated the PDF (default: "HazardHawk")
  * @property generatedAt Timestamp when the PDF was generated (epoch milliseconds)
  */
@@ -53,6 +55,8 @@ data class PDFMetadata(
     val companyLogo: ByteArray? = null,
     val projectName: String,
     val projectLocation: String,
+    val taskDescription: String? = null,
+    val competentPerson: String? = null,
     val generatedBy: String = "HazardHawk",
     val generatedAt: Long = Clock.System.now().toEpochMilliseconds()
 ) {
@@ -69,6 +73,8 @@ data class PDFMetadata(
         } else if (other.companyLogo != null) return false
         if (projectName != other.projectName) return false
         if (projectLocation != other.projectLocation) return false
+        if (taskDescription != other.taskDescription) return false
+        if (competentPerson != other.competentPerson) return false
         if (generatedBy != other.generatedBy) return false
         if (generatedAt != other.generatedAt) return false
 
@@ -80,6 +86,8 @@ data class PDFMetadata(
         result = 31 * result + (companyLogo?.contentHashCode() ?: 0)
         result = 31 * result + projectName.hashCode()
         result = 31 * result + projectLocation.hashCode()
+        result = 31 * result + (taskDescription?.hashCode() ?: 0)
+        result = 31 * result + (competentPerson?.hashCode() ?: 0)
         result = 31 * result + generatedBy.hashCode()
         result = 31 * result + generatedAt.hashCode()
         return result
@@ -132,69 +140,3 @@ data class PhotoMetadata(
     val caption: String? = null
 )
 
-/**
- * PDF layout configuration constants for OSHA-compliant document generation.
- */
-object PDFLayoutConfig {
-    // Page dimensions (US Letter: 8.5" x 11" at 72 DPI)
-    const val PAGE_WIDTH = 612f // 8.5 * 72
-    const val PAGE_HEIGHT = 792f // 11 * 72
-
-    // Margins (0.5" all sides)
-    const val MARGIN_LEFT = 36f // 0.5 * 72
-    const val MARGIN_RIGHT = 36f
-    const val MARGIN_TOP = 36f
-    const val MARGIN_BOTTOM = 36f
-
-    // Content area
-    const val CONTENT_WIDTH = PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT // 540
-    const val CONTENT_HEIGHT = PAGE_HEIGHT - MARGIN_TOP - MARGIN_BOTTOM // 720
-
-    // Font sizes - optimized for field readability and 6th grade level
-    const val FONT_SIZE_TITLE = 20f          // Larger for prominence
-    const val FONT_SIZE_HEADING = 16f        // Larger for section scanning
-    const val FONT_SIZE_SUBHEADING = 14f
-    const val FONT_SIZE_BODY = 12f           // Increased from 10pt for field use
-    const val FONT_SIZE_SMALL = 10f          // Increased from 8pt
-    const val FONT_SIZE_LARGE = 14f          // For critical warnings
-
-    // Line spacing
-    const val LINE_SPACING_TITLE = 24f
-    const val LINE_SPACING_HEADING = 20f
-    const val LINE_SPACING_BODY = 16f
-    const val LINE_SPACING_SMALL = 13f
-
-    // Hazard box styling - INCREASED PADDING
-    const val HAZARD_BOX_PADDING_TOP = 20f      // Increased from 15f
-    const val HAZARD_BOX_PADDING_BOTTOM = 20f   // Increased from 15f
-    const val HAZARD_BOX_PADDING_LEFT = 15f     // Increased from 10f
-    const val HAZARD_BOX_PADDING_RIGHT = 15f    // Increased from 10f
-    const val HAZARD_BOX_BORDER_RADIUS = 8f
-    const val HAZARD_BOX_BORDER_WIDTH = 3f
-    const val HAZARD_BOX_MIN_HEIGHT = 100f      // Increased from 80f
-
-    // Signature section
-    const val SIGNATURE_LINE_WIDTH = 200f
-    const val SIGNATURE_LINE_HEIGHT = 60f
-    const val SIGNATURE_SPACING = 40f           // Space between signature lines
-
-    // Photo dimensions (3" x 4" at 72 DPI)
-    const val PHOTO_WIDTH = 216f // 3 * 72
-    const val PHOTO_HEIGHT = 288f // 4 * 72
-    const val PHOTO_METADATA_WIDTH = CONTENT_WIDTH - PHOTO_WIDTH - 20f // Space for metadata
-    const val PHOTOS_PER_PAGE = 2
-
-    // Colors (ARGB format for Android compatibility)
-    const val COLOR_CRITICAL = 0xFFD32F2F.toInt() // Red
-    const val COLOR_MAJOR = 0xFFFF8F00.toInt() // Orange
-    const val COLOR_MINOR = 0xFFFDD835.toInt() // Yellow
-    const val COLOR_HEADER = 0xFF1976D2.toInt() // Dark blue
-    const val COLOR_BLACK = 0xFF000000.toInt()
-    const val COLOR_DARK_GRAY = 0xFF424242.toInt()
-    const val COLOR_LIGHT_GRAY = 0xFFE0E0E0.toInt()
-
-    // Section spacing
-    const val SECTION_SPACING = 16f
-    const val SUBSECTION_SPACING = 8f
-    const val PARAGRAPH_SPACING = 4f
-}

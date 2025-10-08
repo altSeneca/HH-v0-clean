@@ -46,6 +46,13 @@ interface PTPRepository {
     suspend fun getFeedbackByDocumentType(documentType: DocumentType, limit: Int): Result<List<AILearningFeedback>>
     suspend fun getFeedbackStats(): Result<AILearningStats>
 
+    // Token usage operations
+    suspend fun storeTokenUsage(ptpId: String, usage: TokenUsageMetadata, successful: Boolean): Result<Unit>
+    suspend fun getTokenUsageForPtp(ptpId: String): Result<List<TokenUsageRecord>>
+    suspend fun getDailyTokenUsage(startTimestamp: Long, endTimestamp: Long): Result<TokenUsageSummary>
+    suspend fun getMonthlyTokenUsage(startTimestamp: Long, endTimestamp: Long): Result<TokenUsageSummary>
+    suspend fun getTotalTokenUsage(): Result<TokenUsageSummary>
+
     // Reactive data flows
     fun observePtpsByProject(projectId: String): Flow<List<PreTaskPlan>>
     fun observeOutstandingHazards(): Flow<List<HazardCorrectionWithPhotos>>
@@ -64,7 +71,21 @@ class SQLDelightPTPRepository(
 ) : PTPRepository {
 
     override suspend fun generatePtpWithAI(request: PtpAIRequest): Result<PtpAIResponse> {
-        return ptpAIService.generatePtp(request)
+        val response = ptpAIService.generatePtp(request)
+
+        // Store token usage if available and request has project ID
+        response.getOrNull()?.let { aiResponse ->
+            aiResponse.tokenUsage?.let { usage ->
+                // Store token usage record
+                storeTokenUsage(
+                    ptpId = request.questionnaire.projectName, // Use project name as temporary ID
+                    usage = usage,
+                    successful = aiResponse.success
+                )
+            }
+        }
+
+        return response
     }
 
     override suspend fun createPtp(ptp: PreTaskPlan): Result<String> {
@@ -427,12 +448,117 @@ class SQLDelightPTPRepository(
         }
     }
 
+    override suspend fun storeTokenUsage(ptpId: String, usage: TokenUsageMetadata, successful: Boolean): Result<Unit> {
+        return try {
+            val id = generateUUID()
+            database.tokenUsageQueries.insertTokenUsage(
+                id = id,
+                ptp_id = ptpId,
+                prompt_tokens = usage.promptTokenCount.toLong(),
+                completion_tokens = usage.candidatesTokenCount.toLong(),
+                total_tokens = usage.totalTokenCount.toLong(),
+                estimated_cost = usage.estimatedCost,
+                model_name = usage.modelVersion,
+                timestamp = kotlinx.datetime.Clock.System.now().toEpochMilliseconds(),
+                successful = if (successful) 1L else 0L
+            )
+            println("PTPRepository: Stored token usage for PTP $ptpId - ${usage.totalTokenCount} tokens, cost: $${String.format("%.4f", usage.estimatedCost)}")
+            Result.success(Unit)
+        } catch (e: Exception) {
+            println("PTPRepository: Error storing token usage: ${e.message}")
+            e.printStackTrace()
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getTokenUsageForPtp(ptpId: String): Result<List<TokenUsageRecord>> {
+        return try {
+            val results = database.tokenUsageQueries.selectByPtpId(ptpId)
+                .executeAsList()
+                .map { dbRecord ->
+                    TokenUsageRecord(
+                        id = dbRecord.id,
+                        ptpId = dbRecord.ptp_id,
+                        promptTokens = dbRecord.prompt_tokens.toInt(),
+                        completionTokens = dbRecord.completion_tokens.toInt(),
+                        totalTokens = dbRecord.total_tokens.toInt(),
+                        estimatedCost = dbRecord.estimated_cost,
+                        modelName = dbRecord.model_name,
+                        timestamp = dbRecord.timestamp,
+                        successful = dbRecord.successful == 1L
+                    )
+                }
+            Result.success(results)
+        } catch (e: Exception) {
+            println("PTPRepository: Error getting token usage: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getDailyTokenUsage(startTimestamp: Long, endTimestamp: Long): Result<TokenUsageSummary> {
+        return try {
+            val result = database.tokenUsageQueries.selectDailyUsage(startTimestamp, endTimestamp)
+                .executeAsOneOrNull()
+
+            val summary = TokenUsageSummary(
+                totalTokens = result?.total_tokens ?: 0L,
+                totalCost = result?.total_cost ?: 0.0,
+                requestCount = result?.request_count?.toInt() ?: 0
+            )
+            Result.success(summary)
+        } catch (e: Exception) {
+            println("PTPRepository: Error getting daily token usage: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getMonthlyTokenUsage(startTimestamp: Long, endTimestamp: Long): Result<TokenUsageSummary> {
+        return try {
+            val result = database.tokenUsageQueries.selectMonthlyUsage(startTimestamp, endTimestamp)
+                .executeAsOneOrNull()
+
+            val summary = TokenUsageSummary(
+                totalTokens = result?.total_tokens ?: 0L,
+                totalCost = result?.total_cost ?: 0.0,
+                requestCount = result?.request_count?.toInt() ?: 0
+            )
+            Result.success(summary)
+        } catch (e: Exception) {
+            println("PTPRepository: Error getting monthly token usage: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getTotalTokenUsage(): Result<TokenUsageSummary> {
+        return try {
+            val result = database.tokenUsageQueries.selectTotalUsage()
+                .executeAsOneOrNull()
+
+            val summary = TokenUsageSummary(
+                totalTokens = result?.total_tokens ?: 0L,
+                totalCost = result?.total_cost ?: 0.0,
+                requestCount = result?.request_count?.toInt() ?: 0
+            )
+            Result.success(summary)
+        } catch (e: Exception) {
+            println("PTPRepository: Error getting total token usage: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
     override fun observePtpsByProject(projectId: String): Flow<List<PreTaskPlan>> {
         TODO("Implement Flow using SQLDelight asFlow()")
     }
 
     override fun observeOutstandingHazards(): Flow<List<HazardCorrectionWithPhotos>> {
         TODO("Implement Flow using SQLDelight asFlow()")
+    }
+
+    /**
+     * Generate a UUID for new records
+     */
+    private fun generateUUID(): String {
+        return kotlinx.datetime.Clock.System.now().toEpochMilliseconds().toString() + (0..999).random()
     }
 }
 

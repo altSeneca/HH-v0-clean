@@ -245,7 +245,11 @@ class PTPViewModel(
                         // Save to repository
                         ptpRepository.createPtp(ptp)
                             .onSuccess {
-                                _generationState.value = GenerationState.Success(ptpId)
+                                _generationState.value = GenerationState.Success(
+                                    ptpId = ptpId,
+                                    tokenUsage = aiResponse.tokenUsage,
+                                    processingTimeMs = aiResponse.processingTimeMs
+                                )
                                 _uiState.update { it.copy(isLoading = false) }
                                 onSuccess(ptpId)
                             }
@@ -598,7 +602,11 @@ data class QuestionnaireState(
 sealed class GenerationState {
     object Idle : GenerationState()
     data class Generating(val progress: Float) : GenerationState()
-    data class Success(val ptpId: String) : GenerationState()
+    data class Success(
+        val ptpId: String,
+        val tokenUsage: TokenUsageMetadata? = null,
+        val processingTimeMs: Long = 0
+    ) : GenerationState()
     data class Error(val message: String) : GenerationState()
 }
 
