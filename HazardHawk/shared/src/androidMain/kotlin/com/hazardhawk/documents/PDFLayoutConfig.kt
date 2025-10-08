@@ -14,34 +14,34 @@ object PDFLayoutConfig {
     const val PAGE_WIDTH = 612f
     const val PAGE_HEIGHT = 792f
 
-    // Margins (increased for field readability)
-    const val MARGIN_TOP = 48f
-    const val MARGIN_BOTTOM = 48f
-    const val MARGIN_LEFT = 36f
-    const val MARGIN_RIGHT = 36f
+    // Margins (CONDENSED for 4-page layout)
+    const val MARGIN_TOP = 25f             // Was 48f
+    const val MARGIN_BOTTOM = 25f          // Was 48f
+    const val MARGIN_LEFT = 20f            // Was 36f
+    const val MARGIN_RIGHT = 20f           // Was 36f
 
     // Calculated dimensions
     const val CONTENT_WIDTH = PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT
     const val CONTENT_HEIGHT = PAGE_HEIGHT - MARGIN_TOP - MARGIN_BOTTOM
 
-    // Typography (increased for outdoor visibility)
-    const val FONT_SIZE_TITLE = 22f        // Was 20f
-    const val FONT_SIZE_LARGE = 16f        // For prominent text
-    const val FONT_SIZE_HEADING = 18f      // Was 16f
-    const val FONT_SIZE_SUBHEADING = 14f   // Was 12f
-    const val FONT_SIZE_BODY = 13f         // Was 12f
-    const val FONT_SIZE_SMALL = 11f        // Was 10f
+    // Typography (CONDENSED - reduced for space efficiency)
+    const val FONT_SIZE_TITLE = 18f        // Was 22f (-4pt)
+    const val FONT_SIZE_LARGE = 14f        // Was 16f
+    const val FONT_SIZE_HEADING = 14f      // Was 18f (-4pt)
+    const val FONT_SIZE_SUBHEADING = 12f   // Was 14f
+    const val FONT_SIZE_BODY = 11f         // Was 13f (-2pt)
+    const val FONT_SIZE_SMALL = 9f         // Was 11f (-2pt)
 
-    // Line spacing (improved readability)
-    const val LINE_SPACING_TITLE = 28f
-    const val LINE_SPACING_HEADING = 24f
-    const val LINE_SPACING_BODY = 18f      // Was 16f
-    const val LINE_SPACING_SMALL = 15f     // Was 13f
+    // Line spacing (CONDENSED - tighter for space efficiency)
+    const val LINE_SPACING_TITLE = 22f     // Was 28f
+    const val LINE_SPACING_HEADING = 18f   // Was 24f
+    const val LINE_SPACING_BODY = 14f      // Was 18f
+    const val LINE_SPACING_SMALL = 12f     // Was 15f
 
-    // Section spacing
-    const val SECTION_SPACING = 24f
-    const val SUBSECTION_SPACING = 16f
-    const val PARAGRAPH_SPACING = 8f
+    // Section spacing (CONDENSED)
+    const val SECTION_SPACING = 12f        // Was 24f
+    const val SUBSECTION_SPACING = 8f      // Was 16f
+    const val PARAGRAPH_SPACING = 6f       // Was 8f
 
     // Colors (high contrast for field conditions)
     const val COLOR_BLACK = 0xFF000000.toInt()
@@ -64,16 +64,17 @@ object PDFLayoutConfig {
     const val COLOR_PRIMARY = 0xFF1976D2.toInt()      // HazardHawk blue
     const val COLOR_ACCENT = 0xFFFF8F00.toInt()       // Safety orange
 
-    // Hazard box styling
-    const val HAZARD_BOX_PADDING = 16f
-    const val HAZARD_BOX_PADDING_TOP = 12f
-    const val HAZARD_BOX_PADDING_BOTTOM = 12f
-    const val HAZARD_BOX_PADDING_LEFT = 16f
-    const val HAZARD_BOX_PADDING_RIGHT = 16f
-    const val HAZARD_BOX_BORDER_WIDTH = 4f            // Was 3f
-    const val HAZARD_BOX_BORDER_RADIUS = 4f
-    const val HAZARD_BOX_CORNER_RADIUS = 4f
-    const val HAZARD_BOX_MIN_HEIGHT = 80f
+    // Hazard box styling (MINIMAL left-edge only design)
+    const val HAZARD_LEFT_EDGE_WIDTH = 2f       // Thin colored left edge only
+    const val HAZARD_BOX_PADDING = 8f           // Was 16f (condensed)
+    const val HAZARD_BOX_PADDING_LEFT = 8f      // Was 16f
+    const val HAZARD_BOX_PADDING_TOP = 8f       // Top padding
+    const val HAZARD_BOX_PADDING_BOTTOM = 8f    // Bottom padding
+    const val HAZARD_BOX_PADDING_RIGHT = 8f     // Right padding
+    const val HAZARD_VERTICAL_SPACING = 8f      // Space between hazards
+    const val HAZARD_INDENT = 8f                // Indent from left edge
+    const val HAZARD_BOX_MIN_HEIGHT = 40f       // Minimum height for hazard boxes
+    const val HAZARD_BOX_BORDER_WIDTH = 2f      // Border width (legacy for old methods)
 
     // Photo sizing
     const val PHOTOS_PER_PAGE = 2
