@@ -30,6 +30,7 @@ fun ptpModule(apiKeyProvider: () -> String) = module {
     // PTP Repository - SQLDelight implementation
     single<PTPRepository> {
         SQLDelightPTPRepository(
+            database = get<com.hazardhawk.database.HazardHawkDatabase>(),
             ptpAIService = get<PTPAIService>(),
             json = get<Json>()
         )

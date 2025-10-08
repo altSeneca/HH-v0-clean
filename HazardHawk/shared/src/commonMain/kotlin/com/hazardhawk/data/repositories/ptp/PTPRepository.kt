@@ -53,12 +53,9 @@ interface PTPRepository {
 
 /**
  * SQLDelight implementation of PTPRepository
- *
- * Note: This is a skeleton implementation. The actual implementation will depend on
- * the generated SQLDelight database interface. This serves as a contract for what
- * operations are needed.
  */
 class SQLDelightPTPRepository(
+    private val database: com.hazardhawk.database.HazardHawkDatabase,
     private val ptpAIService: com.hazardhawk.domain.services.ptp.PTPAIService,
     private val json: Json = Json {
         prettyPrint = false
@@ -72,52 +69,126 @@ class SQLDelightPTPRepository(
 
     override suspend fun createPtp(ptp: PreTaskPlan): Result<String> {
         return try {
-            // Implementation will use generated queries from PreTaskPlans.sq
-            // Example:
-            // database.preTaskPlansQueries.insertPreTaskPlan(
-            //     id = ptp.id,
-            //     project_id = ptp.projectId,
-            //     created_by = ptp.createdBy,
-            //     ... map all fields ...
-            //     ai_generated_content = json.encodeToString(ptp.aiGeneratedContent),
-            //     user_modified_content = json.encodeToString(ptp.userModifiedContent),
-            //     ... etc ...
-            // )
+            println("PTPRepository: Creating PTP with ID: ${ptp.id}")
+            println("PTPRepository: PTP has ${ptp.aiGeneratedContent?.hazards?.size ?: 0} hazards")
+
+            database.preTaskPlansQueries.insertPreTaskPlan(
+                id = ptp.id,
+                project_id = ptp.projectId,
+                created_by = ptp.createdBy,
+                created_at = ptp.createdAt,
+                updated_at = ptp.updatedAt,
+                work_type = ptp.workType,
+                work_scope = ptp.workScope,
+                crew_size = ptp.crewSize?.toLong(),
+                status = ptp.status.name.lowercase(),
+                ai_generated_content = ptp.aiGeneratedContent?.let { json.encodeToString(it) },
+                user_modified_content = ptp.userModifiedContent?.let { json.encodeToString(it) },
+                pdf_path = ptp.pdfPath,
+                cloud_storage_url = ptp.cloudStorageUrl,
+                signature_supervisor_blob = ptp.signatureSupervisor?.signatureBlob,
+                signature_supervisor_name = ptp.signatureSupervisor?.supervisorName,
+                signature_date = ptp.signatureSupervisor?.signatureDate,
+                tools_equipment = json.encodeToString(ptp.toolsEquipment),
+                mechanical_equipment = null, // Not in PreTaskPlan model
+                environmental_conditions = null, // Not in PreTaskPlan model
+                materials_involved = null, // Not in PreTaskPlan model
+                specific_tasks = null, // Not in PreTaskPlan model
+                emergency_contacts = json.encodeToString(ptp.emergencyContacts),
+                nearest_hospital = ptp.nearestHospital,
+                evacuation_routes = ptp.evacuationRoutes
+            )
+
+            println("PTPRepository: PTP '${ptp.id}' saved successfully")
             Result.success(ptp.id)
         } catch (e: Exception) {
+            println("PTPRepository: Error creating PTP: ${e.message}")
+            e.printStackTrace()
             Result.failure(e)
         }
     }
 
     override suspend fun getPtpById(id: String): Result<PreTaskPlan?> {
         return try {
-            // Implementation will use:
-            // val result = database.preTaskPlansQueries.selectPreTaskPlanById(id).executeAsOneOrNull()
-            // Then map database model to domain model
-            Result.success(null) // Placeholder
+            val result = database.preTaskPlansQueries.selectPreTaskPlanById(id).executeAsOneOrNull()
+            val ptp = result?.let { mapToDomain(it) }
+
+            println("PTPRepository: ${if (ptp != null) "Found" else "Not found"} PTP with ID: $id")
+            Result.success(ptp)
         } catch (e: Exception) {
+            println("PTPRepository: Error getting PTP by ID: ${e.message}")
+            e.printStackTrace()
             Result.failure(e)
         }
     }
 
     override suspend fun getPtpsByProject(projectId: String): Result<List<PreTaskPlan>> {
         return try {
-            // Implementation will use:
-            // val results = database.preTaskPlansQueries.selectPreTaskPlansByProject(projectId).executeAsList()
-            Result.success(emptyList()) // Placeholder
+            val results = database.preTaskPlansQueries
+                .selectPreTaskPlansByProject(projectId)
+                .executeAsList()
+                .map { mapToDomain(it) }
+
+            println("PTPRepository: Found ${results.size} PTPs for project: $projectId")
+            Result.success(results)
         } catch (e: Exception) {
+            println("PTPRepository: Error getting PTPs by project: ${e.message}")
+            e.printStackTrace()
             Result.failure(e)
         }
     }
 
     override suspend fun getPtpsByStatus(status: PtpStatus): Result<List<PreTaskPlan>> {
         return try {
-            // Implementation will use:
-            // val results = database.preTaskPlansQueries.selectPreTaskPlansByStatus(status.name.lowercase()).executeAsList()
-            Result.success(emptyList()) // Placeholder
+            val results = database.preTaskPlansQueries
+                .selectPreTaskPlansByStatus(status.name.lowercase())
+                .executeAsList()
+                .map { mapToDomain(it) }
+
+            println("PTPRepository: Found ${results.size} PTPs with status: $status")
+            Result.success(results)
         } catch (e: Exception) {
+            println("PTPRepository: Error getting PTPs by status: ${e.message}")
+            e.printStackTrace()
             Result.failure(e)
         }
+    }
+
+    private fun mapToDomain(dbPtp: com.hazardhawk.database.Pre_task_plans): PreTaskPlan {
+        return PreTaskPlan(
+            id = dbPtp.id,
+            projectId = dbPtp.project_id,
+            createdBy = dbPtp.created_by,
+            createdAt = dbPtp.created_at,
+            updatedAt = dbPtp.updated_at,
+            workType = dbPtp.work_type,
+            workScope = dbPtp.work_scope,
+            crewSize = dbPtp.crew_size?.toInt(),
+            status = PtpStatus.valueOf(dbPtp.status?.uppercase() ?: "DRAFT"),
+            aiGeneratedContent = dbPtp.ai_generated_content?.let {
+                json.decodeFromString<PtpContent>(it)
+            },
+            userModifiedContent = dbPtp.user_modified_content?.let {
+                json.decodeFromString<PtpContent>(it)
+            },
+            toolsEquipment = dbPtp.tools_equipment?.let {
+                json.decodeFromString<List<String>>(it)
+            } ?: emptyList(),
+            emergencyContacts = dbPtp.emergency_contacts?.let {
+                json.decodeFromString<List<EmergencyContact>>(it)
+            } ?: emptyList(),
+            nearestHospital = dbPtp.nearest_hospital,
+            evacuationRoutes = dbPtp.evacuation_routes,
+            pdfPath = dbPtp.pdf_path,
+            cloudStorageUrl = dbPtp.cloud_storage_url,
+            signatureSupervisor = if (dbPtp.signature_supervisor_blob != null) {
+                SignatureData(
+                    signatureBlob = dbPtp.signature_supervisor_blob,
+                    supervisorName = dbPtp.signature_supervisor_name ?: "",
+                    signatureDate = dbPtp.signature_date ?: 0L
+                )
+            } else null
+        )
     }
 
     override suspend fun updatePtpStatus(id: String, status: PtpStatus): Result<Unit> {

@@ -1,9 +1,14 @@
 package com.hazardhawk.utils
 
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
 import androidx.core.content.FileProvider
 import java.io.File
+import java.io.FileOutputStream
 
 /**
  * Utility class for managing file storage operations in the Android app.
@@ -24,8 +29,23 @@ class FileStorageUtil(private val context: Context) {
      * @param ptpId The unique ID of the Pre-Task Plan
      * @return The absolute file path where the PDF was saved
      */
-    fun savePdfToStorage(pdfBytes: ByteArray, ptpId: String): String {
-        val fileName = "PTP_${ptpId}_${System.currentTimeMillis()}.pdf"
+    fun savePdfToStorage(pdfBytes: ByteArray, ptpId: String, workType: String = "", projectName: String = ""): String {
+        // Create readable filename with date
+        val dateFormatter = java.text.SimpleDateFormat("yyyy-MM-dd_HHmm", java.util.Locale.US)
+        val dateStr = dateFormatter.format(java.util.Date())
+
+        // Clean work type and project name for filename (remove special characters)
+        val cleanWorkType = workType.replace(Regex("[^A-Za-z0-9]"), "-").take(20)
+        val cleanProject = projectName.replace(Regex("[^A-Za-z0-9]"), "-").take(20)
+
+        val fileName = if (cleanWorkType.isNotEmpty() && cleanProject.isNotEmpty()) {
+            "PTP_${cleanProject}_${cleanWorkType}_${dateStr}.pdf"
+        } else if (cleanWorkType.isNotEmpty()) {
+            "PTP_${cleanWorkType}_${dateStr}.pdf"
+        } else {
+            "PTP_${dateStr}_${ptpId.take(8)}.pdf"
+        }
+
         val directory = File(context.getExternalFilesDir(null), PDF_DIRECTORY)
 
         // Create directory if it doesn't exist
@@ -36,7 +56,65 @@ class FileStorageUtil(private val context: Context) {
         val file = File(directory, fileName)
         file.writeBytes(pdfBytes)
 
+        // ALSO save to public Documents folder for user access
+        try {
+            savePdfToPublicDocuments(pdfBytes, fileName)
+            println("FileStorageUtil: PDF also saved to public Documents folder")
+        } catch (e: Exception) {
+            println("FileStorageUtil: Failed to save to public Documents: ${e.message}")
+            e.printStackTrace()
+        }
+
         return file.absolutePath
+    }
+
+    /**
+     * Save a PDF to the public Documents/HazardHawk folder.
+     * Uses MediaStore API on Android 10+ for proper scoped storage.
+     * Falls back to legacy storage on older Android versions.
+     *
+     * @param pdfBytes The PDF content as a byte array
+     * @param fileName The filename for the PDF
+     * @return The file path or content URI string where the PDF was saved
+     */
+    private fun savePdfToPublicDocuments(pdfBytes: ByteArray, fileName: String): String {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            // Android 10+ - Use MediaStore API
+            val contentValues = ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+                put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
+                put(MediaStore.MediaColumns.RELATIVE_PATH, "${Environment.DIRECTORY_DOCUMENTS}/HazardHawk")
+            }
+
+            val resolver = context.contentResolver
+            val uri = resolver.insert(MediaStore.Files.getContentUri("external"), contentValues)
+                ?: throw Exception("Failed to create MediaStore entry")
+
+            resolver.openOutputStream(uri)?.use { outputStream ->
+                outputStream.write(pdfBytes)
+                outputStream.flush()
+            } ?: throw Exception("Failed to open output stream")
+
+            println("FileStorageUtil: Saved to MediaStore URI: $uri")
+            uri.toString()
+        } else {
+            // Android 9 and below - Use legacy storage
+            val documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
+            val hazardHawkDir = File(documentsDir, "HazardHawk")
+
+            if (!hazardHawkDir.exists()) {
+                hazardHawkDir.mkdirs()
+            }
+
+            val file = File(hazardHawkDir, fileName)
+            FileOutputStream(file).use { outputStream ->
+                outputStream.write(pdfBytes)
+                outputStream.flush()
+            }
+
+            println("FileStorageUtil: Saved to legacy path: ${file.absolutePath}")
+            file.absolutePath
+        }
     }
 
     /**

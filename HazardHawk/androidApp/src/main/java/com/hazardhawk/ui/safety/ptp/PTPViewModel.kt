@@ -54,6 +54,20 @@ class PTPViewModel(
 
     // ===== Questionnaire Methods =====
 
+    // Project Details
+    fun updateProjectName(name: String) {
+        _questionnaireState.update { it.copy(projectName = name) }
+    }
+
+    fun updateProjectLocation(location: String) {
+        _questionnaireState.update { it.copy(projectLocation = location) }
+    }
+
+    fun updateCompetentPersonName(name: String) {
+        _questionnaireState.update { it.copy(competentPersonName = name) }
+    }
+
+    // Work Type and Tasks
     fun updateWorkType(workType: String) {
         _questionnaireState.update { it.copy(workType = workType) }
     }
@@ -115,6 +129,20 @@ class PTPViewModel(
     private fun validateQuestionnaire(state: QuestionnaireState) {
         val errors = mutableListOf<String>()
 
+        // Project details validation
+        if (state.projectName.isBlank()) {
+            errors.add("Project name is required")
+        }
+
+        if (state.projectLocation.isBlank()) {
+            errors.add("Project location is required")
+        }
+
+        if (state.competentPersonName.isBlank()) {
+            errors.add("Competent person name is required")
+        }
+
+        // Work type validation
         if (state.workType.isBlank()) {
             errors.add("Work type is required")
         }
@@ -161,6 +189,9 @@ class PTPViewModel(
 
                 // Build AI request from questionnaire
                 val questionnaire = PtpQuestionnaire(
+                    projectName = state.projectName,
+                    projectLocation = state.projectLocation,
+                    competentPersonName = state.competentPersonName,
                     workType = state.workType,
                     specificTasks = listOf(state.taskDescription), // Convert description to task list
                     toolsEquipment = state.toolsEquipment.split(",").map { it.trim() },
@@ -317,6 +348,28 @@ class PTPViewModel(
         }
     }
 
+    fun deleteHazard(index: Int) {
+        _documentState.update { state ->
+            state?.let {
+                val currentContent = it.userModifiedContent ?: it.aiGeneratedContent
+                if (currentContent != null) {
+                    val updatedHazards = currentContent.hazards.toMutableList().apply {
+                        if (index < size) {
+                            removeAt(index)
+                        }
+                    }
+                    val updatedContent = currentContent.copy(hazards = updatedHazards)
+                    it.copy(
+                        userModifiedContent = updatedContent,
+                        hasUnsavedChanges = true
+                    )
+                } else {
+                    it
+                }
+            }
+        }
+    }
+
     fun updateJobStep(index: Int, jobStep: JobStep) {
         _documentState.update { state ->
             state?.let {
@@ -397,16 +450,26 @@ class PTPViewModel(
         onComplete: (String) -> Unit,
         onError: (String) -> Unit = {}
     ) {
-        val docState = _documentState.value ?: return
+        println("PTPViewModel: exportPDF called")
+        val docState = _documentState.value
 
+        if (docState == null) {
+            println("PTPViewModel: ERROR - No document state available for PDF export")
+            onError("No document loaded")
+            return
+        }
+
+        println("PTPViewModel: Starting PDF export for PTP: ${docState.ptp.id}")
         viewModelScope.launch {
             _uiState.update { it.copy(isExporting = true) }
 
             try {
                 val ptp = docState.ptp
+                println("PTPViewModel: Loading photos for PTP")
 
                 // Load photos for the PTP
                 val photos = loadPhotosForPtp(ptp.id)
+                println("PTPViewModel: Loaded ${photos.size} photos")
 
                 // Create metadata
                 val metadata = PDFMetadata(
@@ -414,27 +477,38 @@ class PTPViewModel(
                     projectName = projectName ?: ptp.projectId ?: "Unknown Project",
                     projectLocation = projectLocation
                 )
+                println("PTPViewModel: Metadata created - company: $companyName, project: ${metadata.projectName}")
 
                 // Generate PDF
+                println("PTPViewModel: Calling PDF generator")
                 pdfGenerator.generatePDFWithMetadata(ptp, photos, metadata)
                     .onSuccess { pdfBytes ->
+                        println("PTPViewModel: PDF generated successfully, size: ${pdfBytes.size} bytes")
+
                         // Save to local storage
                         val filePath = withContext(Dispatchers.IO) {
+                            println("PTPViewModel: Saving PDF to storage")
                             fileStorageUtil.savePdfToStorage(pdfBytes, ptp.id)
                         }
+                        println("PTPViewModel: PDF saved to: $filePath")
 
                         // Update database with PDF path
+                        println("PTPViewModel: Updating database with PDF path")
                         ptpRepository.updatePtpPdfPaths(ptp.id, filePath, null)
                             .onSuccess {
+                                println("PTPViewModel: Database updated successfully")
                                 _documentState.update { state ->
                                     state?.copy(
                                         ptp = ptp.copy(pdfPath = filePath)
                                     )
                                 }
                                 _uiState.update { it.copy(isExporting = false) }
+                                println("PTPViewModel: PDF export complete!")
                                 onComplete(filePath)
                             }
                             .onFailure { error ->
+                                println("PTPViewModel: ERROR updating database: ${error.message}")
+                                error.printStackTrace()
                                 _uiState.update {
                                     it.copy(
                                         isExporting = false,
@@ -445,6 +519,8 @@ class PTPViewModel(
                             }
                     }
                     .onFailure { error ->
+                        println("PTPViewModel: ERROR generating PDF: ${error.message}")
+                        error.printStackTrace()
                         _uiState.update {
                             it.copy(
                                 isExporting = false,
@@ -454,6 +530,8 @@ class PTPViewModel(
                         onError(error.message ?: "PDF generation failed")
                     }
             } catch (e: Exception) {
+                println("PTPViewModel: ERROR in export PDF: ${e.message}")
+                e.printStackTrace()
                 _uiState.update {
                     it.copy(
                         isExporting = false,
@@ -492,6 +570,12 @@ class PTPViewModel(
  * Questionnaire state for PTP creation
  */
 data class QuestionnaireState(
+    // Project Details (OSHA-required)
+    val projectName: String = "",
+    val projectLocation: String = "",
+    val competentPersonName: String = "",
+
+    // Work Type and Tasks
     val workType: String = "",
     val taskDescription: String = "",
     val toolsEquipment: String = "",

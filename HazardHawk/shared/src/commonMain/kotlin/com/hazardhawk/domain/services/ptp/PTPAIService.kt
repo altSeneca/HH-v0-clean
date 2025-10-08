@@ -6,11 +6,10 @@ import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
+import io.ktor.client.plugins.*
 import io.ktor.http.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
-import kotlinx.coroutines.withTimeout
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * AI service for Pre-Task Plan generation using Google Gemini
@@ -57,7 +56,7 @@ class GeminiPTPAIService(
     companion object {
         private const val GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta"
         private const val MODEL_NAME = "gemini-2.5-flash" // Using Gemini 2.5 Flash for faster, cost-effective generation
-        private const val REQUEST_TIMEOUT_SECONDS = 60
+        private const val REQUEST_TIMEOUT_MILLIS = 120000L // 2 minutes for AI generation
 
         // OSHA code regex pattern: 1926.XXX or 1926.XXX(x)(x)
         internal val OSHA_CODE_PATTERN = Regex("^1926\\.[0-9]+(\\([a-z]\\)(\\([0-9]+\\))?)?$")
@@ -65,16 +64,25 @@ class GeminiPTPAIService(
 
     override suspend fun generatePtp(request: PtpAIRequest): Result<PtpAIResponse> {
         return try {
+            println("PTPAIService: Starting PTP generation")
+            println("PTPAIService: API Key configured: ${apiKey.isNotBlank()}")
+
             val startTime = currentTimeMillis()
 
             // Build the AI prompt
+            println("PTPAIService: Building AI prompt")
             val prompt = PtpAIPrompt.buildPrompt(request)
+            println("PTPAIService: Prompt length: ${prompt.length} characters")
 
             // Call Gemini API
+            println("PTPAIService: Calling Gemini API")
             val geminiResponse = callGeminiAPI(prompt)
+            println("PTPAIService: Received Gemini response, length: ${geminiResponse.length}")
 
             // Parse the response
+            println("PTPAIService: Parsing Gemini response")
             val content = parseGeminiResponse(geminiResponse)
+            println("PTPAIService: Successfully parsed content with ${content.hazards.size} hazards")
 
             val processingTime = currentTimeMillis() - startTime
 
@@ -88,6 +96,8 @@ class GeminiPTPAIService(
                 )
             )
         } catch (e: Exception) {
+            println("PTPAIService: ERROR - ${e.message}")
+            e.printStackTrace()
             Result.failure(e)
         }
     }
@@ -142,6 +152,7 @@ class GeminiPTPAIService(
      */
     private suspend fun callGeminiAPI(prompt: String): String {
         val endpoint = "$GEMINI_API_BASE/models/$MODEL_NAME:generateContent"
+        println("PTPAIService: Endpoint: $endpoint")
 
         val requestBody = buildJsonObject {
             putJsonArray("contents") {
@@ -184,16 +195,24 @@ class GeminiPTPAIService(
             }
         }
 
-        val response = withTimeout(REQUEST_TIMEOUT_SECONDS.seconds) {
-            httpClient.post(endpoint) {
-                parameter("key", apiKey)
-                contentType(ContentType.Application.Json)
-                setBody(requestBody.toString())
+        println("PTPAIService: Sending POST request to Gemini")
+        val response = httpClient.post(endpoint) {
+            parameter("key", apiKey)
+            contentType(ContentType.Application.Json)
+            setBody(requestBody.toString())
+            // Override default timeout for AI generation requests
+            timeout {
+                requestTimeoutMillis = REQUEST_TIMEOUT_MILLIS
+                connectTimeoutMillis = 30000L
+                socketTimeoutMillis = REQUEST_TIMEOUT_MILLIS
             }
         }
 
+        println("PTPAIService: Received response with status: ${response.status}")
         if (!response.status.isSuccess()) {
-            throw Exception("Gemini API error: ${response.status} - ${response.bodyAsText()}")
+            val errorBody = response.bodyAsText()
+            println("PTPAIService: ERROR Response Body: $errorBody")
+            throw Exception("Gemini API error: ${response.status} - $errorBody")
         }
 
         val responseBody = response.bodyAsText()
@@ -224,6 +243,10 @@ class GeminiPTPAIService(
      */
     private fun parseGeminiResponse(responseText: String): PtpContent {
         try {
+            println("PTPAIService: Raw response text length: ${responseText.length}")
+            println("PTPAIService: First 200 chars: ${responseText.take(200)}")
+            println("PTPAIService: Last 200 chars: ${responseText.takeLast(200)}")
+
             // The response should be pure JSON since we set responseMimeType
             val cleaned = responseText.trim().let {
                 // Remove markdown code blocks if present
@@ -234,7 +257,15 @@ class GeminiPTPAIService(
                 } else {
                     it
                 }
+            }.let {
+                // Fix Gemini's occasional trailing commas in arrays/objects
+                // Replace ",]" with "]" and ",}" with "}"
+                it.replace(Regex(",\\s*]"), "]")
+                  .replace(Regex(",\\s*}"), "}")
             }
+
+            println("PTPAIService: Cleaned JSON length: ${cleaned.length}")
+            println("PTPAIService: Attempting to parse JSON...")
 
             val jsonElement = json.parseToJsonElement(cleaned).jsonObject
 
@@ -294,6 +325,9 @@ class GeminiPTPAIService(
                 requiredTraining = requiredTraining
             )
         } catch (e: Exception) {
+            println("PTPAIService: Parse error at offset: ${e.message}")
+            println("PTPAIService: Full response text:")
+            println(responseText)
             throw Exception("Failed to parse Gemini response: ${e.message}", e)
         }
     }

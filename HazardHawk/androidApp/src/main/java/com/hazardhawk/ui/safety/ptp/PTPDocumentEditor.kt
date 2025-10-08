@@ -122,6 +122,9 @@ fun PTPDocumentEditor(
                     onHazardUpdate = { index, hazard ->
                         viewModel.updateHazard(index, hazard)
                     },
+                    onHazardDelete = { index ->
+                        viewModel.deleteHazard(index)
+                    },
                     onJobStepUpdate = { index, step ->
                         viewModel.updateJobStep(index, step)
                     },
@@ -201,6 +204,7 @@ fun PTPDocumentEditor(
 private fun PTPEditorContent(
     documentState: DocumentState,
     onHazardUpdate: (Int, PtpHazard) -> Unit,
+    onHazardDelete: (Int) -> Unit,
     onJobStepUpdate: (Int, JobStep) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -243,6 +247,9 @@ private fun PTPEditorContent(
                     hazard = hazard,
                     onUpdate = { updatedHazard ->
                         onHazardUpdate(index, updatedHazard)
+                    },
+                    onDelete = {
+                        onHazardDelete(index)
                     }
                 )
             }
@@ -457,10 +464,12 @@ private fun InfoRow(label: String, value: String) {
 @Composable
 private fun HazardCard(
     hazard: PtpHazard,
-    onUpdate: (PtpHazard) -> Unit
+    onUpdate: (PtpHazard) -> Unit,
+    onDelete: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     var isEditing by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -521,6 +530,17 @@ private fun HazardCard(
                 }
 
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    IconButton(
+                        onClick = { showDeleteDialog = true },
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Delete,
+                            "Delete hazard",
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
+
                     IconButton(
                         onClick = { isEditing = !isEditing },
                         modifier = Modifier.size(40.dp)
@@ -611,6 +631,59 @@ private fun HazardCard(
                 }
             }
         }
+    }
+
+    // Delete confirmation dialog
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            icon = {
+                Icon(
+                    Icons.Default.Warning,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error
+                )
+            },
+            title = {
+                Text("Delete Hazard?")
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "Are you sure you want to delete this hazard?",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        "OSHA Code: ${hazard.oshaCode}",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        hazard.description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onDelete()
+                        showDeleteDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 

@@ -150,18 +150,33 @@ object PDFLayoutConfig {
     const val CONTENT_WIDTH = PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT // 540
     const val CONTENT_HEIGHT = PAGE_HEIGHT - MARGIN_TOP - MARGIN_BOTTOM // 720
 
-    // Font sizes (in points)
-    const val FONT_SIZE_TITLE = 18f
-    const val FONT_SIZE_HEADING = 14f
-    const val FONT_SIZE_SUBHEADING = 12f
-    const val FONT_SIZE_BODY = 10f
-    const val FONT_SIZE_SMALL = 8f
+    // Font sizes - optimized for field readability and 6th grade level
+    const val FONT_SIZE_TITLE = 20f          // Larger for prominence
+    const val FONT_SIZE_HEADING = 16f        // Larger for section scanning
+    const val FONT_SIZE_SUBHEADING = 14f
+    const val FONT_SIZE_BODY = 12f           // Increased from 10pt for field use
+    const val FONT_SIZE_SMALL = 10f          // Increased from 8pt
+    const val FONT_SIZE_LARGE = 14f          // For critical warnings
 
     // Line spacing
-    const val LINE_SPACING_TITLE = 22f
-    const val LINE_SPACING_HEADING = 18f
-    const val LINE_SPACING_BODY = 14f
-    const val LINE_SPACING_SMALL = 10f
+    const val LINE_SPACING_TITLE = 24f
+    const val LINE_SPACING_HEADING = 20f
+    const val LINE_SPACING_BODY = 16f
+    const val LINE_SPACING_SMALL = 13f
+
+    // Hazard box styling - INCREASED PADDING
+    const val HAZARD_BOX_PADDING_TOP = 20f      // Increased from 15f
+    const val HAZARD_BOX_PADDING_BOTTOM = 20f   // Increased from 15f
+    const val HAZARD_BOX_PADDING_LEFT = 15f     // Increased from 10f
+    const val HAZARD_BOX_PADDING_RIGHT = 15f    // Increased from 10f
+    const val HAZARD_BOX_BORDER_RADIUS = 8f
+    const val HAZARD_BOX_BORDER_WIDTH = 3f
+    const val HAZARD_BOX_MIN_HEIGHT = 100f      // Increased from 80f
+
+    // Signature section
+    const val SIGNATURE_LINE_WIDTH = 200f
+    const val SIGNATURE_LINE_HEIGHT = 60f
+    const val SIGNATURE_SPACING = 40f           // Space between signature lines
 
     // Photo dimensions (3" x 4" at 72 DPI)
     const val PHOTO_WIDTH = 216f // 3 * 72
