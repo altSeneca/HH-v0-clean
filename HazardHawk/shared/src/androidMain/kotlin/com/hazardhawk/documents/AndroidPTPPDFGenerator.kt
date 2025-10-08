@@ -190,14 +190,15 @@ class AndroidPTPPDFGenerator : PTPPDFGenerator {
                 currentY += 10f
             }
 
-            // Emergency procedures (compact)
+            // Emergency procedures (enhanced and prominent)
+            currentY += 5f
             canvas.drawText(
                 "EMERGENCY PROCEDURES",
                 PDFLayoutConfig.MARGIN_LEFT,
                 currentY + PDFLayoutConfig.FONT_SIZE_HEADING,
                 sectionPaint
             )
-            currentY += PDFLayoutConfig.LINE_SPACING_HEADING + 10f
+            currentY += PDFLayoutConfig.LINE_SPACING_HEADING + 8f
 
             val competentPerson = metadata.competentPerson ?: ptp.emergencyContacts.firstOrNull()?.name ?: "competent person"
             val emergencyProcs = listOf(
@@ -216,21 +217,14 @@ class AndroidPTPPDFGenerator : PTPPDFGenerator {
                     currentY + PDFLayoutConfig.FONT_SIZE_BODY,
                     emergencyPaint
                 )
-                currentY += PDFLayoutConfig.LINE_SPACING_BODY
+                currentY += PDFLayoutConfig.LINE_SPACING_BODY + 2f
             }
 
-            drawFooterCompact(canvas, PDFLayoutConfig.PAGE_HEIGHT - 30f, metadata.projectName, 3)
-            document.finishPage(page)
-
-            // PAGE 4: Signatures
-            pageInfo = PdfDocument.PageInfo.Builder(PDFLayoutConfig.PAGE_WIDTH.toInt(), PDFLayoutConfig.PAGE_HEIGHT.toInt(), 4).create()
-            page = document.startPage(pageInfo)
-            canvas = page.canvas
-            currentY = PDFLayoutConfig.MARGIN_TOP
-
+            // Add signatures on same page (Page 3)
+            currentY += 20f
             currentY = drawSignaturesCompact(canvas, currentY, metadata, ptp.crewSize ?: 10)
 
-            drawFooterCompact(canvas, PDFLayoutConfig.PAGE_HEIGHT - 30f, metadata.projectName, 4)
+            drawFooterCompact(canvas, PDFLayoutConfig.PAGE_HEIGHT - 30f, metadata.projectName, 3)
             document.finishPage(page)
 
             // Convert to ByteArray
@@ -361,11 +355,11 @@ class AndroidPTPPDFGenerator : PTPPDFGenerator {
         var currentY = y
         val overflowSteps = mutableListOf<JobStep>()
 
-        // Table column widths (adjusted to fit page width)
+        // Table column widths (optimized for content balance)
         val colStep = 30f
-        val colHazards = 180f
-        val colControls = 180f
-        val colPPE = 150f
+        val colHazards = 185f      // Increased from 180f for better text wrapping
+        val colControls = 230f      // Increased from 180f (most important column)
+        val colPPE = 115f           // Reduced from 150f (shorter content)
         val tableWidth = colStep + colHazards + colControls + colPPE
 
         // Draw table header
@@ -555,13 +549,7 @@ class AndroidPTPPDFGenerator : PTPPDFGenerator {
                 borderPaint
             )
 
-            val workerTextPaint = createTextPaint(PDFLayoutConfig.FONT_SIZE_SMALL, PDFLayoutConfig.COLOR_DARK_GRAY, false)
-            canvas.drawText(
-                "Worker $i",
-                PDFLayoutConfig.MARGIN_LEFT + 5f,
-                currentY + 20f,
-                workerTextPaint
-            )
+            // Empty row - no "Worker #" label (user will fill in name)
 
             // Vertical dividers
             canvas.drawLine(PDFLayoutConfig.MARGIN_LEFT + colName, currentY,
