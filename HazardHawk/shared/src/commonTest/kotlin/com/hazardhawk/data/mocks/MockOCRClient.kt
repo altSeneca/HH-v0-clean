@@ -177,7 +177,7 @@ class MockOCRClient(
         }
         val year = 2025
         val number = Random.nextInt(100000, 999999)
-        return "$prefix-$year-$number"
+        return prefix + "-" + year + "-" + number
     }
     
     /**
@@ -186,7 +186,9 @@ class MockOCRClient(
     private fun generateIssueDate(): String {
         val month = Random.nextInt(1, 13)
         val day = Random.nextInt(1, 29)
-        return "2025-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}"
+        val monthStr = month.toString().padStart(2, '0')
+        val dayStr = day.toString().padStart(2, '0')
+        return "2025-" + monthStr + "-" + dayStr
     }
     
     /**
@@ -198,7 +200,9 @@ class MockOCRClient(
         } else {
             val month = Random.nextInt(1, 13)
             val day = Random.nextInt(1, 29)
-            "2027-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}"
+            val monthStr = month.toString().padStart(2, '0')
+            val dayStr = day.toString().padStart(2, '0')
+            "2027-" + monthStr + "-" + dayStr
         }
     }
     
@@ -218,22 +222,18 @@ class MockOCRClient(
      * Generate realistic raw text
      */
     private fun generateRawText(certType: String): String {
-        return """
-            $certType Certification
-            
-            This certifies that the holder has successfully completed
-            the required training program and demonstrated competency
-            in the subject matter.
-            
-            Certificate Type: $certType
-            Training Provider: ${getIssuingAuthority(certType)}
-            
-            Topics Covered:
-            - Safety regulations and compliance
-            - Hazard recognition and mitigation
-            - Emergency response procedures
-            - Best practices and standards
-        """.trimIndent()
+        val authority = getIssuingAuthority(certType)
+        return certType + " Certification\n\n" +
+            "This certifies that the holder has successfully completed\n" +
+            "the required training program and demonstrated competency\n" +
+            "in the subject matter.\n\n" +
+            "Certificate Type: " + certType + "\n" +
+            "Training Provider: " + authority + "\n\n" +
+            "Topics Covered:\n" +
+            "- Safety regulations and compliance\n" +
+            "- Hazard recognition and mitigation\n" +
+            "- Emergency response procedures\n" +
+            "- Best practices and standards"
     }
     
     /**

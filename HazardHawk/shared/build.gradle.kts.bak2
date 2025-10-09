@@ -240,7 +240,7 @@ tasks.register<Test>("e2eTest") {
 apply(plugin = "jacoco")
 
 tasks.register<JacocoReport>("jacocoTestReport") {
-    // dependsOn(tasks.named("test")) // Disabled: KMP projects dont have single test task
+    dependsOn(tasks.named("test"))
     
     reports {
         xml.required.set(true)
