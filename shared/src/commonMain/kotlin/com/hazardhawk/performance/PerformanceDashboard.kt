@@ -1,4 +1,5 @@
 package com.hazardhawk.performance
+import kotlinx.datetime.Clock
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -170,7 +171,7 @@ class PerformanceDashboard(
         }
         
         val status = IntegrationValidationStatus(
-            timestamp = System.currentTimeMillis(),
+            timestamp = Clock.System.now().toEpochMilliseconds(),
             validationPassed = validationReport.passed,
             overallScore = validationReport.overallScore,
             targetValidation = targetResults,
@@ -193,7 +194,7 @@ class PerformanceDashboard(
         val benchmarkResults = benchmarkSuite.runBenchmarkSuite()
         
         return ComprehensivePerformanceReport(
-            timestamp = System.currentTimeMillis(),
+            timestamp = Clock.System.now().toEpochMilliseconds(),
             performanceMetrics = performanceMetrics,
             repositoryMetrics = repositoryMetrics,
             workflowMetrics = workflowMetrics,
@@ -497,7 +498,7 @@ class PerformanceDashboard(
         val trends = calculateTrends()
         
         return RealTimeMetrics(
-            timestamp = System.currentTimeMillis(),
+            timestamp = Clock.System.now().toEpochMilliseconds(),
             overallPerformanceGrade = performanceGrade,
             overallScore = overallScore,
             cameraFPS = performanceMetrics.currentFPS,
@@ -772,7 +773,7 @@ class IntegrationPerformanceTestRunner(
      * Run complete integration performance test suite.
      */
     suspend fun runIntegrationTestSuite(buildVersion: String): IntegrationTestResults {
-        val startTime = System.currentTimeMillis()
+        val startTime = Clock.System.now().toEpochMilliseconds()
         
         // 1. Run integration validation
         val integrationValidation = dashboard.runIntegrationValidation()
@@ -786,7 +787,7 @@ class IntegrationPerformanceTestRunner(
         // 4. Generate comprehensive report
         val comprehensiveReport = dashboard.generateComprehensiveReport()
         
-        val totalDuration = System.currentTimeMillis() - startTime
+        val totalDuration = Clock.System.now().toEpochMilliseconds() - startTime
         
         // Determine if integration passes
         val passed = integrationValidation.validationPassed &&
@@ -794,7 +795,7 @@ class IntegrationPerformanceTestRunner(
                     workflowResults.allWorkflowsPassedTarget
         
         return IntegrationTestResults(
-            timestamp = System.currentTimeMillis(),
+            timestamp = Clock.System.now().toEpochMilliseconds(),
             buildVersion = buildVersion,
             testDurationMs = totalDuration,
             passed = passed,

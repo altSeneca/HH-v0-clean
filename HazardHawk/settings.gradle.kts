@@ -14,5 +14,5 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "HazardHawk"
-include(":shared")
+// :shared module now comes from root project
 include(":androidApp")

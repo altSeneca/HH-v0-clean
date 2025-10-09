@@ -3,15 +3,16 @@ package com.hazardhawk.di
 import org.koin.dsl.module
 
 /**
- * Domain module containing business logic use cases.
- * Use cases encapsulate specific business operations and coordinate between repositories.
+ * Domain module for business logic use cases.
+ * Contains use case implementations and business rules.
  */
 val domainModule = module {
     
-    // Photo Management Use Cases
+    // Photo use cases
     // factory<CapturePhotoUseCase> {
     //     CapturePhotoUseCase(
     //         photoRepository = get(),
+    //         storageManager = get(),
     //         locationService = get()
     //     )
     // }
@@ -22,17 +23,19 @@ val domainModule = module {
     //     )
     // }
     
-    // factory<DeletePhotoUseCase> {
-    //     DeletePhotoUseCase(
-    //         photoRepository = get()
+    // factory<DeletePhotosUseCase> {
+    //     DeletePhotosUseCase(
+    //         photoRepository = get(),
+    //         storageManager = get()
     //     )
     // }
     
-    // AI Analysis Use Cases
+    // Analysis use cases
     // factory<AnalyzePhotoUseCase> {
     //     AnalyzePhotoUseCase(
     //         analysisRepository = get(),
-    //         photoRepository = get()
+    //         aiService = get(),
+    //         complianceEngine = get()
     //     )
     // }
     
@@ -42,11 +45,11 @@ val domainModule = module {
     //     )
     // }
     
-    // Tag Management Use Cases
+    // Tag use cases
     // factory<GetRecommendedTagsUseCase> {
     //     GetRecommendedTagsUseCase(
     //         tagRepository = get(),
-    //         analysisRepository = get()
+    //         aiService = get()
     //     )
     // }
     
@@ -57,22 +60,24 @@ val domainModule = module {
     //     )
     // }
     
-    // Safety Report Use Cases
+    // Report use cases
     // factory<GenerateReportUseCase> {
     //     GenerateReportUseCase(
-    //         reportRepository = get(),
     //         photoRepository = get(),
-    //         analysisRepository = get()
+    //         analysisRepository = get(),
+    //         tagRepository = get(),
+    //         reportGenerator = get()
     //     )
     // }
     
     // factory<ExportReportUseCase> {
     //     ExportReportUseCase(
-    //         reportRepository = get()
+    //         reportRepository = get(),
+    //         fileManager = get()
     //     )
     // }
     
-    // Project Management Use Cases
+    // Project use cases
     // factory<CreateProjectUseCase> {
     //     CreateProjectUseCase(
     //         projectRepository = get(),
@@ -85,50 +90,62 @@ val domainModule = module {
     //         projectRepository = get()
     //     )
     // }
-    
-    // OSHA Compliance Use Cases
-    // factory<ValidateComplianceUseCase> {
-    //     ValidateComplianceUseCase(
-    //         analysisRepository = get(),
-    //         tagRepository = get()
-    //     )
-    // }
-    
-    // factory<GenerateComplianceReportUseCase> {
-    //     GenerateComplianceReportUseCase(
-    //         reportRepository = get(),
-    //         analysisRepository = get()
-    //     )
-    // }
 }
 
 /**
- * Domain services module for complex business logic
+ * Domain services module for complex business operations.
  */
 val domainServicesModule = module {
     
-    // AI Service Facade for managing different AI providers
-    // single<AIServiceFacade> {
-    //     AIServiceFacade(
-    //         geminiService = get(),
-    //         localAIService = get(),
-    //         applicationScope = getApplicationScope()
+    // AI services
+    // single<AIAnalysisService> {
+    //     AIAnalysisServiceImpl(
+    //         geminiClient = get(),
+    //         onnxService = get(),
+    //         fallbackService = get()
     //     )
     // }
     
-    // Safety recommendation engine
-    // single<SafetyRecommendationEngine> {
-    //     SafetyRecommendationEngine(
-    //         tagRepository = get(),
-    //         analysisRepository = get()
-    //     )
-    // }
-    
-    // Hazard detection and classification service
     // single<HazardDetectionService> {
-    //     HazardDetectionService(
+    //     HazardDetectionServiceImpl(
+    //         yoloDetector = get(),
+    //         geminiAnalyzer = get(),
+    //         confidenceThreshold = 0.7f
+    //     )
+    // }
+    
+    // OSHA compliance engine
+    // single<OSHAComplianceEngine> {
+    //     OSHAComplianceEngineImpl(
+    //         regulationsDatabase = get(),
+    //         complianceRules = get()
+    //     )
+    // }
+    
+    // Report generation service
+    // single<ReportGenerationService> {
+    //     ReportGenerationServiceImpl(
+    //         pdfGenerator = get(),
+    //         templateEngine = get(),
+    //         signatureService = get()
+    //     )
+    // }
+    
+    // Tag recommendation engine
+    // single<TagRecommendationEngine> {
+    //     TagRecommendationEngineImpl(
     //         aiService = get(),
-    //         oshaStandards = get()
+    //         oshaEngine = get(),
+    //         learningModel = get()
+    //     )
+    // }
+    
+    // File management service
+    // single<FileManagementService> {
+    //     FileManagementServiceImpl(
+    //         storageProvider = get(),
+    //         encryptionService = get(),
+    //         compressionService = get()
     //     )
     // }
 }

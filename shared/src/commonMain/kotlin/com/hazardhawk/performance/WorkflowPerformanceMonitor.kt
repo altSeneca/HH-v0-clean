@@ -1,4 +1,5 @@
 package com.hazardhawk.performance
+import kotlinx.datetime.Clock
 
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -30,7 +31,7 @@ class WorkflowPerformanceMonitor {
         var success: Boolean = false,
         var errorMessage: String? = null
     ) {
-        val durationMs: Long get() = (endTime ?: System.currentTimeMillis()) - startTime
+        val durationMs: Long get() = (endTime ?: Clock.System.now().toEpochMilliseconds()) - startTime
         val isComplete: Boolean get() = endTime != null
         val stepCount: Int get() = steps.size
         val successfulSteps: Int get() = steps.count { it.success }
@@ -46,7 +47,7 @@ class WorkflowPerformanceMonitor {
         var errorMessage: String? = null,
         val metadata: MutableMap<String, Any> = mutableMapOf()
     ) {
-        val durationMs: Long get() = (endTime ?: System.currentTimeMillis()) - startTime
+        val durationMs: Long get() = (endTime ?: Clock.System.now().toEpochMilliseconds()) - startTime
     }
     
     enum class WorkflowType {
@@ -89,7 +90,7 @@ class WorkflowPerformanceMonitor {
             val workflow = WorkflowExecution(
                 workflowId = workflowId,
                 workflowType = workflowType,
-                startTime = System.currentTimeMillis(),
+                startTime = Clock.System.now().toEpochMilliseconds(),
                 metadata = metadata.toMutableMap()
             )
             
@@ -113,7 +114,7 @@ class WorkflowPerformanceMonitor {
                 val step = WorkflowStep(
                     stepName = stepName,
                     stepType = stepType,
-                    startTime = System.currentTimeMillis(),
+                    startTime = Clock.System.now().toEpochMilliseconds(),
                     metadata = metadata.toMutableMap()
                 )
                 workflow.steps.add(step)
@@ -137,7 +138,7 @@ class WorkflowPerformanceMonitor {
             val step = workflow?.steps?.findLast { it.stepName == stepName && it.endTime == null }
             
             if (step != null) {
-                step.endTime = System.currentTimeMillis()
+                step.endTime = Clock.System.now().toEpochMilliseconds()
                 step.success = success
                 step.errorMessage = errorMessage
                 step.metadata.putAll(metadata)
@@ -160,7 +161,7 @@ class WorkflowPerformanceMonitor {
         mutex.withLock {
             val workflow = activeWorkflows.remove(workflowId)
             if (workflow != null) {
-                workflow.endTime = System.currentTimeMillis()
+                workflow.endTime = Clock.System.now().toEpochMilliseconds()
                 workflow.success = success
                 workflow.errorMessage = errorMessage
                 workflow.metadata.putAll(metadata)
@@ -183,7 +184,7 @@ class WorkflowPerformanceMonitor {
      */
     suspend fun getCurrentMetrics(): WorkflowPerformanceMetrics {
         return mutex.withLock {
-            val now = System.currentTimeMillis()
+            val now = Clock.System.now().toEpochMilliseconds()
             val recentWorkflows = completedWorkflows.filter { now - it.startTime <= 3600_000 } // Last hour
             
             if (recentWorkflows.isEmpty()) {
@@ -227,7 +228,7 @@ class WorkflowPerformanceMonitor {
      */
     suspend fun getWorkflowAnalytics(workflowType: WorkflowType? = null, durationHours: Int = 24): WorkflowAnalytics {
         return mutex.withLock {
-            val now = System.currentTimeMillis()
+            val now = Clock.System.now().toEpochMilliseconds()
             val cutoff = now - (durationHours * 3600_000L)
             
             val workflows = completedWorkflows.filter { 
@@ -448,7 +449,7 @@ class WorkflowPerformanceMonitor {
         // Check for high failure rate
         val recentSimilarWorkflows = completedWorkflows.filter { 
             it.workflowType == workflow.workflowType && 
-            System.currentTimeMillis() - it.startTime <= 3600_000 // Last hour
+            Clock.System.now().toEpochMilliseconds() - it.startTime <= 3600_000 // Last hour
         }
         
         if (recentSimilarWorkflows.size >= 5) {

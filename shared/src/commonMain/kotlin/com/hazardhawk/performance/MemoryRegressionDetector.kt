@@ -1,4 +1,5 @@
 package com.hazardhawk.performance
+import kotlinx.datetime.Clock
 
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -172,7 +173,7 @@ class MemoryRegressionDetector(
         val availableMemory = deviceDetector.getAvailableMemory() / (1024 * 1024)
         
         return MemorySnapshot(
-            timestamp = System.currentTimeMillis(),
+            timestamp = Clock.System.now().toEpochMilliseconds(),
             totalMemoryMB = deviceCapabilities.totalMemoryMB.toFloat(),
             usedMemoryMB = currentMemoryUsage.toFloat(),
             availableMemoryMB = availableMemory.toFloat(),
@@ -220,7 +221,7 @@ class MemoryRegressionDetector(
             )
             
             RegressionAnalysisReport(
-                timestamp = System.currentTimeMillis(),
+                timestamp = Clock.System.now().toEpochMilliseconds(),
                 buildVersion = buildVersion,
                 baselineComparison = baselineComparison,
                 memoryLeakAnalysis = memoryLeakAnalysis,

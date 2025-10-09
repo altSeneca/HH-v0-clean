@@ -1,4 +1,5 @@
 package com.hazardhawk.documents.generators
+import kotlinx.datetime.Clock
 
 import com.hazardhawk.ai.models.*
 import com.hazardhawk.documents.models.*
@@ -22,7 +23,7 @@ class PTPGenerator(
     suspend fun generatePTP(request: PTPGenerationRequest): Result<PTPGenerationResponse> = 
         withContext(Dispatchers.Default) {
             
-        val startTime = System.currentTimeMillis()
+        val startTime = Clock.System.now().toEpochMilliseconds()
         
         try {
             // Phase 1: Aggregate and analyze all hazards
@@ -61,7 +62,7 @@ class PTPGenerator(
             val ptpDocument = PTPDocument(
                 id = uuid4().toString(),
                 title = generateTitle(request.jobDescription, request.projectInfo),
-                createdAt = System.currentTimeMillis(),
+                createdAt = Clock.System.now().toEpochMilliseconds(),
                 projectInfo = request.projectInfo,
                 jobDescription = request.jobDescription,
                 hazardAnalysis = hazardAnalysis,
@@ -81,7 +82,7 @@ class PTPGenerator(
                 document = ptpDocument,
                 generationMetadata = GenerationMetadata(
                     aiModel = "Gemma 3N E2B + Safety Templates",
-                    processingTimeMs = System.currentTimeMillis() - startTime,
+                    processingTimeMs = Clock.System.now().toEpochMilliseconds() - startTime,
                     confidenceScore = calculateOverallConfidence(request.safetyAnalyses),
                     hazardsProcessed = aggregatedHazards.size,
                     templatesUsed = listOf("Standard PTP Template"),

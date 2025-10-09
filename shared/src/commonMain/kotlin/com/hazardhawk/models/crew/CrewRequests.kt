@@ -77,3 +77,114 @@ data class UpdateProjectRequest(
     val zip: String? = null,
     val generalContractor: String? = null
 )
+
+// ========== Attendance Tracking Models ==========
+
+@Serializable
+data class TrackAttendanceRequest(
+    val crewId: String,
+    val type: AttendanceType,
+    val timestamp: String,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val notes: String? = null
+)
+
+@Serializable
+enum class AttendanceType {
+    CHECK_IN,
+    CHECK_OUT,
+    BREAK_START,
+    BREAK_END
+}
+
+@Serializable
+data class AttendanceRecord(
+    val id: String,
+    val crewId: String,
+    val type: AttendanceType,
+    val timestamp: String,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val notes: String? = null,
+    val createdAt: String
+)
+
+// ========== Analytics Models ==========
+
+@Serializable
+data class CrewAnalytics(
+    val totalCrews: Int,
+    val activeCrews: Int,
+    val inactiveCrews: Int,
+    val onLeaveCrews: Int,
+    val averageCrewSize: Double,
+    val totalMembers: Int,
+    val utilizationRate: Double,
+    val timestamp: String
+)
+
+@Serializable
+data class CrewPerformanceMetrics(
+    val crewId: String,
+    val crewName: String,
+    val projectCompletionRate: Double,
+    val attendanceScore: Double,
+    val averageProjectDuration: Double,
+    val totalProjectsCompleted: Int,
+    val onTimeDeliveryRate: Double,
+    val safetyIncidentCount: Int,
+    val periodStart: String,
+    val periodEnd: String
+)
+
+// ========== Multi-Project Support Models ==========
+
+@Serializable
+data class AssignMultipleProjectsRequest(
+    val crewId: String,
+    val projectIds: List<String>
+)
+
+@Serializable
+data class CrewAvailability(
+    val crewId: String,
+    val crewName: String,
+    val isAvailable: Boolean,
+    val currentProjects: List<String>,
+    val scheduledDates: List<ScheduledDate>,
+    val conflicts: List<ScheduleConflict>
+)
+
+@Serializable
+data class ScheduledDate(
+    val date: String,
+    val projectId: String,
+    val projectName: String,
+    val hours: Double
+)
+
+@Serializable
+data class ScheduleConflict(
+    val date: String,
+    val crewId: String,
+    val crewName: String,
+    val conflictingProjects: List<ConflictingProject>,
+    val totalHours: Double,
+    val severity: ConflictSeverity
+)
+
+@Serializable
+data class ConflictingProject(
+    val projectId: String,
+    val projectName: String,
+    val scheduledHours: Double
+)
+
+@Serializable
+enum class ConflictSeverity {
+    LOW,      // < 10 hours total
+    MEDIUM,   // 10-12 hours
+    HIGH,     // > 12 hours (double-booked)
+    CRITICAL  // Multiple conflicts on same day
+}

@@ -1,51 +1,56 @@
 package com.hazardhawk.ai.core
 
-import com.hazardhawk.core.models.SafetyAnalysis
-import com.hazardhawk.core.models.WorkType
-import com.hazardhawk.core.models.AnalysisCapability
+import com.hazardhawk.ai.models.SafetyAnalysis
+import com.hazardhawk.ai.models.WorkType
+import com.hazardhawk.ai.models.AnalysisCapability
 
 /**
- * Core interface for AI-powered construction safety photo analysis.
- * Implementations include Gemma 3N E2B (local), Vertex AI (cloud), and YOLO11 (fallback).
+ * Enhanced interface for AI photo analysis services in HazardHawk.
+ * Provides contract for analyzing construction site photos for safety hazards.
+ *
+ * Updated to match orchestrator implementations (SimplifiedAIOrchestrator, SmartAIOrchestrator)
+ * with additional metadata properties for service management and monitoring.
  */
 interface AIPhotoAnalyzer {
     /**
-     * Analyze a construction photo for safety hazards and compliance.
-     * 
-     * @param imageData Raw image bytes from camera or gallery
-     * @param workType Type of construction work being performed
-     * @return Result containing safety analysis or error
+     * Human-readable name of the analyzer for logging and UI display.
+     */
+    val analyzerName: String
+
+    /**
+     * Priority level for service selection (higher = preferred).
+     * Used by factory to determine which analyzer to use when multiple are available.
+     */
+    val priority: Int
+
+    /**
+     * Set of analysis capabilities supported by this analyzer.
+     * Used for feature detection and capability matching.
+     */
+    val analysisCapabilities: Set<AnalysisCapability>
+
+    /**
+     * Check if the analyzer is available and ready to use.
+     */
+    val isAvailable: Boolean
+
+    /**
+     * Analyze a photo for safety hazards and compliance issues.
+     *
+     * @param imageData The image data as a byte array
+     * @param workType The type of construction work being performed
+     * @return Result containing detailed safety analysis or error
      */
     suspend fun analyzePhoto(
         imageData: ByteArray,
-        workType: WorkType = WorkType.GENERAL_CONSTRUCTION
+        workType: WorkType
     ): Result<SafetyAnalysis>
-    
+
     /**
-     * Configure the analyzer with necessary credentials or settings.
-     * 
+     * Configure the analyzer with API keys or settings.
+     *
      * @param apiKey Optional API key for cloud services
-     * @return Result indicating success or failure
+     * @return Result indicating success or failure of configuration
      */
     suspend fun configure(apiKey: String? = null): Result<Unit>
-    
-    /**
-     * Check if this analyzer is available and ready to use.
-     */
-    val isAvailable: Boolean
-    
-    /**
-     * Get the analysis capabilities supported by this implementation.
-     */
-    val analysisCapabilities: Set<AnalysisCapability>
-    
-    /**
-     * Get a human-readable name for this analyzer.
-     */
-    val analyzerName: String
-    
-    /**
-     * Get the priority of this analyzer (higher = preferred).
-     */
-    val priority: Int
 }

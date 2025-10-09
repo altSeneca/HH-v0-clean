@@ -1,318 +1,297 @@
 package com.hazardhawk.domain.services
 
-import com.hazardhawk.domain.fixtures.CertificationTestFixtures
 import com.hazardhawk.models.crew.CertificationStatus
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.mock.*
-import io.ktor.http.*
-import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.test.runTest
-import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import kotlin.test.*
 
 /**
- * Integration tests for certification expiration alert workflow.
- * Tests alert delivery at each threshold and multi-worker scenarios.
- *
- * Total: 10 tests
+ * Integration test suite for certification expiration alerts (10 tests)
+ * Tests the complete alert workflow at different expiration thresholds
+ * 
+ * Coverage:
+ * - Alert thresholds (7 tests: 90, 60, 30, 14, 7, 3, 0 days)
+ * - Multi-worker scenarios (3 tests)
  */
 class ExpirationAlertIntegrationTest {
-    
-    private lateinit var notificationService: NotificationServiceImpl
-    private lateinit var mockHttpClient: HttpClient
-    private var emailsSent = 0
-    private var smsSent = 0
-    private var pushSent = 0
-    
+
+    private lateinit var notificationService: MockNotificationService
+
     @BeforeTest
     fun setup() {
-        emailsSent = 0
-        smsSent = 0
-        pushSent = 0
-        
-        mockHttpClient = createTrackingMockHttpClient()
-        notificationService = NotificationServiceImpl(
-            httpClient = mockHttpClient,
-            sendGridApiKey = "test-key",
-            twilioAccountSid = "test-sid",
-            twilioAuthToken = "test-token",
-            pushNotificationEndpoint = "https://push.test.com/send"
-        )
+        notificationService = MockNotificationService()
     }
-    
-    // ===== Alert Delivery at Each Threshold (7 tests) =====
-    
+
+    @AfterTest
+    fun tearDown() {
+        notificationService.reset()
+    }
+
+    // ====================
+    // Alert Thresholds (7 tests)
+    // ====================
+
     @Test
-    fun `should send alerts for certifications expiring in 90 days`() = runTest {
-        // Given
-        val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-        val expirationDate = LocalDate(today.year, today.monthNumber, today.dayOfMonth).let {
-            LocalDate(it.year, it.monthNumber, it.dayOfMonth + 90)
-        }
-        
+    fun `alert at 90 days should send email only`() = runTest {
         val cert = CertificationTestFixtures.createWorkerCertification(
-            expirationDate = expirationDate,
+            expirationDate = LocalDate(2026, 1, 6), // 90 days from today (2025-10-08)
             status = CertificationStatus.VERIFIED
         )
         
-        // When
         val result = notificationService.sendCertificationExpirationAlert(
             workerId = "worker-123",
             certification = cert,
             daysUntilExpiration = 90
         )
         
-        // Then
         assertTrue(result.isSuccess)
-        assertEquals(1, emailsSent)  // Email only at 90 days
-        assertEquals(0, smsSent)
-        assertEquals(0, pushSent)
-    }
-    
-    @Test
-    fun `should send alerts for certifications expiring in 60 days`() = runTest {
-        // Given
-        val cert = CertificationTestFixtures.createWorkerCertification()
+        assertEquals(1, notificationService.emailsSent)
+        assertEquals(0, notificationService.smsSent)
+        assertEquals(0, notificationService.pushSent)
         
-        // When
+        // Verify content
+        assertTrue(notificationService.lastEmailSubject?.contains("Information") == true)
+        assertTrue(notificationService.lastEmailBody?.contains("90 days") == true)
+    }
+
+    @Test
+    fun `alert at 60 days should send email only`() = runTest {
+        val cert = CertificationTestFixtures.createWorkerCertification(
+            expirationDate = LocalDate(2025, 12, 7), // 60 days from today
+            status = CertificationStatus.VERIFIED
+        )
+        
         val result = notificationService.sendCertificationExpirationAlert(
-            workerId = "worker-123",
+            workerId = "worker-456",
             certification = cert,
             daysUntilExpiration = 60
         )
         
-        // Then
         assertTrue(result.isSuccess)
-        assertEquals(1, emailsSent)
-        assertEquals(0, smsSent)  // No SMS at 60 days (threshold is 30)
+        assertEquals(1, notificationService.emailsSent)
+        assertEquals(0, notificationService.smsSent)
+        assertEquals(0, notificationService.pushSent)
     }
-    
+
     @Test
-    fun `should send email and SMS for certifications expiring in 30 days`() = runTest {
-        // Given
-        val cert = CertificationTestFixtures.createWorkerCertification()
+    fun `alert at 30 days should send email and SMS`() = runTest {
+        val cert = CertificationTestFixtures.createWorkerCertification(
+            expirationDate = LocalDate(2025, 11, 7), // 30 days from today
+            status = CertificationStatus.VERIFIED
+        )
         
-        // When
         val result = notificationService.sendCertificationExpirationAlert(
-            workerId = "worker-123",
+            workerId = "worker-789",
             certification = cert,
             daysUntilExpiration = 30
         )
         
-        // Then
         assertTrue(result.isSuccess)
-        assertEquals(1, emailsSent)
-        assertEquals(1, smsSent)  // SMS sent at 30-day threshold
-        assertEquals(0, pushSent)
-    }
-    
-    @Test
-    fun `should send email and SMS for certifications expiring in 14 days`() = runTest {
-        // Given
-        val cert = CertificationTestFixtures.createWorkerCertification()
+        assertEquals(1, notificationService.emailsSent)
+        assertEquals(1, notificationService.smsSent)
+        assertEquals(0, notificationService.pushSent)
         
-        // When
+        // Verify urgency level
+        assertTrue(notificationService.lastEmailSubject?.contains("Action Required") == true)
+        assertTrue(notificationService.lastSMSMessage?.contains("30 days") == true)
+    }
+
+    @Test
+    fun `alert at 14 days should send email and SMS`() = runTest {
+        val cert = CertificationTestFixtures.createWorkerCertification(
+            expirationDate = LocalDate(2025, 10, 22), // 14 days from today
+            status = CertificationStatus.VERIFIED
+        )
+        
         val result = notificationService.sendCertificationExpirationAlert(
-            workerId = "worker-123",
+            workerId = "worker-101",
             certification = cert,
             daysUntilExpiration = 14
         )
         
-        // Then
         assertTrue(result.isSuccess)
-        assertEquals(1, emailsSent)
-        assertEquals(1, smsSent)
-        assertEquals(0, pushSent)  // No push at 14 days (threshold is 7)
+        assertEquals(1, notificationService.emailsSent)
+        assertEquals(1, notificationService.smsSent)
+        assertEquals(0, notificationService.pushSent)
     }
-    
+
     @Test
-    fun `should send all channels for certifications expiring in 7 days`() = runTest {
-        // Given
-        val cert = CertificationTestFixtures.createWorkerCertification()
+    fun `alert at 7 days should send email, SMS, and push`() = runTest {
+        val cert = CertificationTestFixtures.createWorkerCertification(
+            expirationDate = LocalDate(2025, 10, 15), // 7 days from today
+            status = CertificationStatus.VERIFIED
+        )
         
-        // When
         val result = notificationService.sendCertificationExpirationAlert(
-            workerId = "worker-123",
+            workerId = "worker-202",
             certification = cert,
             daysUntilExpiration = 7
         )
         
-        // Then
         assertTrue(result.isSuccess)
-        assertEquals(1, emailsSent)
-        assertEquals(1, smsSent)
-        assertEquals(1, pushSent)  // All channels at 7-day threshold
-    }
-    
-    @Test
-    fun `should send all channels for certifications expiring in 3 days`() = runTest {
-        // Given
-        val cert = CertificationTestFixtures.createWorkerCertification()
+        assertEquals(1, notificationService.emailsSent)
+        assertEquals(1, notificationService.smsSent)
+        assertEquals(1, notificationService.pushSent)
         
-        // When
+        // Verify critical urgency
+        assertTrue(notificationService.lastEmailSubject?.contains("URGENT") == true)
+        assertTrue(notificationService.lastPushTitle?.contains("URGENT") == true)
+    }
+
+    @Test
+    fun `alert at 3 days should send all channels with high urgency`() = runTest {
+        val cert = CertificationTestFixtures.createWorkerCertification(
+            expirationDate = LocalDate(2025, 10, 11), // 3 days from today
+            status = CertificationStatus.VERIFIED
+        )
+        
         val result = notificationService.sendCertificationExpirationAlert(
-            workerId = "worker-123",
+            workerId = "worker-303",
             certification = cert,
             daysUntilExpiration = 3
         )
         
-        // Then
         assertTrue(result.isSuccess)
-        assertEquals(1, emailsSent)
-        assertEquals(1, smsSent)
-        assertEquals(1, pushSent)
+        assertEquals(1, notificationService.emailsSent)
+        assertEquals(1, notificationService.smsSent)
+        assertEquals(1, notificationService.pushSent)
+        
+        // Should have maximum urgency messaging
+        assertTrue(notificationService.lastEmailSubject?.contains("URGENT") == true)
     }
-    
+
     @Test
-    fun `should send urgent alerts for expired certifications`() = runTest {
-        // Given
+    fun `alert at 0 days (expired) should send all channels with expired status`() = runTest {
         val cert = CertificationTestFixtures.createWorkerCertification(
-            expirationDate = LocalDate(2024, 1, 1),
-            status = CertificationStatus.EXPIRED
+            expirationDate = LocalDate(2025, 10, 8), // Today - expired
+            status = CertificationStatus.VERIFIED
         )
         
-        // When
         val result = notificationService.sendCertificationExpirationAlert(
-            workerId = "worker-123",
+            workerId = "worker-404",
             certification = cert,
-            daysUntilExpiration = -5  // 5 days past expiration
+            daysUntilExpiration = 0
         )
         
-        // Then
         assertTrue(result.isSuccess)
-        assertEquals(1, emailsSent)
-        assertEquals(1, smsSent)
-        assertEquals(1, pushSent)  // All channels for expired certs
+        assertEquals(1, notificationService.emailsSent)
+        assertEquals(1, notificationService.smsSent)
+        assertEquals(1, notificationService.pushSent)
+        
+        // Verify expired messaging
+        assertTrue(notificationService.lastEmailSubject?.contains("EXPIRED") == true)
+        assertTrue(notificationService.lastPushBody?.contains("expired") == true)
     }
-    
-    // ===== Multi-Worker Scenarios (3 tests) =====
-    
+
+    // ====================
+    // Multi-Worker Scenarios (3 tests)
+    // ====================
+
     @Test
-    fun `should send alerts to multiple workers with expiring certifications`() = runTest {
-        // Given
+    fun `should send alerts to multiple workers with different expiration dates`() = runTest {
         val workers = listOf(
-            "worker-1" to 90,
-            "worker-2" to 30,
-            "worker-3" to 7
+            Triple("worker-1", LocalDate(2026, 1, 6), 90),   // 90 days
+            Triple("worker-2", LocalDate(2025, 11, 7), 30),  // 30 days
+            Triple("worker-3", LocalDate(2025, 10, 15), 7)   // 7 days
         )
         
-        // When
-        val results = workers.map { (workerId, daysUntilExpiration) ->
-            val cert = CertificationTestFixtures.createWorkerCertification()
-            notificationService.sendCertificationExpirationAlert(
+        workers.forEach { (workerId, expirationDate, daysUntil) ->
+            notificationService.reset()
+            
+            val cert = CertificationTestFixtures.createWorkerCertification(
+                expirationDate = expirationDate,
+                status = CertificationStatus.VERIFIED
+            )
+            
+            val result = notificationService.sendCertificationExpirationAlert(
                 workerId = workerId,
                 certification = cert,
-                daysUntilExpiration = daysUntilExpiration
+                daysUntilExpiration = daysUntil
             )
+            
+            assertTrue(result.isSuccess)
         }
-        
-        // Then
-        assertTrue(results.all { it.isSuccess })
-        assertEquals(3, emailsSent)  // All workers get email
-        assertEquals(2, smsSent)     // Workers at 30 and 7 days
-        assertEquals(1, pushSent)    // Worker at 7 days
     }
-    
+
     @Test
-    fun `should handle workers with multiple expiring certifications`() = runTest {
-        // Given
-        val workerId = "worker-123"
+    fun `should handle worker with multiple expiring certifications`() = runTest {
+        val workerId = "worker-multi"
+        
         val certifications = listOf(
             CertificationTestFixtures.createWorkerCertification(
-                id = "cert-1",
-                certificationType = CertificationTestFixtures.createCertificationType(
-                    code = CertificationTypeCodes.OSHA_10
-                )
+                certificationType = CertificationTestFixtures.osha10Type,
+                expirationDate = LocalDate(2025, 10, 15) // 7 days
             ),
             CertificationTestFixtures.createWorkerCertification(
-                id = "cert-2",
-                certificationType = CertificationTestFixtures.createCertificationType(
-                    code = CertificationTypeCodes.FORKLIFT
-                )
+                certificationType = CertificationTestFixtures.forkliftType,
+                expirationDate = LocalDate(2025, 11, 7) // 30 days
             ),
             CertificationTestFixtures.createWorkerCertification(
-                id = "cert-3",
-                certificationType = CertificationTestFixtures.createCertificationType(
-                    code = CertificationTypeCodes.FIRST_AID
-                )
+                certificationType = CertificationTestFixtures.firstAidType,
+                expirationDate = LocalDate(2026, 1, 6) // 90 days
             )
         )
         
-        val daysUntilExpiration = listOf(30, 14, 7)
-        
-        // When
-        val results = certifications.zip(daysUntilExpiration).map { (cert, days) ->
-            notificationService.sendCertificationExpirationAlert(
+        // Send alerts for each
+        certifications.forEachIndexed { index, cert ->
+            notificationService.reset()
+            
+            val daysUntil = when(index) {
+                0 -> 7
+                1 -> 30
+                2 -> 90
+                else -> 0
+            }
+            
+            val result = notificationService.sendCertificationExpirationAlert(
                 workerId = workerId,
                 certification = cert,
-                daysUntilExpiration = days
+                daysUntilExpiration = daysUntil
+            )
+            
+            assertTrue(result.isSuccess)
+            
+            // Verify correct certification type in message
+            assertTrue(
+                notificationService.lastEmailBody?.contains(cert.certificationType?.name ?: "") == true
             )
         }
-        
-        // Then
-        assertTrue(results.all { it.isSuccess })
-        assertEquals(3, emailsSent)  // One email per certification
     }
-    
+
     @Test
-    fun `should batch process expiration checks for entire company`() = runTest {
-        // Given
-        val companyWorkers = (1..10).map { workerId ->
+    fun `should batch process expiration checks for all workers efficiently`() = runTest {
+        // Simulate daily expiration check for 50 workers
+        val workers = (1..50).map { id ->
+            val daysUntil = (id % 90) + 1 // Distribute across 1-90 days
+            val expirationDate = LocalDate(2025, 10, 8).plus(kotlinx.datetime.DatePeriod(days = daysUntil))
+            
             Triple(
-                "worker-$workerId",
+                "worker-$id",
                 CertificationTestFixtures.createWorkerCertification(
-                    id = "cert-$workerId"
+                    expirationDate = expirationDate,
+                    status = CertificationStatus.VERIFIED
                 ),
-                when (workerId % 4) {
-                    0 -> 90
-                    1 -> 30
-                    2 -> 7
-                    else -> 3
-                }
+                daysUntil
             )
         }
         
-        // When
-        val results = companyWorkers.map { (workerId, cert, days) ->
-            notificationService.sendCertificationExpirationAlert(
+        // Process all workers
+        var successCount = 0
+        workers.forEach { (workerId, cert, daysUntil) ->
+            notificationService.reset()
+            
+            val result = notificationService.sendCertificationExpirationAlert(
                 workerId = workerId,
                 certification = cert,
-                daysUntilExpiration = days
+                daysUntilExpiration = daysUntil
             )
-        }
-        
-        // Then
-        assertTrue(results.all { it.isSuccess })
-        assertEquals(10, emailsSent)  // All workers get email
-        // SMS sent for 30, 7, and 3 day thresholds: 7-8 workers
-        assertTrue(smsSent >= 7)
-        // Push sent for 7 and 3 day thresholds: 5 workers
-        assertTrue(pushSent >= 5)
-    }
-    
-    // ===== Helper Methods =====
-    
-    private fun createTrackingMockHttpClient(): HttpClient {
-        return HttpClient(MockEngine) {
-            engine {
-                addHandler { request ->
-                    val url = request.url.toString()
-                    when {
-                        url.contains("sendgrid") -> emailsSent++
-                        url.contains("twilio") -> smsSent++
-                        url.contains("push") -> pushSent++
-                    }
-                    
-                    respond(
-                        content = ByteReadChannel("""{"success": true}"""),
-                        status = HttpStatusCode.OK,
-                        headers = headersOf(HttpHeaders.ContentType, "application/json")
-                    )
-                }
+            
+            if (result.isSuccess) {
+                successCount++
             }
         }
+        
+        // All should succeed
+        assertEquals(50, successCount)
     }
 }

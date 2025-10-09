@@ -1,4 +1,5 @@
 package com.hazardhawk.performance
+import kotlinx.datetime.Clock
 
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -80,7 +81,7 @@ class RepositoryPerformanceTracker {
                 success = success,
                 resultCount = resultCount,
                 cacheHit = cacheHit,
-                timestamp = System.currentTimeMillis(),
+                timestamp = Clock.System.now().toEpochMilliseconds(),
                 errorMessage = errorMessage
             )
             
@@ -106,7 +107,7 @@ class RepositoryPerformanceTracker {
      */
     suspend fun getCurrentMetrics(): RepositoryPerformanceMetrics {
         return mutex.withLock {
-            val now = System.currentTimeMillis()
+            val now = Clock.System.now().toEpochMilliseconds()
             val recentQueries = queryHistory.filter { now - it.timestamp <= 600_000 } // Last 10 minutes
             
             if (recentQueries.isEmpty()) {
@@ -154,7 +155,7 @@ class RepositoryPerformanceTracker {
      */
     suspend fun getQueryPerformanceByType(): Map<String, QueryTypeMetrics> {
         return mutex.withLock {
-            val now = System.currentTimeMillis()
+            val now = Clock.System.now().toEpochMilliseconds()
             val recentQueries = queryHistory.filter { now - it.timestamp <= 3600_000 } // Last hour
             
             recentQueries.groupBy { it.queryType }.mapValues { (_, queries) ->
@@ -179,7 +180,7 @@ class RepositoryPerformanceTracker {
         
         if (cacheHit) {
             metrics.hitCount++
-            metrics.lastHitTime = System.currentTimeMillis()
+            metrics.lastHitTime = Clock.System.now().toEpochMilliseconds()
             // Update rolling average response time
             metrics.avgResponseTimeMs = ((metrics.avgResponseTimeMs * (metrics.hitCount - 1)) + durationMs) / metrics.hitCount
         } else {
@@ -200,7 +201,7 @@ class RepositoryPerformanceTracker {
         if (!record.success) {
             val recentSameTypeQueries = queryHistory.filter { 
                 it.queryType == record.queryType && 
-                System.currentTimeMillis() - it.timestamp <= 300_000 // Last 5 minutes
+                Clock.System.now().toEpochMilliseconds() - it.timestamp <= 300_000 // Last 5 minutes
             }
             
             if (recentSameTypeQueries.size >= 5) {
@@ -275,7 +276,7 @@ class RepositoryPerformanceTracker {
         val queryTypeMetrics = getQueryPerformanceByType()
         
         return RepositoryPerformanceReport(
-            timestamp = System.currentTimeMillis(),
+            timestamp = Clock.System.now().toEpochMilliseconds(),
             overallMetrics = currentMetrics,
             queryTypeBreakdown = queryTypeMetrics,
             performanceGrade = calculatePerformanceGrade(currentMetrics),
@@ -433,7 +434,7 @@ class RepositoryPerformanceBenchmark(
      * Run comprehensive repository performance benchmark.
      */
     suspend fun runBenchmark(): RepositoryBenchmarkResults {
-        val startTime = System.currentTimeMillis()
+        val startTime = Clock.System.now().toEpochMilliseconds()
         val results = mutableMapOf<String, BenchmarkResult>()
         
         // Benchmark different query types
@@ -452,10 +453,10 @@ class RepositoryPerformanceBenchmark(
             results[queryType] = benchmarkQueryType(queryType)
         }
         
-        val totalTime = System.currentTimeMillis() - startTime
+        val totalTime = Clock.System.now().toEpochMilliseconds() - startTime
         
         return RepositoryBenchmarkResults(
-            timestamp = System.currentTimeMillis(),
+            timestamp = Clock.System.now().toEpochMilliseconds(),
             totalBenchmarkTimeMs = totalTime,
             queryBenchmarks = results,
             overallScore = results.values.map { it.score }.average().toFloat(),
@@ -469,7 +470,7 @@ class RepositoryPerformanceBenchmark(
         var successCount = 0
         
         repeat(iterations) {
-            val startTime = System.currentTimeMillis()
+            val startTime = Clock.System.now().toEpochMilliseconds()
             
             // Simulate query execution based on type
             val (duration, success) = simulateQuery(queryType)

@@ -1,135 +1,134 @@
 package com.hazardhawk.di
 
-import io.ktor.client.*
-import io.ktor.client.engine.*
-import io.ktor.client.plugins.*
-import io.ktor.client.plugins.auth.*
-import io.ktor.client.plugins.auth.providers.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.plugins.logging.*
-import io.ktor.http.*
-import io.ktor.serialization.kotlinx.json.*
+import io.ktor.client.HttpClient
+import io.ktor.client.plugins.DefaultRequest
+import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logging
+import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import org.koin.dsl.module
 
 /**
- * Network module for HTTP client configuration and API services.
- * Uses Ktor client for cross-platform networking support.
+ * Network module for HTTP client and API communication.
+ * Contains networking dependencies and configuration.
  */
 val networkModule = module {
     
-    // JSON configuration for API serialization
-    single {
+    // JSON serializer for HTTP client
+    single<Json> {
         Json {
-            prettyPrint = true
-            isLenient = true
             ignoreUnknownKeys = true
+            isLenient = true
             encodeDefaults = true
+            prettyPrint = false
         }
     }
     
-    // Main HTTP client for API communication
+    // HTTP Client (platform-specific engine will be provided)
     single<HttpClient> {
-        HttpClient(get<HttpClientEngine>()) {
-            
-            // Content negotiation for JSON API responses
+        HttpClient {
             install(ContentNegotiation) {
                 json(get<Json>())
             }
-            
-            // Default request configuration
-            defaultRequest {
-                contentType(ContentType.Application.Json)
-                host = "api.hazardhawk.com" // This should come from build config
-                url {
-                    protocol = URLProtocol.HTTPS
-                }
-            }
-            
-            // Request/response logging for debugging
             install(Logging) {
-                logger = Logger.DEFAULT
                 level = LogLevel.INFO
-                filter { request ->
-                    !request.url.encodedPath.contains("auth") // Don't log auth requests
-                }
             }
-            
-            // Authentication configuration
-            install(Auth) {
-                bearer {
-                    loadTokens {
-                        // Load tokens from secure storage
-                        // This will be implemented with platform-specific secure storage
-                        null
-                    }
-                    refreshTokens {
-                        // Refresh token logic
-                        null
-                    }
-                }
-            }
-            
-            // Request timeout configuration
             install(HttpTimeout) {
-                requestTimeoutMillis = 30_000
-                connectTimeoutMillis = 10_000
-                socketTimeoutMillis = 30_000
+                requestTimeoutMillis = 30000
+                connectTimeoutMillis = 10000
+                socketTimeoutMillis = 30000
             }
-            
-            // Retry failed requests
-            install(HttpRequestRetry) {
-                retryOnServerErrors(maxRetries = 2)
-                retryOnException(maxRetries = 2, retryOnTimeout = true)
-                exponentialDelay()
+            install(DefaultRequest) {
+                headers.append("Content-Type", "application/json")
+                headers.append("Accept", "application/json")
             }
         }
     }
     
-    // AI API client for Gemini Vision API
-    // single<GeminiVisionClient> {
-    //     GeminiVisionClient(
+    // API client services
+    // single<GeminiApiClient> {
+    //     GeminiApiClient(
     //         httpClient = get(),
-    //         apiKey = get(qualifier = named("GeminiApiKey"))
+    //         apiKey = get<ApiConfiguration>().geminiApiKey,
+    //         baseUrl = "https://generativelanguage.googleapis.com/"
     //     )
     // }
     
-    // AWS S3 client for photo storage
     // single<S3Client> {
     //     S3Client(
     //         httpClient = get(),
-    //         config = get<S3Config>()
+    //         configuration = get<S3Configuration>()
     //     )
     // }
     
-    // Backend API service
-    // single<HazardHawkApiService> {
-    //     HazardHawkApiService(
-    //         httpClient = get()
+    // single<HazardHawkApiClient> {
+    //     HazardHawkApiClient(
+    //         httpClient = get(),
+    //         baseUrl = get<ApiConfiguration>().baseUrl,
+    //         authTokenProvider = get()
+    //     )
+    // }
+    
+    // WebSocket client for real-time updates
+    // single<WebSocketClient> {
+    //     WebSocketClient(
+    //         httpClient = get(),
+    //         baseUrl = get<ApiConfiguration>().wsBaseUrl
+    //     )
+    // }
+    
+    // Network connectivity monitor
+    // single<NetworkConnectivityMonitor> {
+    //     NetworkConnectivityMonitorImpl(
+    //         scope = get<CoroutineScope>()
     //     )
     // }
 }
 
 /**
- * API configuration module for service-specific settings
+ * API configuration module for endpoint and service settings.
  */
 val apiConfigModule = module {
     
-    // API endpoint configurations
-    single(qualifier = org.koin.core.qualifier.named("ApiBaseUrl")) { "https://api.hazardhawk.com" }
-    single(qualifier = org.koin.core.qualifier.named("ApiVersion")) { "v1" }
+    // API configuration
+    // single<ApiConfiguration> {
+    //     ApiConfiguration(
+    //         baseUrl = "https://api.hazardhawk.com",
+    //         wsBaseUrl = "wss://ws.hazardhawk.com",
+    //         geminiApiKey = get<SecureStorage>().getApiKey("gemini"),
+    //         timeout = 30000L,
+    //         retryAttempts = 3
+    //     )
+    // }
     
-    // API timeout configurations
-    single(qualifier = org.koin.core.qualifier.named("ApiTimeoutMs")) { 30_000L }
-    single(qualifier = org.koin.core.qualifier.named("ApiRetryCount")) { 3 }
+    // S3 configuration for photo storage
+    // single<S3Configuration> {
+    //     S3Configuration(
+    //         bucketName = "hazardhawk-photos",
+    //         region = "us-east-1",
+    //         accessKeyId = get<SecureStorage>().getApiKey("aws_access_key"),
+    //         secretAccessKey = get<SecureStorage>().getApiKey("aws_secret_key")
+    //     )
+    // }
     
-    // S3 configuration (will be provided by platform-specific modules)
-    // single<S3Config> {
-    //     S3Config(
-    //         bucketName = get(qualifier = named("S3BucketName")),
-    //         region = get(qualifier = named("S3Region")),
-    //         accessKey = get(qualifier = named("S3AccessKey")),
-    //         secretKey = get(qualifier = named("S3SecretKey"))
+    // Rate limiting configuration
+    // single<RateLimitConfiguration> {
+    //     RateLimitConfiguration(
+    //         maxRequestsPerMinute = 60,
+    //         maxConcurrentRequests = 10,
+    //         backoffMultiplier = 2.0
+    //     )
+    // }
+    
+    // Request retry configuration
+    // single<RetryConfiguration> {
+    //     RetryConfiguration(
+    //         maxRetries = 3,
+    //         initialDelayMs = 1000L,
+    //         maxDelayMs = 30000L,
+    //         backoffMultiplier = 2.0
     //     )
     // }
 }

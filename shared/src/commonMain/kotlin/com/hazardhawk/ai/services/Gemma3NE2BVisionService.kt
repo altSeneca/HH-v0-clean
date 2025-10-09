@@ -1,4 +1,5 @@
 package com.hazardhawk.ai.services
+import kotlinx.datetime.Clock
 
 import com.hazardhawk.ai.core.AIPhotoAnalyzer
 import com.hazardhawk.ai.loaders.GemmaModelLoader
@@ -63,7 +64,7 @@ class Gemma3NE2BVisionService(
             return@withContext Result.failure(Exception("Gemma 3N E2B models not available"))
         }
         
-        val startTime = System.currentTimeMillis()
+        val startTime = Clock.System.now().toEpochMilliseconds()
         
         try {
             // Phase 1: Vision encoding
@@ -85,7 +86,7 @@ class Gemma3NE2BVisionService(
             val analysis = parseGemmaSafetyAnalysis(
                 analysisText = analysisText,
                 workType = workType,
-                processingTime = System.currentTimeMillis() - startTime
+                processingTime = Clock.System.now().toEpochMilliseconds() - startTime
             )
             
             Result.success(analysis)
@@ -163,7 +164,7 @@ class Gemma3NE2BVisionService(
             
             SafetyAnalysis(
                 id = uuid4().toString(),
-                timestamp = System.currentTimeMillis(),
+                timestamp = Clock.System.now().toEpochMilliseconds(),
                 analysisType = AnalysisType.LOCAL_GEMMA_MULTIMODAL,
                 workType = workType,
                 hazards = response.hazards.map { hazard ->
@@ -240,7 +241,7 @@ class Gemma3NE2BVisionService(
         
         return SafetyAnalysis(
             id = uuid4().toString(),
-            timestamp = System.currentTimeMillis(),
+            timestamp = Clock.System.now().toEpochMilliseconds(),
             analysisType = AnalysisType.LOCAL_GEMMA_MULTIMODAL,
             workType = workType,
             hazards = hazards,

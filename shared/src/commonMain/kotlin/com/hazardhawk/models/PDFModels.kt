@@ -1,4 +1,5 @@
 package com.hazardhawk.models
+import kotlinx.datetime.Clock
 
 /**
  * PDF export data structures for OSHA-compliant construction documentation
@@ -59,7 +60,7 @@ data class PDFExportRequest(
      * Generate a default filename for this export request
      */
     fun generateFileName(): String {
-        val timestamp = System.currentTimeMillis()
+        val timestamp = Clock.System.now().toEpochMilliseconds()
         val docType = documentType.name.lowercase().replace('_', '-')
         val projectName = metadata.projectName.replace("[^a-zA-Z0-9]".toRegex(), "-")
         return "${docType}-${projectName}-${timestamp}.pdf"
@@ -174,7 +175,7 @@ sealed class PDFExportState {
         val filePath: String,
         val fileName: String,
         val fileSize: Long = 0L,
-        val exportTime: Long = System.currentTimeMillis()
+        val exportTime: Long = Clock.System.now().toEpochMilliseconds()
     ) : PDFExportState() {
         /**
          * Get human-readable file size

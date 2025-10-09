@@ -1,4 +1,5 @@
 package com.hazardhawk.performance
+import kotlinx.datetime.Clock
 
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -73,7 +74,7 @@ class MemoryManager(
                 // Check if model is already loaded
                 loadedModels[modelId]?.let { existingModel ->
                     loadedModels[modelId] = existingModel.copy(
-                        lastAccessTimestamp = System.currentTimeMillis(),
+                        lastAccessTimestamp = Clock.System.now().toEpochMilliseconds(),
                         accessCount = existingModel.accessCount + 1
                     )
                     return@withLock Result.success(existingModel.modelData)
@@ -103,9 +104,9 @@ class MemoryManager(
                 }
                 
                 // Load the model
-                val startTime = System.currentTimeMillis()
+                val startTime = Clock.System.now().toEpochMilliseconds()
                 val modelData = loader()
-                val loadTime = System.currentTimeMillis() - startTime
+                val loadTime = Clock.System.now().toEpochMilliseconds() - startTime
                 
                 // Track loading performance
                 performanceMonitor.recordModelLoad(loadTime, (modelSizeBytes / (1024 * 1024)).toInt())
@@ -114,8 +115,8 @@ class MemoryManager(
                 loadedModels[modelId] = LoadedModel(
                     modelId = modelId,
                     sizeBytes = modelSizeBytes,
-                    loadTimestamp = System.currentTimeMillis(),
-                    lastAccessTimestamp = System.currentTimeMillis(),
+                    loadTimestamp = Clock.System.now().toEpochMilliseconds(),
+                    lastAccessTimestamp = Clock.System.now().toEpochMilliseconds(),
                     accessCount = 1,
                     complexity = complexity,
                     modelData = modelData
@@ -157,7 +158,7 @@ class MemoryManager(
             imageCache[imageId] = CachedImage(
                 imageId = imageId,
                 sizeBytes = sizeBytes,
-                timestamp = System.currentTimeMillis(),
+                timestamp = Clock.System.now().toEpochMilliseconds(),
                 accessCount = 1,
                 imageData = imageData
             )
@@ -197,8 +198,8 @@ class MemoryManager(
             analysisResultCache[analysisId] = CachedAnalysis(
                 analysisId = analysisId,
                 sizeBytes = sizeBytes,
-                timestamp = System.currentTimeMillis(),
-                lastAccessTimestamp = System.currentTimeMillis(),
+                timestamp = Clock.System.now().toEpochMilliseconds(),
+                lastAccessTimestamp = Clock.System.now().toEpochMilliseconds(),
                 analysisData = analysisData
             )
             
@@ -213,7 +214,7 @@ class MemoryManager(
         return mutex.withLock {
             analysisResultCache[analysisId]?.let { cached ->
                 analysisResultCache[analysisId] = cached.copy(
-                    lastAccessTimestamp = System.currentTimeMillis()
+                    lastAccessTimestamp = Clock.System.now().toEpochMilliseconds()
                 )
                 cached.analysisData
             }
@@ -290,7 +291,7 @@ class MemoryManager(
     }
     
     private fun clearOldAnalysisCache(): Long {
-        val cutoff = System.currentTimeMillis() - 600_000 // 10 minutes
+        val cutoff = Clock.System.now().toEpochMilliseconds() - 600_000 // 10 minutes
         val toRemove = analysisResultCache.filter { it.value.timestamp < cutoff }
         val freedBytes = toRemove.values.sumOf { it.sizeBytes }
         
@@ -300,7 +301,7 @@ class MemoryManager(
     }
     
     private fun clearOldImageCache(): Long {
-        val cutoff = System.currentTimeMillis() - 300_000 // 5 minutes
+        val cutoff = Clock.System.now().toEpochMilliseconds() - 300_000 // 5 minutes
         val toRemove = imageCache.filter { it.value.timestamp < cutoff }
         val freedBytes = toRemove.values.sumOf { it.sizeBytes }
         
@@ -313,7 +314,7 @@ class MemoryManager(
         if (loadedModels.size <= keepCount) return 0L
         
         val sortedModels = loadedModels.values.sortedBy { 
-            it.accessCount.toFloat() / (System.currentTimeMillis() - it.loadTimestamp)
+            it.accessCount.toFloat() / (Clock.System.now().toEpochMilliseconds() - it.loadTimestamp)
         }
         
         val toUnload = sortedModels.dropLast(keepCount)
@@ -430,7 +431,7 @@ class SmartGarbageCollector {
         availableMemoryMB: Float,
         memoryPressure: MemoryPressure
     ): Boolean {
-        val now = System.currentTimeMillis()
+        val now = Clock.System.now().toEpochMilliseconds()
         
         // Don't GC too frequently (min 30 seconds apart)
         if (now - lastGCTime < 30_000) return false
@@ -460,7 +461,7 @@ class SmartGarbageCollector {
         memoryAfterMB: Float,
         durationMs: Long
     ) {
-        lastGCTime = System.currentTimeMillis()
+        lastGCTime = Clock.System.now().toEpochMilliseconds()
         gcHistory.add(
             GCEvent(
                 timestamp = lastGCTime,
@@ -481,7 +482,7 @@ class SmartGarbageCollector {
      */
     fun getGCStats(): GCStats {
         val recentGCs = gcHistory.filter { 
-            System.currentTimeMillis() - it.timestamp < 3600_000 // Last hour
+            Clock.System.now().toEpochMilliseconds() - it.timestamp < 3600_000 // Last hour
         }
         
         if (recentGCs.isEmpty()) {

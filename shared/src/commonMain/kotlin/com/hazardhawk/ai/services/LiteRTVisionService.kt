@@ -1,4 +1,5 @@
 package com.hazardhawk.ai.services
+import kotlinx.datetime.Clock
 
 import com.hazardhawk.ai.core.AIPhotoAnalyzer
 import com.hazardhawk.ai.models.SafetyAnalysis
@@ -103,7 +104,7 @@ class LiteRTVisionService(
             )
         }
         
-        val startTime = System.currentTimeMillis()
+        val startTime = Clock.System.now().toEpochMilliseconds()
         
         try {
             // Get timeout based on current backend performance characteristics
@@ -162,7 +163,7 @@ class LiteRTVisionService(
         
         return liteRTResult.fold(
             onSuccess = { result ->
-                val analysisTime = System.currentTimeMillis() - startTime
+                val analysisTime = Clock.System.now().toEpochMilliseconds() - startTime
                 
                 // Convert LiteRT results to HazardHawk SafetyAnalysis format
                 val safetyAnalysis = convertToSafetyAnalysis(
@@ -231,7 +232,7 @@ class LiteRTVisionService(
         // Create metadata with LiteRT processing information
         val metadata = SafetyAnalysisMetadata(
             analysisId = uuid4().toString(),
-            timestamp = System.currentTimeMillis(),
+            timestamp = Clock.System.now().toEpochMilliseconds(),
             processingTimeMs = processingTime,
             modelVersion = "LiteRT-Construction-Safety-v1.0",
             confidenceScore = liteRTResult.confidence,

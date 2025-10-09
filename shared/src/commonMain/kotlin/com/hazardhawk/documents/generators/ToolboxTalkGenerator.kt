@@ -1,4 +1,5 @@
 package com.hazardhawk.documents.generators
+import kotlinx.datetime.Clock
 
 import com.hazardhawk.ai.models.*
 import com.hazardhawk.documents.models.*
@@ -22,7 +23,7 @@ class ToolboxTalkGenerator(
         request: ToolboxTalkGenerationRequest
     ): Result<ToolboxTalkGenerationResponse> = withContext(Dispatchers.Default) {
         
-        val startTime = System.currentTimeMillis()
+        val startTime = Clock.System.now().toEpochMilliseconds()
         
         try {
             // Phase 1: Analyze recent hazards for topic relevance
@@ -66,7 +67,7 @@ class ToolboxTalkGenerator(
                 id = uuid4().toString(),
                 title = generateTalkTitle(request.topic, relevantHazards),
                 topic = request.topic,
-                createdAt = System.currentTimeMillis(),
+                createdAt = Clock.System.now().toEpochMilliseconds(),
                 meetingInfo = request.meetingInfo,
                 talkContent = talkContent,
                 interactiveElements = interactiveElements,
@@ -88,7 +89,7 @@ class ToolboxTalkGenerator(
                 document = toolboxTalk,
                 generationMetadata = GenerationMetadata(
                     aiModel = "Gemma 3N E2B + Safety Knowledge Base",
-                    processingTimeMs = System.currentTimeMillis() - startTime,
+                    processingTimeMs = Clock.System.now().toEpochMilliseconds() - startTime,
                     confidenceScore = calculateContentConfidence(relevantHazards),
                     hazardsProcessed = relevantHazards.size,
                     templatesUsed = listOf("Interactive Toolbox Talk Template"),

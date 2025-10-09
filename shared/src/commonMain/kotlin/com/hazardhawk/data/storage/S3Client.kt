@@ -1,20 +1,26 @@
 package com.hazardhawk.data.storage
 
 /**
- * Interface for S3-compatible cloud storage operations.
- * Platform-specific implementations should handle the actual AWS SDK integration.
+ * Client interface for interacting with S3-compatible cloud storage.
+ *
+ * Implements presigned URL strategy for secure uploads without embedding AWS credentials.
+ * Supports progress tracking and automatic retry logic.
  */
 interface S3Client {
     /**
-     * Uploads a file to an S3 bucket.
-     * Uses chunked upload for large files and provides progress tracking.
+     * Uploads a file to S3 using presigned URL strategy.
      *
-     * @param bucket The S3 bucket name
-     * @param key The object key (path) in the bucket
-     * @param data The file data as a ByteArray
-     * @param contentType The MIME type of the file
-     * @param onProgress Callback for upload progress (0.0 to 1.0)
-     * @return Result containing the CDN URL of the uploaded file, or an error
+     * Flow:
+     * 1. Request presigned URL from backend API
+     * 2. Upload file directly to S3 using HTTP PUT
+     * 3. Return CDN URL for accessing the file
+     *
+     * @param bucket S3 bucket name
+     * @param key Object key (path) within the bucket
+     * @param data File data as byte array
+     * @param contentType MIME type of the file
+     * @param onProgress Callback receiving upload progress (0.0 to 1.0)
+     * @return Result containing CDN URL or error
      */
     suspend fun uploadFile(
         bucket: String,
@@ -25,43 +31,111 @@ interface S3Client {
     ): Result<String>
 
     /**
-     * Generates a presigned URL for direct upload from client.
-     * Useful for large files to avoid proxying through the app server.
+     * Requests a presigned URL from the backend for uploading.
      *
-     * @param bucket The S3 bucket name
-     * @param key The object key (path) in the bucket
-     * @param contentType The MIME type of the file
-     * @param expirationSeconds How long the presigned URL should be valid (default: 3600s = 1 hour)
-     * @return Result containing the presigned upload URL, or an error
+     * @param bucket S3 bucket name
+     * @param key Object key (path) within the bucket
+     * @param contentType MIME type of the file
+     * @param expirationSeconds URL expiration time in seconds (default: 300)
+     * @return Result containing presigned upload URL or error
      */
-    suspend fun generatePresignedUploadUrl(
+    suspend fun getPresignedUploadUrl(
         bucket: String,
         key: String,
         contentType: String,
-        expirationSeconds: Int = 3600
-    ): Result<String>
+        expirationSeconds: Int = 300
+    ): Result<PresignedUrlResponse>
 
     /**
-     * Deletes a file from S3 storage.
+     * Uploads file data directly to S3 using a presigned URL.
      *
-     * @param bucket The S3 bucket name
-     * @param key The object key (path) in the bucket
-     * @return Result indicating success or failure
+     * @param presignedUrl The presigned URL obtained from backend
+     * @param data File data as byte array
+     * @param contentType MIME type of the file
+     * @param onProgress Callback receiving upload progress (0.0 to 1.0)
+     * @return Result indicating success or error
+     */
+    suspend fun uploadToPresignedUrl(
+        presignedUrl: String,
+        data: ByteArray,
+        contentType: String,
+        onProgress: (Float) -> Unit = {}
+    ): Result<Unit>
+
+    /**
+     * Deletes a file from S3.
+     *
+     * @param bucket S3 bucket name
+     * @param key Object key (path) to delete
+     * @return Result indicating success or error
      */
     suspend fun deleteFile(
         bucket: String,
         key: String
     ): Result<Unit>
+}
 
-    /**
-     * Checks if a file exists in S3 storage.
-     *
-     * @param bucket The S3 bucket name
-     * @param key The object key (path) in the bucket
-     * @return Result containing true if the file exists, false otherwise
-     */
-    suspend fun fileExists(
-        bucket: String,
-        key: String
-    ): Result<Boolean>
+/**
+ * Response containing presigned URL information.
+ *
+ * @property uploadUrl Presigned URL for uploading
+ * @property cdnUrl Public CDN URL for accessing the file after upload
+ * @property expiresAt Timestamp when the presigned URL expires
+ * @property fields Additional fields required for the upload (for multipart form uploads)
+ */
+data class PresignedUrlResponse(
+    val uploadUrl: String,
+    val cdnUrl: String,
+    val expiresAt: Long,
+    val fields: Map<String, String> = emptyMap()
+)
+
+/**
+ * Configuration for S3 client.
+ *
+ * @property apiBaseUrl Base URL of the backend API for requesting presigned URLs
+ * @property cdnBaseUrl Base URL of the CDN for accessing uploaded files
+ * @property defaultBucket Default bucket name for uploads
+ * @property maxRetries Maximum number of retry attempts (default: 3)
+ * @property retryDelayMs Initial delay between retries in milliseconds (default: 1000)
+ */
+data class S3ClientConfig(
+    val apiBaseUrl: String,
+    val cdnBaseUrl: String,
+    val defaultBucket: String,
+    val maxRetries: Int = 3,
+    val retryDelayMs: Long = 1000
+)
+
+/**
+ * Errors that can occur during S3 operations.
+ */
+sealed class S3Error : Exception() {
+    data class PresignedUrlRequestFailed(val reason: String) : S3Error() {
+        override val message: String = "Failed to obtain presigned URL: $reason"
+    }
+
+    data class UploadFailed(val statusCode: Int, val reason: String) : S3Error() {
+        override val message: String = "S3 upload failed (HTTP $statusCode): $reason"
+    }
+
+    data class NetworkError(override val cause: Throwable) : S3Error() {
+        override val message: String = "Network error during S3 operation: ${cause.message}"
+    }
+
+    data class AuthenticationError(val reason: String) : S3Error() {
+        override val message: String = "S3 authentication failed: $reason"
+    }
+
+    data class InvalidBucket(val bucket: String) : S3Error() {
+        override val message: String = "Invalid S3 bucket: $bucket"
+    }
+
+    data class InvalidKey(val key: String) : S3Error() {
+        override val message: String = "Invalid S3 key: $key"
+    }
+
+    data class RetryExhausted(val attempts: Int, val lastError: Throwable) : S3Error() {
+        override val message: String = "S3 operation failed after $attempts retry attempts: ${lastError.message}"
+    }
 }

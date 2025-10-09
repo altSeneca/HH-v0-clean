@@ -1,4 +1,5 @@
 package com.hazardhawk.ai.services
+import kotlinx.datetime.Clock
 
 import com.hazardhawk.ai.core.AIPhotoAnalyzer
 import com.hazardhawk.ai.models.*
@@ -100,7 +101,7 @@ class VertexAIGeminiService : AIPhotoAnalyzer {
             return Result.failure(Exception("Vertex AI service not configured"))
         }
         
-        val startTime = System.currentTimeMillis()
+        val startTime = Clock.System.now().toEpochMilliseconds()
         
         try {
             // Use real Vertex AI integration through platform-specific client

@@ -1,0 +1,635 @@
+package com.hazardhawk.ai.impl
+
+import com.hazardhawk.ai.core.OSHAPhotoAnalyzer
+import com.hazardhawk.ai.GeminiVisionAnalyzer
+import com.hazardhawk.data.repositories.OSHAAnalysisRepository
+import com.hazardhawk.domain.entities.WorkType
+import com.hazardhawk.models.*
+import kotlinx.datetime.Clock
+
+/**
+ * Live OSHA analyzer that integrates with Gemini Vision for real AI-powered safety analysis.
+ * Provides comprehensive OSHA compliance assessment with actual AI image analysis.
+ */
+class LiveOSHAAnalyzer(
+    private val geminiAnalyzer: GeminiVisionAnalyzer,
+    private val oshaAnalysisRepository: OSHAAnalysisRepository
+) : OSHAPhotoAnalyzer {
+
+    private var configured = false
+
+    /**
+     * Analyze photo for OSHA compliance with persistence support
+     */
+    suspend fun analyzeForOSHAComplianceWithPersistence(
+        photoId: String,
+        imageData: ByteArray,
+        workType: WorkType,
+        forceReanalyze: Boolean = false
+    ): Result<OSHAAnalysisResult> {
+        return try {
+            println("🔍 [LiveOSHAAnalyzer] Starting OSHA compliance analysis for photo: $photoId, work type: ${workType.name}")
+
+            // Check for existing analysis unless forced reanalysis
+            if (!forceReanalyze) {
+                val existingAnalysis = oshaAnalysisRepository.getAnalysis(photoId).getOrNull()
+                if (existingAnalysis != null) {
+                    println("✅ [LiveOSHAAnalyzer] Found existing OSHA analysis for photo: $photoId")
+                    return Result.success(existingAnalysis)
+                }
+            }
+
+            // Perform new analysis
+            val analysisResult = analyzeForOSHACompliance(imageData, workType)
+
+            if (analysisResult.isSuccess) {
+                val analysis = analysisResult.getOrThrow()
+
+                // Save analysis to persistence
+                val saveResult = oshaAnalysisRepository.saveAnalysis(photoId, analysis)
+                if (saveResult.isFailure) {
+                    println("⚠️ [LiveOSHAAnalyzer] Failed to save analysis: ${saveResult.exceptionOrNull()?.message}")
+                } else {
+                    println("💾 [LiveOSHAAnalyzer] Successfully saved OSHA analysis for photo: $photoId")
+                }
+            }
+
+            analysisResult
+        } catch (e: Exception) {
+            println("❌ [LiveOSHAAnalyzer] Analysis with persistence failed: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun analyzeForOSHACompliance(
+        imageData: ByteArray,
+        workType: WorkType
+    ): Result<OSHAAnalysisResult> {
+        return try {
+            println("🔍 [LiveOSHAAnalyzer] Starting OSHA compliance analysis for work type: ${workType.name}")
+
+            // First, perform AI image analysis with OSHA-specific prompts
+            val aiAnalysisResult = performAIImageAnalysis(imageData, workType)
+
+            if (aiAnalysisResult.isFailure) {
+                println("❌ [LiveOSHAAnalyzer] AI analysis failed: ${aiAnalysisResult.exceptionOrNull()?.message}")
+                return Result.failure(aiAnalysisResult.exceptionOrNull() ?: Exception("AI analysis failed"))
+            }
+
+            val aiAnalysis = aiAnalysisResult.getOrThrow()
+            println("✅ [LiveOSHAAnalyzer] AI analysis completed successfully")
+
+            // Process AI results into OSHA compliance data
+            val oshaAnalysis = processAIResultsIntoOSHACompliance(aiAnalysis, workType)
+
+            println("🎯 [LiveOSHAAnalyzer] OSHA analysis complete. Found ${oshaAnalysis.safetyHazards.size} hazards, compliance score: ${oshaAnalysis.complianceScore}%")
+
+            Result.success(oshaAnalysis)
+        } catch (e: Exception) {
+            println("❌ [LiveOSHAAnalyzer] Analysis failed: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Delete stored OSHA analysis for a photo
+     */
+    suspend fun deleteAnalysis(photoId: String): Result<Unit> {
+        return try {
+            oshaAnalysisRepository.deleteAnalysis(photoId)
+            println("🗑️ [LiveOSHAAnalyzer] Deleted OSHA analysis for photo: $photoId")
+            Result.success(Unit)
+        } catch (e: Exception) {
+            println("❌ [LiveOSHAAnalyzer] Failed to delete analysis for photo $photoId: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Check if analysis exists for a photo
+     */
+    suspend fun hasAnalysis(photoId: String): Boolean {
+        return oshaAnalysisRepository.hasAnalysis(photoId)
+    }
+
+    /**
+     * Get stored analysis for a photo
+     */
+    suspend fun getStoredAnalysis(photoId: String): Result<OSHAAnalysisResult?> {
+        return oshaAnalysisRepository.getAnalysis(photoId)
+    }
+
+    override suspend fun configure(apiKey: String?): Result<Unit> {
+        return try {
+            println("🔧 [LiveOSHAAnalyzer] Configuring with Gemini Vision integration")
+            val result = geminiAnalyzer.configure(apiKey)
+            configured = result.isSuccess
+            if (configured) {
+                println("✅ [LiveOSHAAnalyzer] Configuration successful")
+            } else {
+                println("❌ [LiveOSHAAnalyzer] Configuration failed: ${result.exceptionOrNull()?.message}")
+            }
+            result
+        } catch (e: Exception) {
+            println("❌ [LiveOSHAAnalyzer] Configuration error: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    override val isAvailable: Boolean
+        get() = configured && geminiAnalyzer.isAvailable
+
+    private suspend fun performAIImageAnalysis(
+        imageData: ByteArray,
+        workType: WorkType
+    ): Result<PhotoAnalysis> {
+        println("🤖 [LiveOSHAAnalyzer] Performing AI image analysis with OSHA-specific prompts")
+
+        val oshaPrompt = buildOSHAAnalysisPrompt(workType)
+
+        // Use Gemini Vision for analysis with OSHA-specific context
+        return geminiAnalyzer.analyzePhotoWithTags(
+            imageData = imageData,
+            existingTags = emptyList(),
+            customPrompt = oshaPrompt
+        )
+    }
+
+    private fun buildOSHAAnalysisPrompt(workType: WorkType): String {
+        return buildString {
+            appendLine("Analyze this construction site photo for OSHA safety compliance violations.")
+            appendLine("Work Type: ${workType.name}")
+            appendLine("")
+            appendLine("Look specifically for:")
+
+            when (workType) {
+                WorkType.ELECTRICAL -> {
+                    appendLine("- Electrical panel safety and proper enclosures")
+                    appendLine("- Electrical PPE (insulated gloves, arc flash protection)")
+                    appendLine("- Proper electrical grounding and GFCI protection")
+                    appendLine("- Lockout/tagout procedures")
+                    appendLine("- Electrical clearance distances")
+                }
+                WorkType.STEEL_WORK -> {
+                    appendLine("- Fall protection systems (guardrails, safety nets, harnesses)")
+                    appendLine("- Scaffold safety and platform conditions")
+                    appendLine("- Steel erection safety procedures")
+                    appendLine("- Crane and rigging safety")
+                    appendLine("- Leading edge protection")
+                }
+                WorkType.EXCAVATION -> {
+                    appendLine("- Excavation protective systems")
+                    appendLine("- Proper slope angles and benching")
+                    appendLine("- Competent person oversight")
+                    appendLine("- Safe egress from excavations")
+                    appendLine("- Utilities location and protection")
+                }
+                else -> {
+                    appendLine("- General PPE compliance (hard hats, safety glasses, steel-toed boots)")
+                    appendLine("- Fall protection for work at heights over 6 feet")
+                    appendLine("- Housekeeping and tripping hazards")
+                    appendLine("- Tool and equipment safety")
+                    appendLine("- Emergency procedures and access")
+                }
+            }
+
+            appendLine("")
+            appendLine("For each safety issue identified:")
+            appendLine("1. Describe the specific hazard")
+            appendLine("2. Identify the relevant OSHA standard (29 CFR)")
+            appendLine("3. Assess severity (Serious, Other-Than-Serious, Willful)")
+            appendLine("4. Recommend corrective actions")
+            appendLine("5. Estimate compliance confidence level")
+            appendLine("")
+            appendLine("Focus on construction industry standards (29 CFR Part 1926).")
+            appendLine("Be specific about OSHA standard numbers and requirements.")
+        }
+    }
+
+    private fun processAIResultsIntoOSHACompliance(
+        aiAnalysis: PhotoAnalysis,
+        workType: WorkType
+    ): OSHAAnalysisResult {
+        println("🔄 [LiveOSHAAnalyzer] Processing AI results into OSHA compliance data")
+
+        // Extract safety hazards from AI analysis
+        val safetyHazards = extractSafetyHazards(aiAnalysis, workType)
+
+        // Generate OSHA violations based on hazards
+        val oshaViolations = generateOSHAViolations(safetyHazards)
+
+        // Calculate compliance score
+        val complianceScore = calculateComplianceScore(safetyHazards)
+
+        // Determine overall compliance status
+        val overallCompliance = determineComplianceStatus(complianceScore, safetyHazards)
+
+        // Generate recommendations
+        val recommendations = generateRecommendations(safetyHazards, workType)
+
+        // Create detailed analysis report
+        val detailedAnalysis = generateDetailedAnalysisReport(safetyHazards, workType, complianceScore)
+
+        return OSHAAnalysisResult(
+            analysisId = "live_osha_analysis_${Clock.System.now().toEpochMilliseconds()}",
+            overallCompliance = overallCompliance,
+            safetyHazards = safetyHazards,
+            oshaViolations = oshaViolations,
+            complianceScore = complianceScore,
+            confidenceLevel = calculateAverageConfidence(safetyHazards),
+            detailedAnalysis = detailedAnalysis,
+            recommendations = recommendations
+        )
+    }
+
+    private fun extractSafetyHazards(aiAnalysis: PhotoAnalysis, workType: WorkType): List<OSHAHazard> {
+        val hazards = mutableListOf<OSHAHazard>()
+
+        // Extract hazards from AI analysis description and tags
+        val analysisText = "${aiAnalysis.description} ${aiAnalysis.tags.joinToString(" ")}"
+
+        // Parse for specific safety keywords and map to OSHA standards
+        parseForElectricalHazards(analysisText, hazards)
+        parseForFallProtectionHazards(analysisText, hazards)
+        parseForPPEViolations(analysisText, hazards)
+        parseForScaffoldingHazards(analysisText, hazards)
+        parseForGeneralSafetyHazards(analysisText, hazards)
+
+        // Add work-type specific hazards based on AI confidence
+        addWorkTypeSpecificHazards(workType, aiAnalysis, hazards)
+
+        return hazards
+    }
+
+    private fun parseForElectricalHazards(text: String, hazards: MutableList<OSHAHazard>) {
+        val electricalKeywords = listOf("electrical", "panel", "wire", "cable", "circuit", "voltage", "power")
+        val safetyKeywords = listOf("exposed", "unprotected", "missing", "damaged", "unsafe")
+
+        if (electricalKeywords.any { text.contains(it, ignoreCase = true) } &&
+            safetyKeywords.any { text.contains(it, ignoreCase = true) }) {
+
+            hazards.add(OSHAHazard(
+                id = "electrical_${System.currentTimeMillis()}",
+                hazardType = OSHAHazardType.ELECTRICAL_SAFETY,
+                title = "Electrical Safety Violation Detected",
+                description = "AI analysis identified potential electrical safety hazards requiring attention.",
+                severity = OSHASeverity.SERIOUS,
+                oshaStandard = "29 CFR 1926.95",
+                oshaCode = "1926.95(a)",
+                violationDetails = "Electrical installations must be properly protected and maintained according to OSHA standards.",
+                requiredAction = "Inspect electrical systems, ensure proper protection, and verify compliance with electrical safety standards.",
+                confidence = 0.85f
+            ))
+        }
+    }
+
+    private fun parseForFallProtectionHazards(text: String, hazards: MutableList<OSHAHazard>) {
+        val fallKeywords = listOf("height", "elevated", "roof", "ladder", "scaffold", "edge")
+        val protectionKeywords = listOf("guardrail", "harness", "safety net", "fall protection")
+
+        if (fallKeywords.any { text.contains(it, ignoreCase = true) } &&
+            !protectionKeywords.any { text.contains(it, ignoreCase = true) }) {
+
+            hazards.add(OSHAHazard(
+                id = "fall_${System.currentTimeMillis()}",
+                hazardType = OSHAHazardType.FALL_PROTECTION,
+                title = "Fall Protection Required",
+                description = "Work at height detected without adequate fall protection systems.",
+                severity = OSHASeverity.SERIOUS,
+                oshaStandard = "29 CFR 1926.501",
+                oshaCode = "1926.501(b)(1)",
+                violationDetails = "Workers on surfaces 6 feet or more above lower levels must be protected from falling.",
+                requiredAction = "Install guardrail systems, safety nets, or personal fall arrest systems.",
+                confidence = 0.80f
+            ))
+        }
+    }
+
+    private fun parseForPPEViolations(text: String, hazards: MutableList<OSHAHazard>) {
+        val ppeItems = listOf("hard hat", "helmet", "safety glasses", "gloves", "boots", "vest")
+        val violationKeywords = listOf("not wearing", "missing", "without", "no")
+
+        if (violationKeywords.any { text.contains(it, ignoreCase = true) } &&
+            ppeItems.any { text.contains(it, ignoreCase = true) }) {
+
+            hazards.add(OSHAHazard(
+                id = "ppe_${System.currentTimeMillis()}",
+                hazardType = OSHAHazardType.PPE_VIOLATION,
+                title = "Personal Protective Equipment Violation",
+                description = "Workers observed without required personal protective equipment.",
+                severity = OSHASeverity.SERIOUS,
+                oshaStandard = "29 CFR 1926.95",
+                oshaCode = "1926.95(a)(1)",
+                violationDetails = "All workers must wear appropriate PPE for their work environment and tasks.",
+                requiredAction = "Ensure all workers are equipped with and properly use required PPE.",
+                confidence = 0.75f
+            ))
+        }
+    }
+
+    private fun parseForScaffoldingHazards(text: String, hazards: MutableList<OSHAHazard>) {
+        val scaffoldKeywords = listOf("scaffold", "platform", "plank", "frame")
+        val hazardKeywords = listOf("gap", "missing", "damaged", "unstable", "incomplete")
+
+        if (scaffoldKeywords.any { text.contains(it, ignoreCase = true) } &&
+            hazardKeywords.any { text.contains(it, ignoreCase = true) }) {
+
+            hazards.add(OSHAHazard(
+                id = "scaffold_${System.currentTimeMillis()}",
+                hazardType = OSHAHazardType.SCAFFOLDING,
+                title = "Scaffolding Safety Issue",
+                description = "Scaffold structure shows potential safety deficiencies.",
+                severity = OSHASeverity.OTHER_THAN_SERIOUS,
+                oshaStandard = "29 CFR 1926.451",
+                oshaCode = "1926.451(b)",
+                violationDetails = "Scaffolds must be properly constructed and maintained according to OSHA standards.",
+                requiredAction = "Inspect scaffold construction, repair deficiencies, and ensure proper assembly.",
+                confidence = 0.70f
+            ))
+        }
+    }
+
+    private fun parseForGeneralSafetyHazards(text: String, hazards: MutableList<OSHAHazard>) {
+        val housekeepingKeywords = listOf("debris", "clutter", "materials", "tools", "scattered")
+        val hazardKeywords = listOf("tripping", "blocking", "disorganized", "messy")
+
+        if (housekeepingKeywords.any { text.contains(it, ignoreCase = true) } &&
+            hazardKeywords.any { text.contains(it, ignoreCase = true) }) {
+
+            hazards.add(OSHAHazard(
+                id = "housekeeping_${System.currentTimeMillis()}",
+                hazardType = OSHAHazardType.GENERAL_SAFETY,
+                title = "Housekeeping and Organization",
+                description = "Work area shows poor housekeeping that could create safety hazards.",
+                severity = OSHASeverity.OTHER_THAN_SERIOUS,
+                oshaStandard = "29 CFR 1926.25",
+                oshaCode = "1926.25(a)",
+                violationDetails = "Work areas must be kept clean and orderly to prevent accidents.",
+                requiredAction = "Implement proper housekeeping procedures and material organization.",
+                confidence = 0.65f
+            ))
+        }
+    }
+
+    private fun addWorkTypeSpecificHazards(
+        workType: WorkType,
+        aiAnalysis: PhotoAnalysis,
+        hazards: MutableList<OSHAHazard>
+    ) {
+        // Add specific hazards based on work type and AI confidence
+        when (workType) {
+            WorkType.ELECTRICAL -> {
+                if (aiAnalysis.confidence > 0.7f) {
+                    hazards.add(createElectricalSpecificHazard())
+                }
+            }
+            WorkType.STEEL_WORK -> {
+                if (aiAnalysis.confidence > 0.7f) {
+                    hazards.add(createSteelWorkSpecificHazard())
+                }
+            }
+            WorkType.EXCAVATION -> {
+                if (aiAnalysis.confidence > 0.7f) {
+                    hazards.add(createExcavationSpecificHazard())
+                }
+            }
+            else -> {
+                // General construction hazards already covered
+            }
+        }
+    }
+
+    private fun createElectricalSpecificHazard(): OSHAHazard {
+        return OSHAHazard(
+            id = "electrical_specific_${System.currentTimeMillis()}",
+            hazardType = OSHAHazardType.ELECTRICAL_SAFETY,
+            title = "Electrical Work Safety Requirements",
+            description = "Electrical work environment requires enhanced safety protocols and specialized PPE.",
+            severity = OSHASeverity.SERIOUS,
+            oshaStandard = "29 CFR 1926.137",
+            oshaCode = "1926.137(a)(2)",
+            violationDetails = "Electrical work requires specialized protective equipment and procedures.",
+            requiredAction = "Ensure proper electrical PPE, lockout/tagout procedures, and qualified person oversight.",
+            confidence = 0.85f
+        )
+    }
+
+    private fun createSteelWorkSpecificHazard(): OSHAHazard {
+        return OSHAHazard(
+            id = "steel_specific_${System.currentTimeMillis()}",
+            hazardType = OSHAHazardType.FALL_PROTECTION,
+            title = "Steel Erection Safety Requirements",
+            description = "Steel work operations require comprehensive fall protection and safety systems.",
+            severity = OSHASeverity.SERIOUS,
+            oshaStandard = "29 CFR 1926.760",
+            oshaCode = "1926.760(a)(1)",
+            violationDetails = "Steel erection work requires specialized fall protection and safety procedures.",
+            requiredAction = "Implement steel erection safety plan, fall protection systems, and competent person oversight.",
+            confidence = 0.80f
+        )
+    }
+
+    private fun createExcavationSpecificHazard(): OSHAHazard {
+        return OSHAHazard(
+            id = "excavation_specific_${System.currentTimeMillis()}",
+            hazardType = OSHAHazardType.EXCAVATION_SAFETY,
+            title = "Excavation Safety Requirements",
+            description = "Excavation work requires protective systems and competent person oversight.",
+            severity = OSHASeverity.SERIOUS,
+            oshaStandard = "29 CFR 1926.651",
+            oshaCode = "1926.651(c)(2)",
+            violationDetails = "Excavations require protective systems when workers are exposed to cave-in hazards.",
+            requiredAction = "Install proper protective systems, ensure safe egress, and maintain competent person oversight.",
+            confidence = 0.78f
+        )
+    }
+
+    private fun generateOSHAViolations(hazards: List<OSHAHazard>): List<OSHAViolation> {
+        return hazards.map { hazard ->
+            OSHAViolation(
+                violationId = "violation_${hazard.id}",
+                oshaStandard = hazard.oshaStandard,
+                standardTitle = getStandardTitle(hazard.oshaStandard),
+                violationType = mapSeverityToViolationType(hazard.severity),
+                description = hazard.violationDetails,
+                potentialPenalty = calculatePenalty(hazard.severity),
+                correctiveAction = hazard.requiredAction,
+                timeframe = determineTimeframe(hazard.severity)
+            )
+        }
+    }
+
+    private fun calculateComplianceScore(hazards: List<OSHAHazard>): Float {
+        if (hazards.isEmpty()) return 95.0f
+
+        val seriousCount = hazards.count { it.severity == OSHASeverity.SERIOUS }
+        val otherCount = hazards.count { it.severity == OSHASeverity.OTHER_THAN_SERIOUS }
+        val willfulCount = hazards.count { it.severity == OSHASeverity.WILLFUL }
+
+        // Calculate score based on severity and count
+        var score = 100.0f
+        score -= (willfulCount * 30.0f)  // Willful violations are most serious
+        score -= (seriousCount * 20.0f)  // Serious violations
+        score -= (otherCount * 10.0f)    // Other violations
+
+        return score.coerceAtLeast(0.0f)
+    }
+
+    private fun determineComplianceStatus(score: Float, hazards: List<OSHAHazard>): ComplianceStatus {
+        val hasWillful = hazards.any { it.severity == OSHASeverity.WILLFUL }
+        val hasSerious = hazards.any { it.severity == OSHASeverity.SERIOUS }
+
+        return when {
+            hasWillful || score < 50 -> ComplianceStatus.SERIOUS_VIOLATIONS
+            hasSerious || score < 75 -> ComplianceStatus.MINOR_VIOLATIONS
+            score >= 90 -> ComplianceStatus.COMPLIANT
+            else -> ComplianceStatus.MINOR_VIOLATIONS
+        }
+    }
+
+    private fun generateRecommendations(hazards: List<OSHAHazard>, workType: WorkType): List<OSHARecommendation> {
+        val recommendations = mutableListOf<OSHARecommendation>()
+
+        // Add immediate action recommendations for serious hazards
+        val seriousHazards = hazards.filter { it.severity == OSHASeverity.SERIOUS }
+        if (seriousHazards.isNotEmpty()) {
+            recommendations.add(OSHARecommendation(
+                id = "immediate_action_${System.currentTimeMillis()}",
+                priority = OSHAPriority.IMMEDIATE,
+                category = OSHARecommendationCategory.SAFETY_PROCEDURES,
+                title = "Immediate Hazard Mitigation Required",
+                description = "Address ${seriousHazards.size} serious safety violations identified in the analysis.",
+                actionSteps = seriousHazards.map { "• ${it.requiredAction}" },
+                oshaReference = seriousHazards.first().oshaStandard,
+                estimatedCost = "Varies by violation",
+                timeToImplement = "Immediate action required"
+            ))
+        }
+
+        // Add training recommendations
+        recommendations.add(OSHARecommendation(
+            id = "training_${System.currentTimeMillis()}",
+            priority = OSHAPriority.HIGH,
+            category = OSHARecommendationCategory.TRAINING_AND_EDUCATION,
+            title = "Comprehensive Safety Training Program",
+            description = "Implement targeted safety training based on identified hazards and work type.",
+            actionSteps = listOf(
+                "Conduct hazard recognition training for all workers",
+                "Provide work-type specific safety training for ${workType.name}",
+                "Implement regular safety refresher courses",
+                "Document training completion and competency"
+            ),
+            oshaReference = "29 CFR 1926.20",
+            estimatedCost = "$500-2,000 per training session",
+            timeToImplement = "1-2 weeks"
+        ))
+
+        // Add inspection recommendations
+        recommendations.add(OSHARecommendation(
+            id = "inspection_${System.currentTimeMillis()}",
+            priority = OSHAPriority.MEDIUM,
+            category = OSHARecommendationCategory.SAFETY_PROCEDURES,
+            title = "Enhanced Safety Inspection Program",
+            description = "Establish systematic safety inspections to prevent future violations.",
+            actionSteps = listOf(
+                "Assign competent person for daily safety inspections",
+                "Create work-type specific inspection checklists",
+                "Implement corrective action tracking system",
+                "Conduct weekly safety audits with management"
+            ),
+            oshaReference = "29 CFR 1926.20",
+            estimatedCost = "$200-500 per month",
+            timeToImplement = "1 week"
+        ))
+
+        return recommendations
+    }
+
+    private fun generateDetailedAnalysisReport(hazards: List<OSHAHazard>, workType: WorkType, score: Float): String {
+        return buildString {
+            appendLine("# Live OSHA Compliance Analysis Report")
+            appendLine("**Generated**: ${Clock.System.now()}")
+            appendLine("**Work Type**: ${workType.name}")
+            appendLine("**Analysis Method**: AI-Powered with Gemini Vision")
+            appendLine()
+
+            appendLine("## Executive Summary")
+            appendLine("**Compliance Score**: ${score.toInt()}%")
+            appendLine("**Total Hazards**: ${hazards.size}")
+            appendLine("**Serious Violations**: ${hazards.count { it.severity == OSHASeverity.SERIOUS }}")
+            appendLine("**Other Violations**: ${hazards.count { it.severity == OSHASeverity.OTHER_THAN_SERIOUS }}")
+            appendLine()
+
+            if (hazards.any { it.severity == OSHASeverity.SERIOUS }) {
+                appendLine("⚠️ **IMMEDIATE ACTION REQUIRED**")
+                appendLine("Serious safety violations require immediate correction to prevent potential injuries or OSHA penalties.")
+                appendLine()
+            }
+
+            appendLine("## Detailed Findings")
+            hazards.forEachIndexed { index, hazard ->
+                appendLine("### ${index + 1}. ${hazard.title}")
+                appendLine("**Severity**: ${hazard.severity.name}")
+                appendLine("**OSHA Standard**: ${hazard.oshaCode}")
+                appendLine("**Description**: ${hazard.description}")
+                appendLine("**Required Action**: ${hazard.requiredAction}")
+                appendLine("**AI Confidence**: ${(hazard.confidence * 100).toInt()}%")
+                appendLine()
+            }
+
+            appendLine("## Compliance Recommendations")
+            appendLine("1. **Immediate Actions**: Address all serious violations within 24 hours")
+            appendLine("2. **Training Program**: Implement comprehensive safety training for identified hazards")
+            appendLine("3. **Inspection Protocol**: Establish regular safety inspections with qualified personnel")
+            appendLine("4. **Documentation**: Maintain records of all corrective actions taken")
+            appendLine("5. **Follow-up**: Schedule re-analysis after corrective measures are implemented")
+            appendLine()
+
+            appendLine("---")
+            appendLine("*This analysis was generated using AI-powered image recognition combined with OSHA regulatory knowledge. While comprehensive, it should be supplemented with human safety expert review.*")
+        }
+    }
+
+    private fun calculateAverageConfidence(hazards: List<OSHAHazard>): Float {
+        return if (hazards.isEmpty()) 0.0f else hazards.map { it.confidence }.average().toFloat()
+    }
+
+    private fun getStandardTitle(oshaStandard: String): String {
+        return when {
+            oshaStandard.contains("1926.95") -> "Personal Protective Equipment"
+            oshaStandard.contains("1926.137") -> "Electrical Protective Equipment"
+            oshaStandard.contains("1926.501") -> "Fall Protection"
+            oshaStandard.contains("1926.451") -> "Scaffolding"
+            oshaStandard.contains("1926.25") -> "Housekeeping"
+            oshaStandard.contains("1926.651") -> "Excavation Safety"
+            oshaStandard.contains("1926.760") -> "Steel Erection"
+            oshaStandard.contains("1926.20") -> "General Safety and Health Provisions"
+            else -> "Construction Safety Standards"
+        }
+    }
+
+    private fun mapSeverityToViolationType(severity: OSHASeverity): OSHAViolationType {
+        return when (severity) {
+            OSHASeverity.SERIOUS -> OSHAViolationType.SERIOUS
+            OSHASeverity.WILLFUL -> OSHAViolationType.WILLFUL
+            OSHASeverity.OTHER_THAN_SERIOUS -> OSHAViolationType.OTHER_THAN_SERIOUS
+            else -> OSHAViolationType.OTHER_THAN_SERIOUS
+        }
+    }
+
+    private fun calculatePenalty(severity: OSHASeverity): String {
+        return when (severity) {
+            OSHASeverity.WILLFUL -> "Up to $156,259 per violation"
+            OSHASeverity.SERIOUS -> "Up to $15,625 per violation"
+            OSHASeverity.OTHER_THAN_SERIOUS -> "Up to $15,625 per violation"
+            else -> "Up to $15,625 per violation"
+        }
+    }
+
+    private fun determineTimeframe(severity: OSHASeverity): String {
+        return when (severity) {
+            OSHASeverity.WILLFUL, OSHASeverity.SERIOUS -> "Immediate correction required"
+            else -> "Correction required within 30 days"
+        }
+    }
+}

@@ -1,6 +1,7 @@
 package com.hazardhawk.ai.core
 
 import com.hazardhawk.ai.services.TFLiteVisionService
+import com.hazardhawk.ai.services.LiteRTVisionService
 import com.hazardhawk.ai.services.VertexAIGeminiService
 import com.hazardhawk.ai.services.Gemma3NE2BVisionService
 import com.hazardhawk.ai.services.YOLO11LocalService
@@ -43,7 +44,7 @@ class AIServiceFactory : KoinComponent {
      * 3. Create appropriate orchestrator with fallback logic
      * 4. Handle initialization failures gracefully
      */
-    fun createOrchestrator(
+    suspend fun createOrchestrator(
         networkMonitor: NetworkConnectivityService,
         performanceManager: AdaptivePerformanceManager,
         memoryManager: MemoryManager,
@@ -130,26 +131,27 @@ class AIServiceFactory : KoinComponent {
     /**
      * Check if device is compatible with LiteRT processing.
      */
-    private fun isLiteRTCompatible(deviceTierDetector: DeviceTierDetector): Boolean {
+    private suspend fun isLiteRTCompatible(deviceTierDetector: DeviceTierDetector): Boolean {
         return try {
-            val deviceTier = deviceTierDetector.detectDeviceTier()
-            val memoryInfo = deviceTierDetector.getMemoryInfo()
-            
+            val capabilities = deviceTierDetector.detectCapabilities()
+            val deviceTier = capabilities.tier
+            val totalMemoryMB = capabilities.totalMemoryMB
+
             // LiteRT compatibility requirements
             when {
                 // High-end devices: Full compatibility
-                deviceTier == DeviceTier.HIGH_END && memoryInfo.totalMemoryMB >= 4096 -> true
-                
+                deviceTier == DeviceTier.HIGH_END && totalMemoryMB >= 4096 -> true
+
                 // Mid-range devices: Limited compatibility (GPU only)
-                deviceTier == DeviceTier.MID_RANGE && 
-                memoryInfo.totalMemoryMB >= 3072 &&
+                deviceTier == DeviceTier.MID_RANGE &&
+                totalMemoryMB >= 3072 &&
                 AIFeatureFlags.ENABLE_GPU_ACCELERATION -> true
-                
+
                 // Low-end devices: CPU only if explicitly enabled
-                deviceTier == DeviceTier.LOW_END && 
-                memoryInfo.totalMemoryMB >= 2048 &&
+                deviceTier == DeviceTier.LOW_END &&
+                totalMemoryMB >= 2048 &&
                 AIFeatureFlags.ENABLE_LOW_END_LITERT -> true
-                
+
                 else -> false
             }
         } catch (e: Exception) {
@@ -181,9 +183,9 @@ class AIServiceFactory : KoinComponent {
                 expectedPerformanceImprovement = "Baseline"
             )
             else -> OrchestratorInfo(
-                type = orchestrator.analyzerName,
+                type = orchestrator::class.simpleName ?: "Unknown",
                 version = "Unknown",
-                capabilities = orchestrator.analysisCapabilities,
+                capabilities = emptyList(),
                 primaryService = "Unknown",
                 fallbackService = "Unknown",
                 isRealAI = false,

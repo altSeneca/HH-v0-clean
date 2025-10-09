@@ -1,35 +1,32 @@
 package com.hazardhawk.ai
 
 import com.hazardhawk.ai.core.AIPhotoAnalyzer
-import com.hazardhawk.core.models.*
+import com.hazardhawk.ai.models.*
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
 import kotlin.random.Random
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 /**
- * Simplified AI photo analyzer that replaces the complex orchestrator system.
- * Uses MediaPipe-based analysis with TensorFlow Lite fallback.
- * 
- * This implementation follows the research findings to simplify from 6 orchestrators to 1 service.
+ * Simple AI photo analyzer implementation for testing and demonstration.
+ * Provides mock analysis results to verify the AI integration pipeline.
  */
+@OptIn(ExperimentalUuidApi::class)
 class SimpleAIPhotoAnalyzer : AIPhotoAnalyzer {
-    
+
     private var isInitialized = false
-    
+
+    override val analyzerName: String = "Simple Mock Analyzer"
+    override val priority: Int = 10  // Low priority - for testing only
+    override val analysisCapabilities: Set<AnalysisCapability> = setOf(
+        AnalysisCapability.HAZARD_IDENTIFICATION,
+        AnalysisCapability.PPE_DETECTION
+    )
+
     override val isAvailable: Boolean
         get() = isInitialized
-        
-    override val analysisCapabilities: Set<AnalysisCapability>
-        get() = setOf(
-            AnalysisCapability.PPE_DETECTION,
-            AnalysisCapability.HAZARD_IDENTIFICATION,
-            AnalysisCapability.OSHA_COMPLIANCE
-        )
-        
-    override val analyzerName: String = "MediaPipe + TensorFlow Lite"
-    
-    override val priority: Int = 100
-    
+
     /**
      * Configure the analyzer
      */
@@ -43,250 +40,273 @@ class SimpleAIPhotoAnalyzer : AIPhotoAnalyzer {
             Result.failure(e)
         }
     }
-    
+
     /**
-     * Analyze photo using MediaPipe Vision with TensorFlow Lite backend
+     * Analyze photo using mock AI analysis for testing
      */
     override suspend fun analyzePhoto(
         imageData: ByteArray,
         workType: WorkType
     ): Result<SafetyAnalysis> {
-        
-        if (!isInitialized) {
-            return Result.failure(IllegalStateException("SimpleAIPhotoAnalyzer not initialized"))
-        }
-        
         return try {
-            // Simulate processing time for realistic UX
-            delay(1500)
-            
-            val analysisResult = createConstructionSafetyAnalysis(workType)
-            Result.success(analysisResult)
-            
+            if (!isInitialized) {
+                configure()
+            }
+
+            // Simulate processing time
+            delay(1000)
+            val startTime = Clock.System.now()
+
+            // Generate mock analysis results based on work type
+            val hazards = generateMockHazards(workType)
+            val ppeStatus = generateMockPPEStatus()
+            val oshaViolations = hazards.mapNotNull { hazard ->
+                hazard.oshaCode?.let { code ->
+                    OSHAViolation(
+                        code = code,
+                        title = getOSHATitle(code),
+                        description = hazard.description,
+                        severity = hazard.severity,
+                        fineRange = getFineRange(hazard.severity),
+                        correctiveAction = hazard.recommendations.firstOrNull() ?: "Address safety concern"
+                    )
+                }
+            }
+
+            val processingTime = (Clock.System.now() - startTime).inWholeMilliseconds
+
+            val analysis = SafetyAnalysis(
+                id = Uuid.random().toString(),
+                timestamp = Clock.System.now().toEpochMilliseconds(),
+                analysisType = AnalysisType.LOCAL_GEMMA_MULTIMODAL,
+                workType = workType,
+                hazards = hazards,
+                ppeStatus = ppeStatus,
+                oshaViolations = oshaViolations,
+                recommendations = generateMockRecommendations(workType, hazards),
+                overallRiskLevel = calculateRiskLevel(hazards),
+                confidence = 0.85f + Random.nextFloat() * 0.15f,
+                processingTimeMs = processingTime,
+                metadata = AnalysisMetadata(
+                    imageWidth = 1920,
+                    imageHeight = 1080,
+                    processingTimeMs = processingTime,
+                    modelVersion = "Mock-v1.0"
+                )
+            )
+
+            Result.success(analysis)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
-    
-    /**
-     * Create construction safety analysis using MediaPipe object detection
-     */
-    private fun createConstructionSafetyAnalysis(workType: WorkType): SafetyAnalysis {
-        val hazards = generateWorkTypeHazards(workType)
-        val ppeStatus = generatePPEStatus(workType)
-        val oshaViolations = generateOSHAViolations(workType)
-        val recommendations = generateSafetyRecommendations(workType, hazards)
-        val processingTime = Random.nextLong(1200, 2000)
-        
-        return SafetyAnalysis(
-            id = generateAnalysisId(),
-            photoId = "photo_${System.currentTimeMillis()}",
-            timestamp = Clock.System.now(),
-            analysisType = AnalysisType.ON_DEVICE,
-            workType = workType,
-            hazards = hazards,
-            ppeStatus = ppeStatus,
-            oshaViolations = oshaViolations,
-            recommendations = recommendations,
-            overallRiskLevel = calculateRiskLevel(hazards),
-            severity = calculateSeverity(hazards),
-            aiConfidence = Random.nextFloat() * 0.3f + 0.7f, // 0.7-1.0 range
-            processingTimeMs = processingTime,
-            metadata = AnalysisMetadata(
-                imageWidth = 1920,
-                imageHeight = 1080
-            )
-        )
-    }
-    
-    /**
-     * Generate hazards based on work type using MediaPipe object detection results
-     */
-    private fun generateWorkTypeHazards(workType: WorkType): List<Hazard> {
-        return when (workType) {
-            WorkType.GENERAL_CONSTRUCTION -> listOf(
+
+    private fun generateMockHazards(workType: WorkType): List<Hazard> {
+        val hazards = mutableListOf<Hazard>()
+
+        // Generate 0-3 random hazards based on work type
+        val hazardCount = Random.nextInt(0, 4)
+
+        repeat(hazardCount) { index ->
+            val hazardType = when (workType) {
+                WorkType.ELECTRICAL ->
+                    listOf(HazardType.ELECTRICAL_HAZARD, HazardType.PPE_VIOLATION).random()
+                WorkType.ROOFING ->
+                    listOf(HazardType.FALL_PROTECTION, HazardType.PPE_VIOLATION).random()
+                WorkType.CRANE_OPERATIONS ->
+                    listOf(HazardType.MECHANICAL_HAZARD, HazardType.PPE_VIOLATION).random()
+                WorkType.EXCAVATION ->
+                    listOf(HazardType.MECHANICAL_HAZARD, HazardType.CONFINED_SPACE).random()
+                else ->
+                    listOf(HazardType.PPE_VIOLATION, HazardType.HOUSEKEEPING).random()
+            }
+
+            hazards.add(
                 Hazard(
-                    id = "hazard_${Random.nextInt(1000, 9999)}",
-                    type = HazardType.FALL_PROTECTION,
-                    severity = Severity.HIGH,
-                    description = "Unguarded edge detected at elevated work area",
-                    confidence = 0.89f,
-                    oshaCode = "29 CFR 1926.501",
-                    recommendations = listOf("Install guardrails", "Use safety harnesses"),
-                    immediateAction = "Stop work and install fall protection"
-                ),
-                Hazard(
-                    id = "hazard_${Random.nextInt(1000, 9999)}",
-                    type = HazardType.STRUCK_BY_OBJECT,
-                    severity = Severity.MEDIUM,
-                    description = "Loose materials detected in overhead area",
-                    confidence = 0.76f,
-                    oshaCode = "29 CFR 1926.451",
-                    recommendations = listOf("Secure loose materials", "Implement debris nets")
-                )
-            )
-            
-            WorkType.ELECTRICAL -> listOf(
-                Hazard(
-                    id = "hazard_${Random.nextInt(1000, 9999)}",
-                    type = HazardType.ELECTRICAL,
-                    severity = Severity.HIGH,
-                    description = "Exposed electrical components without proper covering",
-                    confidence = 0.93f,
-                    oshaCode = "29 CFR 1926.95",
-                    recommendations = listOf("Install electrical panel covers", "Verify LOTO procedures"),
-                    immediateAction = "De-energize and cover exposed components"
-                )
-            )
-            
-            WorkType.EXCAVATION -> listOf(
-                Hazard(
-                    id = "hazard_${Random.nextInt(1000, 9999)}",
-                    type = HazardType.ENVIRONMENTAL_HAZARD,
-                    severity = Severity.CRITICAL,
-                    description = "Unsupported trench walls detected",
-                    confidence = 0.87f,
-                    oshaCode = "29 CFR 1926.652",
-                    recommendations = listOf("Install trench shoring", "Ensure proper slope angles"),
-                    immediateAction = "Evacuate trench and install protective systems"
-                )
-            )
-            
-            else -> listOf(
-                Hazard(
-                    id = "hazard_${Random.nextInt(1000, 9999)}",
-                    type = HazardType.EQUIPMENT_SAFETY,
-                    severity = Severity.LOW,
-                    description = "MediaPipe analysis active - monitoring for safety compliance",
-                    confidence = 0.95f,
-                    oshaCode = "General Duty Clause",
-                    recommendations = listOf("Continue following safety protocols")
+                    id = Uuid.random().toString(),
+                    type = hazardType,
+                    description = getHazardDescription(hazardType),
+                    severity = getHazardSeverity(hazardType),
+                    confidence = 0.7f + Random.nextFloat() * 0.3f,
+                    oshaCode = getOSHACode(hazardType),
+                    recommendations = getHazardRecommendations(hazardType),
+                    boundingBox = if (Random.nextBoolean()) {
+                        BoundingBox(
+                            left = Random.nextFloat() * 0.5f,
+                            top = Random.nextFloat() * 0.5f,
+                            width = 0.2f + Random.nextFloat() * 0.3f,
+                            height = 0.2f + Random.nextFloat() * 0.3f
+                        )
+                    } else null
                 )
             )
         }
+
+        return hazards
     }
-    
-    /**
-     * Generate PPE status using MediaPipe person and object detection
-     */
-    private fun generatePPEStatus(workType: WorkType): PPEStatus {
+
+    private fun generateMockPPEStatus(): PPEStatus {
         return PPEStatus(
             hardHat = PPEItem(
                 status = if (Random.nextBoolean()) PPEItemStatus.PRESENT else PPEItemStatus.MISSING,
-                confidence = Random.nextFloat() * 0.3f + 0.7f,
+                confidence = 0.8f + Random.nextFloat() * 0.2f,
                 required = true
             ),
             safetyVest = PPEItem(
                 status = if (Random.nextBoolean()) PPEItemStatus.PRESENT else PPEItemStatus.MISSING,
-                confidence = Random.nextFloat() * 0.3f + 0.7f,
+                confidence = 0.8f + Random.nextFloat() * 0.2f,
                 required = true
             ),
             safetyBoots = PPEItem(
-                status = PPEItemStatus.PRESENT,
-                confidence = 0.85f,
+                status = if (Random.nextBoolean()) PPEItemStatus.PRESENT else PPEItemStatus.UNKNOWN,
+                confidence = 0.6f + Random.nextFloat() * 0.3f,
                 required = true
             ),
             safetyGlasses = PPEItem(
-                status = if (workType == WorkType.ELECTRICAL) PPEItemStatus.PRESENT else PPEItemStatus.UNKNOWN,
-                confidence = if (workType == WorkType.ELECTRICAL) 0.9f else 0.5f,
-                required = workType == WorkType.ELECTRICAL
+                status = if (Random.nextBoolean()) PPEItemStatus.PRESENT else PPEItemStatus.MISSING,
+                confidence = 0.7f + Random.nextFloat() * 0.3f,
+                required = false
             ),
             fallProtection = PPEItem(
-                status = if (workType == WorkType.ROOFING) PPEItemStatus.PRESENT else PPEItemStatus.UNKNOWN,
-                confidence = 0.8f,
-                required = workType == WorkType.ROOFING
+                status = PPEItemStatus.UNKNOWN,
+                confidence = 0.5f,
+                required = false
             ),
             respirator = PPEItem(
                 status = PPEItemStatus.UNKNOWN,
-                confidence = 0.3f,
+                confidence = 0.5f,
                 required = false
             ),
-            overallCompliance = Random.nextFloat() * 0.4f + 0.6f // 0.6-1.0 range
+            overallCompliance = Random.nextFloat() * 0.3f + 0.7f
         )
     }
-    
-    /**
-     * Generate OSHA violations based on detected hazards
-     */
-    private fun generateOSHAViolations(workType: WorkType): List<OSHAViolation> {
-        return when (workType) {
-            WorkType.ELECTRICAL -> listOf(
-                OSHAViolation(
-                    code = "1926.95",
-                    title = "Personal Protective Equipment",
-                    description = "Employees working in areas where there is a possible danger of head injury from impact, or from falling or flying objects, must wear protective helmets",
-                    severity = Severity.HIGH,
-                    fineRange = "$1,000 - $15,625",
-                    correctiveAction = "Ensure all workers wear appropriate PPE"
-                )
-            )
-            else -> emptyList()
+
+    private fun getHazardDescription(type: HazardType): String = when (type) {
+        HazardType.PPE_VIOLATION -> "Worker without required PPE"
+        HazardType.FALL_PROTECTION -> "Potential fall hazard - unprotected height"
+        HazardType.ELECTRICAL_HAZARD -> "Electrical hazard - exposed wiring or equipment"
+        HazardType.MECHANICAL_HAZARD -> "Mechanical equipment hazard"
+        HazardType.CHEMICAL_HAZARD -> "Chemical exposure hazard"
+        HazardType.FIRE_HAZARD -> "Fire hazard detected"
+        HazardType.STRUCK_BY_OBJECT -> "Struck-by hazard"
+        HazardType.CAUGHT_IN_EQUIPMENT -> "Caught-in/between hazard"
+        HazardType.ERGONOMIC_HAZARD -> "Ergonomic concern"
+        HazardType.ENVIRONMENTAL_HAZARD -> "Environmental hazard"
+        HazardType.HOUSEKEEPING -> "Housekeeping issue - trip/slip hazard"
+        HazardType.LOCKOUT_TAGOUT -> "LOTO procedure not followed"
+        HazardType.CONFINED_SPACE -> "Confined space entry hazard"
+        HazardType.SCAFFOLDING_UNSAFE -> "Unsafe scaffolding condition"
+        HazardType.EQUIPMENT_DEFECT -> "Equipment defect detected"
+    }
+
+    private fun getHazardSeverity(type: HazardType): Severity = when (type) {
+        HazardType.FALL_PROTECTION, HazardType.ELECTRICAL_HAZARD,
+        HazardType.CONFINED_SPACE -> Severity.CRITICAL
+        HazardType.MECHANICAL_HAZARD, HazardType.SCAFFOLDING_UNSAFE,
+        HazardType.LOCKOUT_TAGOUT -> Severity.HIGH
+        HazardType.PPE_VIOLATION, HazardType.CHEMICAL_HAZARD,
+        HazardType.EQUIPMENT_DEFECT -> Severity.MEDIUM
+        else -> Severity.LOW
+    }
+
+    private fun getOSHACode(type: HazardType): String? = when (type) {
+        HazardType.PPE_VIOLATION -> "1926.95"
+        HazardType.FALL_PROTECTION -> "1926.501"
+        HazardType.ELECTRICAL_HAZARD -> "1926.416"
+        HazardType.SCAFFOLDING_UNSAFE -> "1926.451"
+        HazardType.EXCAVATION -> "1926.651"
+        HazardType.LOCKOUT_TAGOUT -> "1910.147"
+        HazardType.CONFINED_SPACE -> "1926.1200"
+        else -> null
+    }
+
+    private fun getOSHATitle(code: String): String = when (code) {
+        "1926.95" -> "Personal Protective Equipment"
+        "1926.501" -> "Fall Protection"
+        "1926.416" -> "Electrical Safety"
+        "1926.451" -> "Scaffolding Standards"
+        "1926.651" -> "Excavation Safety"
+        "1910.147" -> "Lockout/Tagout"
+        "1926.1200" -> "Confined Spaces"
+        else -> "OSHA Regulation"
+    }
+
+    private fun getFineRange(severity: Severity): String = when (severity) {
+        Severity.CRITICAL -> "$10,000 - $136,532"
+        Severity.HIGH -> "$5,000 - $15,625"
+        Severity.MEDIUM -> "$1,000 - $15,625"
+        Severity.LOW -> "$0 - $15,625"
+    }
+
+    private fun getHazardRecommendations(type: HazardType): List<String> = when (type) {
+        HazardType.PPE_VIOLATION -> listOf(
+            "Ensure all workers wear required PPE",
+            "Conduct toolbox talk on PPE requirements"
+        )
+        HazardType.FALL_PROTECTION -> listOf(
+            "Install guardrail systems for heights over 6 feet",
+            "Provide personal fall arrest systems",
+            "Conduct fall protection training"
+        )
+        HazardType.ELECTRICAL_HAZARD -> listOf(
+            "Implement lockout/tagout procedures",
+            "Use ground fault circuit interrupters (GFCI)",
+            "Maintain safe clearances from electrical equipment"
+        )
+        HazardType.SCAFFOLDING_UNSAFE -> listOf(
+            "Inspect scaffolding daily",
+            "Ensure proper bracing and tie-offs",
+            "Verify load capacity compliance"
+        )
+        else -> listOf("Address safety concern immediately", "Review safety protocols")
+    }
+
+    private fun calculateRiskLevel(hazards: List<Hazard>): RiskLevel {
+        if (hazards.isEmpty()) return RiskLevel.MINIMAL
+
+        val maxSeverity = hazards.maxOf { it.severity }
+        return when (maxSeverity) {
+            Severity.CRITICAL -> RiskLevel.SEVERE
+            Severity.HIGH -> RiskLevel.HIGH
+            Severity.MEDIUM -> RiskLevel.MODERATE
+            Severity.LOW -> RiskLevel.LOW
         }
     }
-    
-    /**
-     * Generate safety recommendations based on detected hazards and missing PPE
-     */
-    private fun generateSafetyRecommendations(
-        workType: WorkType,
-        hazards: List<Hazard>
-    ): List<String> {
+
+    private fun generateMockRecommendations(workType: WorkType, hazards: List<Hazard>): List<String> {
         val recommendations = mutableListOf<String>()
-        
+
+        if (hazards.isNotEmpty()) {
+            recommendations.add("Address ${hazards.size} safety hazard(s) immediately")
+
+            if (hazards.any { it.severity == Severity.CRITICAL }) {
+                recommendations.add("CRITICAL: Stop work until critical hazards are resolved")
+            }
+        } else {
+            recommendations.add("No immediate safety hazards detected")
+            recommendations.add("Continue following safety protocols")
+        }
+
         // Add work-type specific recommendations
         when (workType) {
-            WorkType.GENERAL_CONSTRUCTION -> {
-                recommendations.addAll(listOf(
-                    "Install guardrails meeting OSHA standards",
-                    "Provide personal fall arrest systems",
-                    "Conduct daily safety briefings",
-                    "MediaPipe AI analysis completed successfully"
-                ))
-            }
             WorkType.ELECTRICAL -> {
-                recommendations.addAll(listOf(
-                    "Verify lockout/tagout procedures",
-                    "Test electrical safety equipment",
-                    "Provide arc-rated PPE",
-                    "Ensure all electrical panels are properly covered"
-                ))
+                recommendations.add("Verify electrical lockout/tagout procedures")
+                recommendations.add("Ensure proper electrical PPE is worn")
+            }
+            WorkType.ROOFING, WorkType.FALL_PROTECTION -> {
+                recommendations.add("Inspect fall protection equipment daily")
+                recommendations.add("Verify anchor points are rated for load")
+            }
+            WorkType.CRANE_OPERATIONS -> {
+                recommendations.add("Conduct pre-lift safety meeting")
+                recommendations.add("Verify crane load chart compliance")
             }
             else -> {
-                recommendations.addAll(listOf(
-                    "Conduct regular safety inspections",
-                    "Ensure proper PPE usage",
-                    "Review safety procedures with team"
-                ))
+                recommendations.add("Maintain situational awareness")
+                recommendations.add("Follow established safety procedures")
             }
         }
-        
+
         return recommendations
     }
-    
-    /**
-     * Calculate overall risk level based on hazards
-     */
-    private fun calculateRiskLevel(hazards: List<Hazard>): RiskLevel {
-        return when {
-            hazards.any { it.severity == Severity.CRITICAL } -> RiskLevel.SEVERE
-            hazards.any { it.severity == Severity.HIGH } -> RiskLevel.HIGH
-            hazards.any { it.severity == Severity.MEDIUM } -> RiskLevel.MODERATE
-            hazards.isNotEmpty() -> RiskLevel.LOW
-            else -> RiskLevel.MINIMAL
-        }
-    }
-    
-    /**
-     * Calculate overall severity based on hazards
-     */
-    private fun calculateSeverity(hazards: List<Hazard>): Severity {
-        return when {
-            hazards.any { it.severity == Severity.CRITICAL } -> Severity.CRITICAL
-            hazards.any { it.severity == Severity.HIGH } -> Severity.HIGH
-            hazards.any { it.severity == Severity.MEDIUM } -> Severity.MEDIUM
-            else -> Severity.LOW
-        }
-    }
-    
-    private fun generateAnalysisId(): String = "analysis_${System.currentTimeMillis()}"
 }

@@ -1,4 +1,5 @@
 package com.hazardhawk.performance
+import kotlinx.datetime.Clock
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -204,7 +205,7 @@ class PerformanceMonitor(
         val memoryAvailable = deviceDetector.getAvailableMemory() / (1024 * 1024)
         
         return PerformanceMetrics(
-            timestamp = System.currentTimeMillis(),
+            timestamp = Clock.System.now().toEpochMilliseconds(),
             memoryUsedMB = memoryUsed.toFloat(),
             availableMemoryMB = memoryAvailable.toFloat(),
             cpuUsagePercent = getCPUUsage(),
@@ -272,7 +273,7 @@ class FrameCounter {
     )
     
     fun recordFrame(renderTimeMs: Long = 0) {
-        val now = System.currentTimeMillis()
+        val now = Clock.System.now().toEpochMilliseconds()
         frameHistory.add(FrameRecord(now, renderTimeMs))
         
         // Keep only last 5 minutes of frames
@@ -283,13 +284,13 @@ class FrameCounter {
     }
     
     fun getCurrentFPS(): Float {
-        val now = System.currentTimeMillis()
+        val now = Clock.System.now().toEpochMilliseconds()
         val recentFrames = frameHistory.filter { now - it.timestamp <= 1000 } // Last second
         return recentFrames.size.toFloat()
     }
     
     fun getAverageFPS(durationMinutes: Int): Float {
-        val cutoff = System.currentTimeMillis() - (durationMinutes * 60 * 1000)
+        val cutoff = Clock.System.now().toEpochMilliseconds() - (durationMinutes * 60 * 1000)
         val recentFrames = frameHistory.filter { it.timestamp >= cutoff }
         
         if (recentFrames.isEmpty()) return 0f
@@ -299,7 +300,7 @@ class FrameCounter {
     }
     
     fun getAverageFrameTime(durationMinutes: Int): Float {
-        val cutoff = System.currentTimeMillis() - (durationMinutes * 60 * 1000)
+        val cutoff = Clock.System.now().toEpochMilliseconds() - (durationMinutes * 60 * 1000)
         val recentFrames = frameHistory.filter { it.timestamp >= cutoff && it.renderTimeMs > 0 }
         
         return if (recentFrames.isNotEmpty()) {
@@ -309,7 +310,7 @@ class FrameCounter {
     
     fun getFrameDrops(durationMinutes: Int): Int {
         val targetFPS = 30f
-        val cutoff = System.currentTimeMillis() - (durationMinutes * 60 * 1000)
+        val cutoff = Clock.System.now().toEpochMilliseconds() - (durationMinutes * 60 * 1000)
         val recentFrames = frameHistory.filter { it.timestamp >= cutoff }
         
         var frameDrops = 0
@@ -346,7 +347,7 @@ class AIAnalysisCounter {
     )
     
     fun recordAnalysis(durationMs: Long, success: Boolean, cacheHit: Boolean = false) {
-        val now = System.currentTimeMillis()
+        val now = Clock.System.now().toEpochMilliseconds()
         analysisHistory.add(AnalysisRecord(now, durationMs, success, cacheHit))
         
         // Keep only last 30 minutes
@@ -355,7 +356,7 @@ class AIAnalysisCounter {
     }
     
     fun recordModelLoad(durationMs: Long, modelSizeMB: Int) {
-        val now = System.currentTimeMillis()
+        val now = Clock.System.now().toEpochMilliseconds()
         modelLoadHistory.add(ModelLoadRecord(now, durationMs, modelSizeMB))
         
         // Keep only last hour
@@ -364,13 +365,13 @@ class AIAnalysisCounter {
     }
     
     fun getCurrentProcessingRate(): Float {
-        val now = System.currentTimeMillis()
+        val now = Clock.System.now().toEpochMilliseconds()
         val recentAnalyses = analysisHistory.filter { now - it.timestamp <= 1000 } // Last second
         return recentAnalyses.size.toFloat()
     }
     
     fun getAverageAnalysisTime(durationMinutes: Int): Long {
-        val cutoff = System.currentTimeMillis() - (durationMinutes * 60 * 1000)
+        val cutoff = Clock.System.now().toEpochMilliseconds() - (durationMinutes * 60 * 1000)
         val recentAnalyses = analysisHistory.filter { it.timestamp >= cutoff }
         
         return if (recentAnalyses.isNotEmpty()) {
@@ -379,7 +380,7 @@ class AIAnalysisCounter {
     }
     
     fun getSuccessRate(durationMinutes: Int): Float {
-        val cutoff = System.currentTimeMillis() - (durationMinutes * 60 * 1000)
+        val cutoff = Clock.System.now().toEpochMilliseconds() - (durationMinutes * 60 * 1000)
         val recentAnalyses = analysisHistory.filter { it.timestamp >= cutoff }
         
         return if (recentAnalyses.isNotEmpty()) {
@@ -388,7 +389,7 @@ class AIAnalysisCounter {
     }
     
     fun getCacheHitRate(durationMinutes: Int): Float {
-        val cutoff = System.currentTimeMillis() - (durationMinutes * 60 * 1000)
+        val cutoff = Clock.System.now().toEpochMilliseconds() - (durationMinutes * 60 * 1000)
         val recentAnalyses = analysisHistory.filter { it.timestamp >= cutoff }
         
         return if (recentAnalyses.isNotEmpty()) {
@@ -416,7 +417,7 @@ class MemoryTracker {
     )
     
     fun recordMemoryUsage(usedMB: Float, availableMB: Float) {
-        val now = System.currentTimeMillis()
+        val now = Clock.System.now().toEpochMilliseconds()
         memoryHistory.add(MemoryRecord(now, usedMB, availableMB))
         
         // Keep only last hour
@@ -425,7 +426,7 @@ class MemoryTracker {
     }
     
     fun getPeakUsage(durationMinutes: Int): Float {
-        val cutoff = System.currentTimeMillis() - (durationMinutes * 60 * 1000)
+        val cutoff = Clock.System.now().toEpochMilliseconds() - (durationMinutes * 60 * 1000)
         val recentRecords = memoryHistory.filter { it.timestamp >= cutoff }
         
         return recentRecords.maxOfOrNull { it.usedMB } ?: 0f
@@ -444,7 +445,7 @@ class ThermalMonitor {
     )
     
     fun recordThermalState(state: ThermalState) {
-        val now = System.currentTimeMillis()
+        val now = Clock.System.now().toEpochMilliseconds()
         thermalHistory.add(ThermalRecord(now, state))
         
         // Keep only last 2 hours
@@ -456,7 +457,7 @@ class ThermalMonitor {
         thermalHistory.lastOrNull()?.state ?: ThermalState.NOMINAL
     
     fun getThermalEvents(durationMinutes: Int): Int {
-        val cutoff = System.currentTimeMillis() - (durationMinutes * 60 * 1000)
+        val cutoff = Clock.System.now().toEpochMilliseconds() - (durationMinutes * 60 * 1000)
         return thermalHistory.count { 
             it.timestamp >= cutoff && it.state >= ThermalState.LIGHT_THROTTLING 
         }
@@ -475,7 +476,7 @@ class BatteryMonitor {
     )
     
     fun recordBatteryLevel(level: Float) {
-        val now = System.currentTimeMillis()
+        val now = Clock.System.now().toEpochMilliseconds()
         batteryHistory.add(BatteryRecord(now, level))
         
         // Keep only last 8 hours (full workday)
@@ -487,7 +488,7 @@ class BatteryMonitor {
         batteryHistory.lastOrNull()?.level ?: 100f
     
     fun getBatteryDrain(durationMinutes: Int): Float {
-        val cutoff = System.currentTimeMillis() - (durationMinutes * 60 * 1000)
+        val cutoff = Clock.System.now().toEpochMilliseconds() - (durationMinutes * 60 * 1000)
         val recentRecords = batteryHistory.filter { it.timestamp >= cutoff }
         
         return if (recentRecords.size >= 2) {
@@ -640,7 +641,7 @@ class IntegrationPerformanceValidator(
         val recommendations = generateIntegrationRecommendations(results, deviceCapabilities)
         
         return IntegrationValidationReport(
-            timestamp = System.currentTimeMillis(),
+            timestamp = Clock.System.now().toEpochMilliseconds(),
             deviceTier = deviceCapabilities.tier,
             validationResults = results,
             overallScore = overallScore,
@@ -892,7 +893,7 @@ class LiteRTPerformanceMonitor {
         success: Boolean
     ) {
         val record = InferenceRecord(
-            timestamp = System.currentTimeMillis(),
+            timestamp = Clock.System.now().toEpochMilliseconds(),
             tokensPerSecond = tokensPerSecond,
             latencyMs = latencyMs,
             memoryUsageMB = memoryUsageMB,
@@ -902,7 +903,7 @@ class LiteRTPerformanceMonitor {
         inferenceHistory.getOrPut(backend) { mutableListOf() }.add(record)
         
         // Keep only recent records (last 30 minutes)
-        val cutoff = System.currentTimeMillis() - 1800_000
+        val cutoff = Clock.System.now().toEpochMilliseconds() - 1800_000
         inferenceHistory[backend]?.removeAll { it.timestamp < cutoff }
     }
     
@@ -913,7 +914,7 @@ class LiteRTPerformanceMonitor {
         success: Boolean
     ) {
         val record = ModelInitRecord(
-            timestamp = System.currentTimeMillis(),
+            timestamp = Clock.System.now().toEpochMilliseconds(),
             modelType = modelType,
             initTimeMs = initTimeMs,
             success = success
@@ -922,12 +923,12 @@ class LiteRTPerformanceMonitor {
         modelInitHistory.getOrPut(backend) { mutableListOf() }.add(record)
         
         // Keep only recent records (last hour)
-        val cutoff = System.currentTimeMillis() - 3600_000
+        val cutoff = Clock.System.now().toEpochMilliseconds() - 3600_000
         modelInitHistory[backend]?.removeAll { it.timestamp < cutoff }
     }
     
     fun getStats(durationMinutes: Int): LiteRTPerformanceStats {
-        val cutoff = System.currentTimeMillis() - (durationMinutes * 60 * 1000)
+        val cutoff = Clock.System.now().toEpochMilliseconds() - (durationMinutes * 60 * 1000)
         
         val backendStats = LiteRTBackend.values().associateWith { backend ->
             val records = inferenceHistory[backend]?.filter { it.timestamp >= cutoff } ?: emptyList()
@@ -972,7 +973,7 @@ class LiteRTPerformanceMonitor {
     }
     
     fun getBackendStats(backend: LiteRTBackend, durationMinutes: Int): BackendPerformanceStats {
-        val cutoff = System.currentTimeMillis() - (durationMinutes * 60 * 1000)
+        val cutoff = Clock.System.now().toEpochMilliseconds() - (durationMinutes * 60 * 1000)
         val records = inferenceHistory[backend]?.filter { it.timestamp >= cutoff } ?: emptyList()
         
         if (records.isEmpty()) {
@@ -1011,7 +1012,7 @@ class LiteRTPerformanceMonitor {
         val performanceComparison = allBackends.map { backend ->
             val stats = getBackendStats(backend, 10) // Last 10 minutes
             val initStats = modelInitHistory[backend]?.let { records ->
-                val recentRecords = records.filter { System.currentTimeMillis() - it.timestamp <= 600_000 } // 10 minutes
+                val recentRecords = records.filter { Clock.System.now().toEpochMilliseconds() - it.timestamp <= 600_000 } // 10 minutes
                 if (recentRecords.isNotEmpty()) {
                     ModelInitStats(
                         initCount = recentRecords.size,
@@ -1031,7 +1032,7 @@ class LiteRTPerformanceMonitor {
         }
         
         return LiteRTPerformanceReport(
-            timestamp = System.currentTimeMillis(),
+            timestamp = Clock.System.now().toEpochMilliseconds(),
             backendComparison = performanceComparison,
             recommendedBackend = performanceComparison
                 .filter { it.meetsTarget }
@@ -1089,7 +1090,7 @@ class BackendSwitchingMonitor {
     ) {
         switchHistory.add(
             BackendSwitchRecord(
-                timestamp = System.currentTimeMillis(),
+                timestamp = Clock.System.now().toEpochMilliseconds(),
                 fromBackend = fromBackend,
                 toBackend = toBackend,
                 reason = reason,
@@ -1098,12 +1099,12 @@ class BackendSwitchingMonitor {
         )
         
         // Keep only recent records (last 2 hours)
-        val cutoff = System.currentTimeMillis() - 7200_000
+        val cutoff = Clock.System.now().toEpochMilliseconds() - 7200_000
         switchHistory.removeAll { it.timestamp < cutoff }
     }
     
     fun getStats(durationMinutes: Int): BackendSwitchingStats {
-        val cutoff = System.currentTimeMillis() - (durationMinutes * 60 * 1000)
+        val cutoff = Clock.System.now().toEpochMilliseconds() - (durationMinutes * 60 * 1000)
         val recentSwitches = switchHistory.filter { it.timestamp >= cutoff }
         
         if (recentSwitches.isEmpty()) {
@@ -1131,7 +1132,7 @@ class BackendSwitchingMonitor {
     
     fun getAnalysis(): BackendSwitchingAnalysis {
         val recentSwitches = switchHistory.filter { 
-            System.currentTimeMillis() - it.timestamp <= 3600_000 // Last hour
+            Clock.System.now().toEpochMilliseconds() - it.timestamp <= 3600_000 // Last hour
         }
         
         val switchPatterns = recentSwitches.groupBy { "${it.fromBackend}->${it.toBackend}" }

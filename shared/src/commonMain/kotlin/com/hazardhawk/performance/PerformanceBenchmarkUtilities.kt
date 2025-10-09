@@ -1,4 +1,5 @@
 package com.hazardhawk.performance
+import kotlinx.datetime.Clock
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -53,7 +54,7 @@ object PerformanceBenchmarkUtilities {
      * Run quick performance validation check.
      */
     suspend fun runQuickPerformanceCheck(setup: PerformanceMonitoringSetup): QuickCheckResult {
-        val startTime = System.currentTimeMillis()
+        val startTime = Clock.System.now().toEpochMilliseconds()
         
         // Initialize monitoring
         setup.dashboard.initialize()
@@ -67,7 +68,7 @@ object PerformanceBenchmarkUtilities {
         // Check current metrics
         val currentMetrics = setup.performanceMonitor.getCurrentMetrics()
         
-        val duration = System.currentTimeMillis() - startTime
+        val duration = Clock.System.now().toEpochMilliseconds() - startTime
         
         return QuickCheckResult(
             durationMs = duration,
@@ -95,7 +96,7 @@ object PerformanceBenchmarkUtilities {
         
         // Step 1: Photo Capture
         workflowMonitor.startWorkflowStep(workflowId, "photo_capture", StepType.PHOTO_CAPTURE)
-        val captureStartTime = System.currentTimeMillis()
+        val captureStartTime = Clock.System.now().toEpochMilliseconds()
         
         // Simulate camera operation
         repeat(30) { 
@@ -103,7 +104,7 @@ object PerformanceBenchmarkUtilities {
             kotlinx.coroutines.delay(16)
         }
         
-        val captureTime = System.currentTimeMillis() - captureStartTime
+        val captureTime = Clock.System.now().toEpochMilliseconds() - captureStartTime
         workflowMonitor.completeWorkflowStep(workflowId, "photo_capture", true, 
             metadata = mapOf("captureTimeMs" to captureTime))
         
@@ -111,7 +112,7 @@ object PerformanceBenchmarkUtilities {
         
         // Step 2: AI Analysis
         workflowMonitor.startWorkflowStep(workflowId, "ai_analysis", StepType.AI_ANALYSIS)
-        val analysisStartTime = System.currentTimeMillis()
+        val analysisStartTime = Clock.System.now().toEpochMilliseconds()
         
         // Simulate AI processing with throttling
         repeat(10) {
@@ -119,7 +120,7 @@ object PerformanceBenchmarkUtilities {
             performanceMonitor.recordAIAnalysis(450, true)
         }
         
-        val analysisTime = System.currentTimeMillis() - analysisStartTime
+        val analysisTime = Clock.System.now().toEpochMilliseconds() - analysisStartTime
         workflowMonitor.completeWorkflowStep(workflowId, "ai_analysis", true,
             metadata = mapOf("analysisTimeMs" to analysisTime))
         
@@ -127,12 +128,12 @@ object PerformanceBenchmarkUtilities {
         
         // Step 3: Report Generation
         workflowMonitor.startWorkflowStep(workflowId, "report_generation", StepType.REPORT_GENERATION)
-        val reportStartTime = System.currentTimeMillis()
+        val reportStartTime = Clock.System.now().toEpochMilliseconds()
         
         // Simulate report generation
         kotlinx.coroutines.delay(2000) // 2 second report generation
         
-        val reportTime = System.currentTimeMillis() - reportStartTime
+        val reportTime = Clock.System.now().toEpochMilliseconds() - reportStartTime
         workflowMonitor.completeWorkflowStep(workflowId, "report_generation", true,
             metadata = mapOf("reportTimeMs" to reportTime))
         
@@ -160,7 +161,7 @@ object PerformanceBenchmarkUtilities {
         memoryDetector: MemoryRegressionDetector,
         buildVersion: String
     ): MemoryStressTestResult {
-        val startTime = System.currentTimeMillis()
+        val startTime = Clock.System.now().toEpochMilliseconds()
         
         // Establish baseline
         memoryDetector.establishBaseline(buildVersion)
@@ -214,7 +215,7 @@ object PerformanceBenchmarkUtilities {
         // Analyze regression
         val regressionAnalysis = memoryDetector.analyzeRegression(buildVersion)
         
-        val totalDuration = System.currentTimeMillis() - startTime
+        val totalDuration = Clock.System.now().toEpochMilliseconds() - startTime
         
         return MemoryStressTestResult(
             durationMs = totalDuration,
@@ -236,7 +237,7 @@ object PerformanceBenchmarkUtilities {
         performanceMonitor: PerformanceMonitor,
         deviceDetector: DeviceTierDetector
     ): LiteRTValidationResult {
-        val startTime = System.currentTimeMillis()
+        val startTime = Clock.System.now().toEpochMilliseconds()
         val capabilities = deviceDetector.detectCapabilities()
         val targets = LiteRTPerformanceTargets()
         
@@ -273,7 +274,7 @@ object PerformanceBenchmarkUtilities {
         // Test backend switching performance
         val switchingResult = testBackendSwitching(performanceMonitor)
         
-        val totalDuration = System.currentTimeMillis() - startTime
+        val totalDuration = Clock.System.now().toEpochMilliseconds() - startTime
         val overallScore = backendResults.map { it.performanceScore }.average().toFloat()
         val meetsTargets = backendResults.all { it.meetsTarget }
         
@@ -298,7 +299,7 @@ object PerformanceBenchmarkUtilities {
         performanceMonitor: PerformanceMonitor
     ): BackendTestResult {
         val testResults = mutableListOf<InferenceTestResult>()
-        val modelInitStart = System.currentTimeMillis()
+        val modelInitStart = Clock.System.now().toEpochMilliseconds()
         
         // Simulate model initialization
         performanceMonitor.recordModelInitialization(
@@ -310,7 +311,7 @@ object PerformanceBenchmarkUtilities {
         
         // Run inference test iterations
         repeat(10) { iteration ->
-            val inferenceStart = System.currentTimeMillis()
+            val inferenceStart = Clock.System.now().toEpochMilliseconds()
             
             // Simulate inference with varying performance
             val simulatedLatency = when (backend) {
@@ -321,7 +322,7 @@ object PerformanceBenchmarkUtilities {
             
             kotlinx.coroutines.delay(simulatedLatency)
             
-            val actualLatency = System.currentTimeMillis() - inferenceStart
+            val actualLatency = Clock.System.now().toEpochMilliseconds() - inferenceStart
             val tokensPerSecond = 1000f / actualLatency // Simplified calculation
             val memoryUsage = Random.nextFloat() * 100 + 50 // 50-150MB
             
@@ -367,7 +368,7 @@ object PerformanceBenchmarkUtilities {
         val switches = mutableListOf<SwitchTest>()
         
         // Test NPU -> GPU fallback
-        val npuToGpuStart = System.currentTimeMillis()
+        val npuToGpuStart = Clock.System.now().toEpochMilliseconds()
         performanceMonitor.recordBackendSwitch(
             fromBackend = LiteRTBackend.NPU,
             toBackend = LiteRTBackend.GPU,
@@ -377,7 +378,7 @@ object PerformanceBenchmarkUtilities {
         switches.add(SwitchTest(LiteRTBackend.NPU, LiteRTBackend.GPU, 250L))
         
         // Test GPU -> CPU fallback
-        val gpuToCpuStart = System.currentTimeMillis()
+        val gpuToCpuStart = Clock.System.now().toEpochMilliseconds()
         performanceMonitor.recordBackendSwitch(
             fromBackend = LiteRTBackend.GPU,
             toBackend = LiteRTBackend.CPU,
@@ -483,9 +484,9 @@ object PerformanceBenchmarkUtilities {
         
         // Test Real AI
         repeat(testImageCount) {
-            val startTime = System.currentTimeMillis()
+            val startTime = Clock.System.now().toEpochMilliseconds()
             val result = realAIAnalyzer(testImage)
-            val duration = System.currentTimeMillis() - startTime
+            val duration = Clock.System.now().toEpochMilliseconds() - startTime
             
             realAIResults.add(
                 AITestResult(
@@ -498,9 +499,9 @@ object PerformanceBenchmarkUtilities {
         
         // Test Mock AI
         repeat(testImageCount) {
-            val startTime = System.currentTimeMillis()
+            val startTime = Clock.System.now().toEpochMilliseconds()
             val result = mockAIAnalyzer(testImage)
-            val duration = System.currentTimeMillis() - startTime
+            val duration = Clock.System.now().toEpochMilliseconds() - startTime
             
             mockAIResults.add(
                 AITestResult(

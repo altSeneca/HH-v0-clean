@@ -1,4 +1,5 @@
 package com.hazardhawk.ai.services
+import kotlinx.datetime.Clock
 
 import com.hazardhawk.ai.core.AIPhotoAnalyzer
 import com.hazardhawk.ai.models.SafetyAnalysis
@@ -83,7 +84,7 @@ class TFLiteVisionService(
             // For now, provide a basic implementation that can be expanded
             // This ensures the service initializes and can be tested
             val analysisId = uuid4().toString()
-            val startTime = System.currentTimeMillis()
+            val startTime = Clock.System.now().toEpochMilliseconds()
             
             // Simulate processing time for now
             withTimeoutOrNull(5000L) {
@@ -93,7 +94,7 @@ class TFLiteVisionService(
                 Exception("Analysis timed out after 5 seconds")
             )
             
-            val processingTime = System.currentTimeMillis() - startTime
+            val processingTime = Clock.System.now().toEpochMilliseconds() - startTime
             
             // Create basic safety analysis result
             val safetyAnalysis = SafetyAnalysis(

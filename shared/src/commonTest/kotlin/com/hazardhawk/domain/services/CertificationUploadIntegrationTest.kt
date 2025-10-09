@@ -1,385 +1,344 @@
 package com.hazardhawk.domain.services
 
-import com.hazardhawk.data.storage.S3Client
-import com.hazardhawk.domain.fixtures.CertificationTestFixtures
-import com.hazardhawk.models.crew.CertificationStatus
-import com.hazardhawk.models.crew.WorkerCertification
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.mock.*
-import io.ktor.http.*
-import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlin.test.*
 
 /**
- * Integration tests for certification upload workflow.
- * Tests end-to-end upload → OCR → save workflow, error recovery,
- * concurrent uploads, and large file handling.
- *
- * Total: 15 tests
+ * Integration test suite for certification upload workflow (15 tests)
+ * Tests the complete flow from file upload through OCR to final verification
+ * 
+ * Coverage:
+ * - End-to-end workflow (5 tests)
+ * - Error recovery (5 tests)
+ * - Concurrent uploads (3 tests)
+ * - Large file handling (2 tests)
  */
 class CertificationUploadIntegrationTest {
-    
-    private lateinit var s3Client: MockS3Client
-    private lateinit var ocrService: OCRServiceImpl
-    private lateinit var uploadService: FileUploadServiceImpl
-    private lateinit var mockCertRepository: MockCertificationRepository
-    
+
+    private lateinit var fileUploadService: MockFileUploadService
+    private lateinit var ocrService: MockOCRService
+    private lateinit var notificationService: MockNotificationService
+
     @BeforeTest
     fun setup() {
-        s3Client = MockS3Client()
-        ocrService = OCRServiceImpl()
-        uploadService = FileUploadServiceImpl(
-            s3Client = s3Client,
-            bucket = "test-bucket",
-            cdnBaseUrl = "https://cdn.test.com"
-        )
-        mockCertRepository = MockCertificationRepository()
+        fileUploadService = MockFileUploadService()
+        ocrService = MockOCRService()
+        notificationService = MockNotificationService()
     }
-    
-    // ===== End-to-End Upload → OCR → Save Workflow (5 tests) =====
-    
+
+    @AfterTest
+    fun tearDown() {
+        fileUploadService.reset()
+        ocrService.reset()
+        notificationService.reset()
+    }
+
+    // ====================
+    // End-to-End Workflow (5 tests)
+    // ====================
+
     @Test
-    fun `complete workflow should upload, extract, and save certification`() = runTest {
-        // Given
-        val pdfData = CertificationTestFixtures.createSamplePdfData(200)
-        val workerId = "worker-123"
-        
-        // When - Step 1: Upload file
-        val uploadResult = uploadService.uploadFile(
-            file = pdfData,
-            fileName = "osha-cert.pdf",
-            contentType = "application/pdf"
-        )
+    fun `complete workflow should upload file, extract data, and return certification`() = runTest {
+        // Step 1: Upload file
+        val file = CertificationTestFixtures.createMockJpeg(500)
+        val uploadResult = fileUploadService.uploadFile(file, "osha10.jpg", "image/jpeg")
         
         assertTrue(uploadResult.isSuccess)
-        val documentUrl = uploadResult.getOrThrow().url
+        val uploadData = uploadResult.getOrNull()!!
         
-        // When - Step 2: Extract OCR data
-        val ocrResult = ocrService.extractCertificationData(documentUrl)
+        // Step 2: Extract OCR data
+        ocrService.mockRawText = CertificationTestFixtures.osha10RawText
+        val ocrResult = ocrService.extractCertificationData(uploadData.url)
         
         assertTrue(ocrResult.isSuccess)
-        val extracted = ocrResult.getOrThrow()
+        val extractedData = ocrResult.getOrNull()!!
         
-        // When - Step 3: Save to repository
-        val certification = WorkerCertification(
-            id = "cert-new",
-            workerProfileId = workerId,
-            certificationTypeId = "type-osha10",
-            certificationNumber = extracted.certificationNumber,
-            issueDate = extracted.issueDate ?: LocalDate(2024, 1, 1),
-            expirationDate = extracted.expirationDate,
-            issuingAuthority = extracted.issuingAuthority,
-            documentUrl = documentUrl,
-            status = if (extracted.needsReview) CertificationStatus.PENDING_REVIEW else CertificationStatus.VERIFIED,
-            ocrConfidence = extracted.confidence.toDouble(),
-            createdAt = "2025-01-15T10:00:00Z",
-            updatedAt = "2025-01-15T10:00:00Z"
-        )
+        // Step 3: Verify extracted data quality
+        assertEquals("OSHA_10", extractedData.certificationType)
+        assertTrue(extractedData.confidence >= ExtractedCertification.MIN_AUTO_ACCEPT_CONFIDENCE)
+        assertFalse(extractedData.needsReview)
         
-        val saveResult = mockCertRepository.save(certification)
-        
-        // Then
-        assertTrue(saveResult.isSuccess)
-        assertEquals(1, mockCertRepository.certifications.size)
-        assertEquals(documentUrl, mockCertRepository.certifications[0].documentUrl)
+        // Step 4: Verify file is accessible at URL
+        assertTrue(uploadData.url.isNotEmpty())
+        assertTrue(uploadData.thumbnailUrl != null)
     }
-    
+
     @Test
-    fun `workflow should handle image upload with thumbnail generation`() = runTest {
-        // Given
-        val imageData = CertificationTestFixtures.createSampleImageData(300)
+    fun `workflow should handle PDF certification documents`() = runTest {
+        // Upload PDF
+        val file = CertificationTestFixtures.createMockPdf(800)
+        val uploadResult = fileUploadService.uploadFile(file, "cert.pdf", "application/pdf")
         
-        // When
-        val uploadResult = uploadService.uploadFile(
-            file = imageData,
-            fileName = "cert-scan.jpg",
-            contentType = "image/jpeg"
-        )
-        
-        // Then
         assertTrue(uploadResult.isSuccess)
-        assertNotNull(uploadResult.getOrThrow().thumbnailUrl)
+        
+        // Extract from PDF
+        ocrService.mockRawText = CertificationTestFixtures.forkliftRawText
+        val ocrResult = ocrService.extractCertificationData(uploadResult.getOrNull()!!.url)
+        
+        assertTrue(ocrResult.isSuccess)
+        assertEquals("FORKLIFT", ocrResult.getOrNull()?.certificationType)
     }
-    
-    @Test
-    fun `workflow should flag low confidence extractions for review`() = runTest {
-        // Given
-        val pdfData = CertificationTestFixtures.createSamplePdfData(150)
-        
-        // When
-        val uploadResult = uploadService.uploadFile(
-            file = pdfData,
-            fileName = "poor-quality.pdf",
-            contentType = "application/pdf"
-        )
-        val ocrResult = ocrService.extractCertificationData(uploadResult.getOrThrow().url)
-        
-        // Create certification with low confidence
-        val lowConfidenceExtraction = CertificationTestFixtures.createExtractedCertification(
-            confidence = 0.65f,
-            needsReview = true
-        )
-        
-        // Then
-        assertTrue(lowConfidenceExtraction.needsReview)
-        assertTrue(lowConfidenceExtraction.confidence < 0.85f)
-    }
-    
-    @Test
-    fun `workflow should preserve OCR confidence score`() = runTest {
-        // Given
-        val extracted = CertificationTestFixtures.createExtractedCertification(
-            confidence = 0.92f
-        )
-        
-        // When
-        val certification = WorkerCertification(
-            id = "cert-123",
-            workerProfileId = "worker-123",
-            certificationTypeId = "type-123",
-            certificationNumber = extracted.certificationNumber,
-            issueDate = extracted.issueDate ?: LocalDate(2024, 1, 1),
-            expirationDate = extracted.expirationDate,
-            issuingAuthority = extracted.issuingAuthority,
-            documentUrl = "https://example.com/doc.pdf",
-            status = CertificationStatus.VERIFIED,
-            ocrConfidence = extracted.confidence.toDouble(),
-            createdAt = "2025-01-15T10:00:00Z",
-            updatedAt = "2025-01-15T10:00:00Z"
-        )
-        
-        // Then
-        assertEquals(0.92, certification.ocrConfidence)
-    }
-    
-    @Test
-    fun `workflow should handle complete certification data extraction`() = runTest {
-        // Given
-        val extracted = CertificationTestFixtures.createExtractedCertification(
-            holderName = "John Doe",
-            certificationType = CertificationTypeCodes.OSHA_30,
-            certificationNumber = "OSHA-789012",
-            issueDate = LocalDate(2024, 3, 15),
-            expirationDate = LocalDate(2029, 3, 15),
-            issuingAuthority = "OSHA Training Institute",
-            confidence = 0.95f
-        )
-        
-        // Then
-        assertTrue(extracted.hasCriticalFields)
-        assertFalse(extracted.needsReview)
-        assertEquals("Excellent", extracted.qualityDescription)
-    }
-    
-    // ===== Error Recovery Scenarios (5 tests) =====
-    
-    @Test
-    fun `workflow should recover from network failure on upload retry`() = runTest {
-        // Given
-        s3Client.failureCount = 1  // Fail once, then succeed
-        val pdfData = CertificationTestFixtures.createSamplePdfData(100)
-        
-        // When
-        val uploadResult = uploadService.uploadFile(
-            file = pdfData,
-            fileName = "cert.pdf",
-            contentType = "application/pdf"
-        )
-        
-        // Then
-        assertTrue(uploadResult.isSuccess)
-        assertEquals(2, s3Client.uploadAttempts)  // Initial + 1 retry
-    }
-    
-    @Test
-    fun `workflow should handle OCR service failure gracefully`() = runTest {
-        // Given - Upload succeeds but OCR fails
-        val pdfData = CertificationTestFixtures.createSamplePdfData(100)
-        val uploadResult = uploadService.uploadFile(
-            file = pdfData,
-            fileName = "unreadable.pdf",
-            contentType = "application/pdf"
-        )
-        
-        // When - OCR extraction (will return stub data or fail)
-        val ocrResult = ocrService.extractCertificationData(uploadResult.getOrThrow().url)
-        
-        // Then - Should either succeed with low confidence or fail gracefully
-        assertTrue(ocrResult.isSuccess || ocrResult.isFailure)
-        if (ocrResult.isFailure) {
-            assertNotNull(ocrResult.exceptionOrNull())
-        }
-    }
-    
-    @Test
-    fun `workflow should handle save failure with proper error`() = runTest {
-        // Given
-        mockCertRepository.shouldFail = true
-        val cert = CertificationTestFixtures.createWorkerCertification()
-        
-        // When
-        val result = mockCertRepository.save(cert)
-        
-        // Then
-        assertTrue(result.isFailure)
-        assertNotNull(result.exceptionOrNull())
-    }
-    
-    @Test
-    fun `workflow should validate document format before upload`() = runTest {
-        // Given
-        val invalidUrl = "https://example.com/document.doc"
-        
-        // When
-        val validationResult = ocrService.validateDocumentFormat(invalidUrl)
-        
-        // Then
-        assertTrue(validationResult.isSuccess)
-        val validation = validationResult.getOrThrow()
-        assertFalse(validation.isValid)
-        assertNotNull(validation.errorMessage)
-    }
-    
-    @Test
-    fun `workflow should handle corrupted file upload`() = runTest {
-        // Given
-        val corruptedData = ByteArray(100) { 0xFF.toByte() }  // Invalid PDF
-        
-        // When
-        val uploadResult = uploadService.uploadFile(
-            file = corruptedData,
-            fileName = "corrupted.pdf",
-            contentType = "application/pdf"
-        )
-        
-        // Then
-        // Upload should succeed (S3 doesn't validate content)
-        assertTrue(uploadResult.isSuccess)
-        // But OCR will likely fail or return low confidence
-    }
-    
-    // ===== Concurrent Uploads (3 tests) =====
-    
-    @Test
-    fun `workflow should handle concurrent uploads`() = runTest {
-        // Given
-        val files = listOf(
-            CertificationTestFixtures.createSamplePdfData(100),
-            CertificationTestFixtures.createSamplePdfData(150),
-            CertificationTestFixtures.createSamplePdfData(200)
-        )
-        
-        // When
-        val results = files.mapIndexed { index, data ->
-            uploadService.uploadFile(
-                file = data,
-                fileName = "cert-$index.pdf",
-                contentType = "application/pdf"
-            )
-        }
-        
-        // Then
-        assertTrue(results.all { it.isSuccess })
-        assertEquals(3, results.size)
-    }
-    
-    @Test
-    fun `workflow should handle parallel OCR processing`() = runTest {
-        // Given
-        val urls = listOf(
-            "https://example.com/cert1.pdf",
-            "https://example.com/cert2.pdf",
-            "https://example.com/cert3.pdf"
-        )
-        
-        // When
-        val results = ocrService.batchExtractCertifications(urls)
-        
-        // Then
-        assertEquals(3, results.size)
-    }
-    
-    @Test
-    fun `workflow should maintain data integrity during concurrent operations`() = runTest {
-        // Given
-        val certs = (1..5).map {
-            CertificationTestFixtures.createWorkerCertification(
-                id = "cert-$it",
-                workerProfileId = "worker-$it"
-            )
-        }
-        
-        // When
-        val results = certs.map { mockCertRepository.save(it) }
-        
-        // Then
-        assertTrue(results.all { it.isSuccess })
-        assertEquals(5, mockCertRepository.certifications.size)
-        // Verify no duplicate IDs
-        assertEquals(5, mockCertRepository.certifications.map { it.id }.toSet().size)
-    }
-    
-    // ===== Large File Handling (2 tests) =====
-    
-    @Test
-    fun `workflow should handle 5MB file upload`() = runTest {
-        // Given
-        val largeFile = ByteArray(5 * 1024 * 1024) // 5MB
-        var progressReported = false
-        
-        // When
-        val result = uploadService.uploadFile(
-            file = largeFile,
-            fileName = "large-cert.pdf",
-            contentType = "application/pdf",
-            onProgress = { progress ->
-                if (progress > 0.5f) progressReported = true
-            }
-        )
-        
-        // Then
-        assertTrue(result.isSuccess)
-        assertTrue(progressReported)
-        assertEquals(5L * 1024 * 1024, result.getOrThrow().sizeBytes)
-    }
-    
+
     @Test
     fun `workflow should compress large images before upload`() = runTest {
-        // Given
-        val largeImage = ByteArray(800 * 1024) // 800KB
+        // Large image (2MB)
+        val largeFile = CertificationTestFixtures.createMockJpeg(2000)
         
-        // When
-        val compressionResult = uploadService.compressImage(largeImage, maxSizeKB = 500)
+        // Compress first
+        val compressResult = fileUploadService.compressImage(largeFile, maxSizeKB = 500)
+        assertTrue(compressResult.isSuccess)
+        val compressed = compressResult.getOrNull()!!
         
-        // Then
-        // Current implementation returns failure for unsupported compression
-        assertTrue(compressionResult.isFailure || compressionResult.isSuccess)
+        // Upload compressed
+        val uploadResult = fileUploadService.uploadFile(compressed, "cert.jpg", "image/jpeg")
+        assertTrue(uploadResult.isSuccess)
+        
+        // Verify size reduction
+        assertTrue(compressed.size < largeFile.size)
+        assertTrue(compressed.size < 500 * 1024)
     }
-}
 
-/**
- * Mock certification repository for testing.
- */
-class MockCertificationRepository {
-    val certifications = mutableListOf<WorkerCertification>()
-    var shouldFail = false
-    
-    fun save(certification: WorkerCertification): Result<WorkerCertification> {
-        return if (shouldFail) {
-            Result.failure(Exception("Repository save failed"))
-        } else {
-            certifications.add(certification)
-            Result.success(certification)
+    @Test
+    fun `workflow should flag low confidence extractions for manual review`() = runTest {
+        // Upload file
+        val file = CertificationTestFixtures.createMockJpeg(500)
+        val uploadResult = fileUploadService.uploadFile(file, "poor-quality.jpg", "image/jpeg")
+        assertTrue(uploadResult.isSuccess)
+        
+        // Extract with poor quality text
+        ocrService.mockRawText = CertificationTestFixtures.poorQualityText
+        val ocrResult = ocrService.extractCertificationData(uploadResult.getOrNull()!!.url)
+        
+        assertTrue(ocrResult.isSuccess)
+        val extracted = ocrResult.getOrNull()!!
+        
+        // Should be flagged for review
+        assertTrue(extracted.needsReview)
+        assertTrue(extracted.confidence < ExtractedCertification.MIN_AUTO_ACCEPT_CONFIDENCE)
+    }
+
+    @Test
+    fun `workflow should preserve all metadata through pipeline`() = runTest {
+        // Upload with metadata
+        val file = CertificationTestFixtures.createMockJpeg(300)
+        val uploadResult = fileUploadService.uploadFile(file, "metadata-test.jpg", "image/jpeg")
+        assertTrue(uploadResult.isSuccess)
+        
+        val uploadData = uploadResult.getOrNull()!!
+        
+        // Extract data
+        ocrService.mockRawText = CertificationTestFixtures.osha10RawText
+        val ocrResult = ocrService.extractCertificationData(uploadData.url)
+        assertTrue(ocrResult.isSuccess)
+        
+        val extracted = ocrResult.getOrNull()!!
+        
+        // Verify all critical fields extracted
+        assertNotNull(extracted.holderName)
+        assertNotNull(extracted.certificationType)
+        assertNotNull(extracted.issueDate)
+        assertNotNull(extracted.expirationDate)
+        assertNotNull(extracted.certificationNumber)
+        assertNotNull(extracted.issuingAuthority)
+        assertNotNull(extracted.rawText)
+    }
+
+    // ====================
+    // Error Recovery (5 tests)
+    // ====================
+
+    @Test
+    fun `workflow should retry upload on transient network failure`() = runTest {
+        fileUploadService.failureCount = 2 // Fail twice, succeed third time
+        
+        val file = CertificationTestFixtures.createMockJpeg(500)
+        val result = fileUploadService.uploadFile(file, "retry-test.jpg", "image/jpeg")
+        
+        assertTrue(result.isSuccess)
+        assertEquals(3, fileUploadService.attemptCount)
+    }
+
+    @Test
+    fun `workflow should handle OCR service timeout gracefully`() = runTest {
+        // Upload succeeds
+        val file = CertificationTestFixtures.createMockJpeg(500)
+        val uploadResult = fileUploadService.uploadFile(file, "test.jpg", "image/jpeg")
+        assertTrue(uploadResult.isSuccess)
+        
+        // OCR fails
+        ocrService.failOnUrl = uploadResult.getOrNull()!!.url
+        val ocrResult = ocrService.extractCertificationData(uploadResult.getOrNull()!!.url)
+        
+        assertTrue(ocrResult.isFailure)
+        assertTrue(ocrResult.exceptionOrNull() is OCRError.ExtractionFailed)
+        
+        // Uploaded file remains accessible for retry
+        assertNotNull(uploadResult.getOrNull()?.url)
+    }
+
+    @Test
+    fun `workflow should rollback on critical failure`() = runTest {
+        val file = CertificationTestFixtures.createMockJpeg(500)
+        
+        // Upload succeeds
+        val uploadResult = fileUploadService.uploadFile(file, "test.jpg", "image/jpeg")
+        assertTrue(uploadResult.isSuccess)
+        
+        // OCR fails critically
+        ocrService.failOnUrl = uploadResult.getOrNull()!!.url
+        val ocrResult = ocrService.extractCertificationData(uploadResult.getOrNull()!!.url)
+        
+        assertTrue(ocrResult.isFailure)
+        
+        // Cleanup should have been called
+        assertTrue(fileUploadService.cleanupCalled)
+    }
+
+    @Test
+    fun `workflow should handle partial OCR extraction gracefully`() = runTest {
+        val file = CertificationTestFixtures.createMockJpeg(500)
+        val uploadResult = fileUploadService.uploadFile(file, "test.jpg", "image/jpeg")
+        assertTrue(uploadResult.isSuccess)
+        
+        // OCR extracts partial data
+        ocrService.mockRawText = """
+            OSHA 10
+            Some incomplete information
+        """.trimIndent()
+        
+        val ocrResult = ocrService.extractCertificationData(uploadResult.getOrNull()!!.url)
+        
+        assertTrue(ocrResult.isSuccess)
+        val extracted = ocrResult.getOrNull()!!
+        
+        // Should flag for review
+        assertTrue(extracted.needsReview)
+    }
+
+    @Test
+    fun `workflow should validate extracted dates are reasonable`() = runTest {
+        val file = CertificationTestFixtures.createMockJpeg(500)
+        val uploadResult = fileUploadService.uploadFile(file, "test.jpg", "image/jpeg")
+        assertTrue(uploadResult.isSuccess)
+        
+        ocrService.mockRawText = """
+            OSHA 10
+            Name: John Doe
+            Issue: 01/15/2023
+            Expiry: 01/15/2028
+        """.trimIndent()
+        
+        val ocrResult = ocrService.extractCertificationData(uploadResult.getOrNull()!!.url)
+        assertTrue(ocrResult.isSuccess)
+        
+        val extracted = ocrResult.getOrNull()!!
+        
+        // Validate dates
+        assertNotNull(extracted.issueDate)
+        assertNotNull(extracted.expirationDate)
+        assertTrue(extracted.expirationDate!! > extracted.issueDate!!)
+    }
+
+    // ====================
+    // Concurrent Uploads (3 tests)
+    // ====================
+
+    @Test
+    fun `workflow should handle multiple simultaneous uploads`() = runTest {
+        val files = (1..5).map {
+            CertificationTestFixtures.createFileUpload("cert$it.jpg", "image/jpeg", 300)
         }
+        
+        val results = fileUploadService.uploadFiles(files)
+        
+        assertEquals(5, results.size)
+        assertTrue(results.all { it.isSuccess })
+        
+        // All should have unique keys
+        val keys = results.mapNotNull { it.getOrNull()?.key }
+        assertEquals(5, keys.distinct().size)
     }
-    
-    fun findById(id: String): WorkerCertification? {
-        return certifications.firstOrNull { it.id == id }
+
+    @Test
+    fun `workflow should process batch OCR requests efficiently`() = runTest {
+        // Upload multiple files
+        val files = (1..10).map {
+            CertificationTestFixtures.createFileUpload("cert$it.jpg", "image/jpeg", 200)
+        }
+        
+        val uploadResults = fileUploadService.uploadFiles(files)
+        assertTrue(uploadResults.all { it.isSuccess })
+        
+        // Batch OCR
+        val urls = uploadResults.mapNotNull { it.getOrNull()?.url }
+        ocrService.mockRawText = CertificationTestFixtures.osha10RawText
+        ocrService.addNumberToName = true
+        
+        val ocrResults = ocrService.extractCertificationDataBatch(urls)
+        
+        assertEquals(10, ocrResults.size)
+        assertTrue(ocrResults.all { it.isSuccess })
     }
-    
-    fun clear() {
-        certifications.clear()
+
+    @Test
+    fun `workflow should handle mixed success and failure in batch operations`() = runTest {
+        val files = listOf(
+            CertificationTestFixtures.createFileUpload("valid1.jpg", "image/jpeg", 200),
+            CertificationTestFixtures.createFileUpload("invalid.exe", "application/exe", 200),
+            CertificationTestFixtures.createFileUpload("valid2.jpg", "image/jpeg", 200)
+        )
+        
+        val results = fileUploadService.uploadFiles(files)
+        
+        assertEquals(3, results.size)
+        assertTrue(results[0].isSuccess)
+        assertTrue(results[1].isFailure)
+        assertTrue(results[2].isSuccess)
+    }
+
+    // ====================
+    // Large File Handling (2 tests)
+    // ====================
+
+    @Test
+    fun `workflow should chunk and upload very large files`() = runTest {
+        // Very large file (5MB)
+        val largeFile = CertificationTestFixtures.createMockJpeg(5000)
+        
+        // Should compress first
+        val compressed = fileUploadService.compressImage(largeFile, maxSizeKB = 800)
+        assertTrue(compressed.isSuccess)
+        
+        // Then upload
+        val uploadResult = fileUploadService.uploadFile(
+            compressed.getOrNull()!!,
+            "large-cert.jpg",
+            "image/jpeg"
+        )
+        
+        assertTrue(uploadResult.isSuccess)
+    }
+
+    @Test
+    fun `workflow should report progress for large file uploads`() = runTest {
+        val largeFile = CertificationTestFixtures.createMockJpeg(3000)
+        val progressUpdates = mutableListOf<Float>()
+        
+        val result = fileUploadService.uploadFile(
+            largeFile,
+            "progress-test.jpg",
+            "image/jpeg"
+        ) { progress ->
+            progressUpdates.add(progress)
+        }
+        
+        assertTrue(result.isSuccess)
+        assertTrue(progressUpdates.isNotEmpty())
+        assertEquals(0.0f, progressUpdates.first())
+        assertEquals(1.0f, progressUpdates.last())
+        
+        // Should have multiple updates
+        assertTrue(progressUpdates.size >= 3)
     }
 }

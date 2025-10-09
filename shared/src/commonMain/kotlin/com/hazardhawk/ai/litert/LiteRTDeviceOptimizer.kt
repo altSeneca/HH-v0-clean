@@ -1,4 +1,5 @@
 package com.hazardhawk.ai.litert
+import kotlinx.datetime.Clock
 
 import com.hazardhawk.performance.DeviceTierDetector
 import com.hazardhawk.performance.DeviceTier
@@ -33,7 +34,7 @@ class LiteRTDeviceOptimizer(
      */
     suspend fun selectOptimalBackend(forceRecalculate: Boolean = false): LiteRTBackend = withContext(Dispatchers.Default) {
         
-        val currentTime = System.currentTimeMillis()
+        val currentTime = Clock.System.now().toEpochMilliseconds()
         
         // Use cached result if recent and not forced
         if (!forceRecalculate && 

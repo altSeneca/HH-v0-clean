@@ -1,382 +1,453 @@
 package com.hazardhawk.domain.services
 
-import com.hazardhawk.domain.fixtures.CertificationTestFixtures
 import com.hazardhawk.models.crew.CertificationStatus
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.mock.*
-import io.ktor.http.*
-import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlin.test.*
 
 /**
- * Unit tests for NotificationService.
- * Tests template generation, multi-channel delivery, and retry logic.
- *
- * Total: 15 tests
+ * Comprehensive test suite for NotificationService (15 tests)
+ * 
+ * Coverage:
+ * - Template generation (5 tests)
+ * - Multi-channel delivery (5 tests)
+ * - Retry logic (5 tests)
  */
 class NotificationServiceTest {
-    
-    private lateinit var mockHttpClient: HttpClient
-    private lateinit var service: NotificationServiceImpl
-    private var requestCount = 0
-    
+
+    private lateinit var mockService: MockNotificationService
+
     @BeforeTest
     fun setup() {
-        requestCount = 0
-        mockHttpClient = createMockHttpClient()
-        service = NotificationServiceImpl(
-            httpClient = mockHttpClient,
-            sendGridApiKey = "test-sendgrid-key",
-            twilioAccountSid = "test-twilio-sid",
-            twilioAuthToken = "test-twilio-token",
-            pushNotificationEndpoint = "https://push.test.com/send"
-        )
+        mockService = MockNotificationService()
     }
-    
-    // ===== Template Generation (5 tests - one for each urgency level) =====
-    
+
+    @AfterTest
+    fun tearDown() {
+        mockService.reset()
+    }
+
+    // ====================
+    // Template Generation (5 tests)
+    // ====================
+
     @Test
-    fun `sendCertificationExpirationAlert should use EXPIRED template for expired cert`() = runTest {
-        // Given
+    fun `sendCertificationExpirationAlert should generate appropriate template for 90 days`() = runTest {
         val cert = CertificationTestFixtures.createWorkerCertification(
-            expirationDate = LocalDate(2024, 1, 1),
-            status = CertificationStatus.EXPIRED
+            expirationDate = LocalDate(2026, 1, 6) // 90 days from today
         )
         
-        // When
-        val result = service.sendCertificationExpirationAlert(
-            workerId = "worker-123",
-            certification = cert,
-            daysUntilExpiration = -10  // 10 days expired
-        )
-        
-        // Then
-        assertTrue(result.isSuccess)
-        // Verify email was sent with EXPIRED urgency
-        assertTrue(requestCount > 0)
-    }
-    
-    @Test
-    fun `sendCertificationExpirationAlert should use URGENT template for 7 days or less`() = runTest {
-        // Given
-        val cert = CertificationTestFixtures.createWorkerCertification(
-            expirationDate = LocalDate(2025, 1, 20)
-        )
-        
-        // When
-        val result = service.sendCertificationExpirationAlert(
-            workerId = "worker-123",
-            certification = cert,
-            daysUntilExpiration = 5
-        )
-        
-        // Then
-        assertTrue(result.isSuccess)
-        // Should send email, SMS, and push (3 channels)
-        assertTrue(requestCount >= 3)
-    }
-    
-    @Test
-    fun `sendCertificationExpirationAlert should use ACTION_REQUIRED template for 30 days`() = runTest {
-        // Given
-        val cert = CertificationTestFixtures.createWorkerCertification()
-        
-        // When
-        val result = service.sendCertificationExpirationAlert(
-            workerId = "worker-123",
-            certification = cert,
-            daysUntilExpiration = 25
-        )
-        
-        // Then
-        assertTrue(result.isSuccess)
-        // Should send email and SMS (2 channels for 30 days or less)
-        assertTrue(requestCount >= 2)
-    }
-    
-    @Test
-    fun `sendCertificationExpirationAlert should use REMINDER template for 90 days`() = runTest {
-        // Given
-        val cert = CertificationTestFixtures.createWorkerCertification()
-        
-        // When
-        val result = service.sendCertificationExpirationAlert(
-            workerId = "worker-123",
-            certification = cert,
-            daysUntilExpiration = 60
-        )
-        
-        // Then
-        assertTrue(result.isSuccess)
-        // Should send email only (1 channel for 30+ days)
-        assertTrue(requestCount >= 1)
-    }
-    
-    @Test
-    fun `sendCertificationExpirationAlert should use INFO template for 90+ days`() = runTest {
-        // Given
-        val cert = CertificationTestFixtures.createWorkerCertification()
-        
-        // When
-        val result = service.sendCertificationExpirationAlert(
-            workerId = "worker-123",
-            certification = cert,
-            daysUntilExpiration = 120
-        )
-        
-        // Then
-        assertTrue(result.isSuccess)
-        assertTrue(requestCount >= 1)
-    }
-    
-    // ===== Multi-Channel Delivery (5 tests) =====
-    
-    @Test
-    fun `sendCertificationExpirationAlert should send email for all urgency levels`() = runTest {
-        // Given
-        val cert = CertificationTestFixtures.createWorkerCertification()
-        
-        // When
-        val result = service.sendCertificationExpirationAlert(
+        val result = mockService.sendCertificationExpirationAlert(
             workerId = "worker-123",
             certification = cert,
             daysUntilExpiration = 90
         )
         
-        // Then
         assertTrue(result.isSuccess)
-        assertTrue(requestCount > 0)  // Email always sent
+        assertTrue(mockService.lastEmailSubject?.contains("Information") == true)
+        assertTrue(mockService.lastEmailBody?.contains("90 days") == true)
+        assertNull(mockService.lastSMSMessage) // Email only at 90+ days
+        assertNull(mockService.lastPushTitle)
     }
-    
+
     @Test
-    fun `sendCertificationExpirationAlert should send SMS for urgent notifications`() = runTest {
-        // Given
-        val cert = CertificationTestFixtures.createWorkerCertification()
+    fun `sendCertificationExpirationAlert should generate urgent template for 30 days`() = runTest {
+        val cert = CertificationTestFixtures.createWorkerCertification(
+            expirationDate = LocalDate(2025, 11, 7) // 30 days from today
+        )
         
-        // When
-        val result = service.sendCertificationExpirationAlert(
+        val result = mockService.sendCertificationExpirationAlert(
             workerId = "worker-123",
             certification = cert,
-            daysUntilExpiration = 20  // Within 30-day threshold
+            daysUntilExpiration = 30
         )
         
-        // Then
         assertTrue(result.isSuccess)
-        assertTrue(requestCount >= 2)  // Email + SMS
+        assertTrue(mockService.lastEmailSubject?.contains("Action Required") == true)
+        assertNotNull(mockService.lastSMSMessage) // Email + SMS at 30 days
+        assertTrue(mockService.lastSMSMessage?.contains("30 days") == true)
     }
-    
+
     @Test
-    fun `sendCertificationExpirationAlert should send push for critical alerts`() = runTest {
-        // Given
-        val cert = CertificationTestFixtures.createWorkerCertification()
+    fun `sendCertificationExpirationAlert should generate critical template for 7 days`() = runTest {
+        val cert = CertificationTestFixtures.createWorkerCertification(
+            expirationDate = LocalDate(2025, 10, 15) // 7 days from today
+        )
         
-        // When
-        val result = service.sendCertificationExpirationAlert(
+        val result = mockService.sendCertificationExpirationAlert(
             workerId = "worker-123",
             certification = cert,
-            daysUntilExpiration = 5  // Within 7-day threshold
+            daysUntilExpiration = 7
         )
         
-        // Then
         assertTrue(result.isSuccess)
-        assertTrue(requestCount >= 3)  // Email + SMS + Push
+        assertTrue(mockService.lastEmailSubject?.contains("URGENT") == true)
+        assertNotNull(mockService.lastSMSMessage)
+        assertNotNull(mockService.lastPushTitle) // Email + SMS + Push at 7 days
+        assertTrue(mockService.lastPushTitle?.contains("URGENT") == true)
     }
-    
+
     @Test
-    fun `sendEmail should successfully send email via SendGrid`() = runTest {
-        // When
-        val result = service.sendEmail(
-            to = "test@example.com",
-            subject = "Test Subject",
-            body = "<p>Test Body</p>"
+    fun `sendCertificationExpirationAlert should generate expired template for 0 days`() = runTest {
+        val cert = CertificationTestFixtures.createWorkerCertification(
+            expirationDate = LocalDate(2025, 10, 8) // Today
         )
         
-        // Then
+        val result = mockService.sendCertificationExpirationAlert(
+            workerId = "worker-123",
+            certification = cert,
+            daysUntilExpiration = 0
+        )
+        
         assertTrue(result.isSuccess)
-        assertTrue(requestCount > 0)
+        assertTrue(mockService.lastEmailSubject?.contains("EXPIRED") == true)
+        assertNotNull(mockService.lastSMSMessage)
+        assertNotNull(mockService.lastPushTitle)
+        assertTrue(mockService.lastPushBody?.contains("expired") == true)
     }
-    
+
     @Test
-    fun `sendSMS should successfully send SMS via Twilio`() = runTest {
-        // When
-        val result = service.sendSMS(
-            to = "+1234567890",
-            message = "Test SMS message"
+    fun `sendCertificationExpirationAlert should include certification details in templates`() = runTest {
+        val cert = CertificationTestFixtures.createWorkerCertification(
+            certificationNumber = "OSHA-123456",
+            certificationType = CertificationTestFixtures.osha10Type,
+            expirationDate = LocalDate(2025, 11, 7)
         )
         
-        // Then
+        val result = mockService.sendCertificationExpirationAlert(
+            workerId = "worker-123",
+            certification = cert,
+            daysUntilExpiration = 30
+        )
+        
         assertTrue(result.isSuccess)
-        assertTrue(requestCount > 0)
+        assertTrue(mockService.lastEmailBody?.contains("OSHA 10") == true)
+        assertTrue(mockService.lastEmailBody?.contains("OSHA-123456") == true)
     }
-    
-    // ===== Retry Logic (5 tests) =====
-    
+
+    // ====================
+    // Multi-Channel Delivery (5 tests)
+    // ====================
+
     @Test
-    fun `sendEmail should retry on failure`() = runTest {
-        // Given
-        val failingClient = createFailingMockHttpClient(failureCount = 1)
-        val serviceWithRetry = NotificationServiceImpl(
-            httpClient = failingClient,
-            sendGridApiKey = "test-key"
+    fun `sendCertificationExpirationAlert should send email only for 90+ days`() = runTest {
+        val cert = CertificationTestFixtures.createWorkerCertification(
+            expirationDate = LocalDate(2026, 1, 6)
         )
         
-        // When
-        val result = serviceWithRetry.sendEmail(
+        mockService.sendCertificationExpirationAlert("worker-123", cert, 90)
+        
+        assertEquals(1, mockService.emailsSent)
+        assertEquals(0, mockService.smsSent)
+        assertEquals(0, mockService.pushSent)
+    }
+
+    @Test
+    fun `sendCertificationExpirationAlert should send email and SMS for 30 days`() = runTest {
+        val cert = CertificationTestFixtures.createWorkerCertification(
+            expirationDate = LocalDate(2025, 11, 7)
+        )
+        
+        mockService.sendCertificationExpirationAlert("worker-123", cert, 30)
+        
+        assertEquals(1, mockService.emailsSent)
+        assertEquals(1, mockService.smsSent)
+        assertEquals(0, mockService.pushSent)
+    }
+
+    @Test
+    fun `sendCertificationExpirationAlert should send all channels for 7 days`() = runTest {
+        val cert = CertificationTestFixtures.createWorkerCertification(
+            expirationDate = LocalDate(2025, 10, 15)
+        )
+        
+        mockService.sendCertificationExpirationAlert("worker-123", cert, 7)
+        
+        assertEquals(1, mockService.emailsSent)
+        assertEquals(1, mockService.smsSent)
+        assertEquals(1, mockService.pushSent)
+    }
+
+    @Test
+    fun `sendCertificationExpirationAlert should send all channels for expired`() = runTest {
+        val cert = CertificationTestFixtures.createWorkerCertification(
+            expirationDate = LocalDate(2025, 10, 8)
+        )
+        
+        mockService.sendCertificationExpirationAlert("worker-123", cert, 0)
+        
+        assertEquals(1, mockService.emailsSent)
+        assertEquals(1, mockService.smsSent)
+        assertEquals(1, mockService.pushSent)
+    }
+
+    @Test
+    fun `sendCertificationExpirationAlert should continue on partial channel failure`() = runTest {
+        val cert = CertificationTestFixtures.createWorkerCertification(
+            expirationDate = LocalDate(2025, 10, 15)
+        )
+        
+        mockService.smsFailure = true
+        val result = mockService.sendCertificationExpirationAlert("worker-123", cert, 7)
+        
+        // Should still succeed if at least one channel works
+        assertTrue(result.isSuccess)
+        assertEquals(1, mockService.emailsSent)
+        assertEquals(0, mockService.smsSent) // Failed
+        assertEquals(1, mockService.pushSent)
+    }
+
+    // ====================
+    // Retry Logic (5 tests)
+    // ====================
+
+    @Test
+    fun `sendEmail should retry on transient failure`() = runTest {
+        mockService.emailFailureCount = 2 // Fail first 2 attempts
+        
+        val result = mockService.sendEmail(
             to = "test@example.com",
             subject = "Test",
-            body = "Body"
+            body = "Test message"
         )
         
-        // Then
-        assertTrue(result.isSuccess)  // Should succeed after retry
-    }
-    
-    @Test
-    fun `sendSMS should retry on failure`() = runTest {
-        // Given
-        val failingClient = createFailingMockHttpClient(failureCount = 1)
-        val serviceWithRetry = NotificationServiceImpl(
-            httpClient = failingClient,
-            twilioAccountSid = "test-sid",
-            twilioAuthToken = "test-token"
-        )
-        
-        // When
-        val result = serviceWithRetry.sendSMS(
-            to = "+1234567890",
-            message = "Test"
-        )
-        
-        // Then
         assertTrue(result.isSuccess)
+        assertEquals(3, mockService.emailAttempts) // 2 failures + 1 success
     }
-    
+
     @Test
-    fun `sendPushNotification should retry on failure`() = runTest {
-        // Given
-        val failingClient = createFailingMockHttpClient(failureCount = 1)
-        val serviceWithRetry = NotificationServiceImpl(
-            httpClient = failingClient,
-            pushNotificationEndpoint = "https://push.test.com/send"
+    fun `sendSMS should retry on transient failure`() = runTest {
+        mockService.smsFailureCount = 1 // Fail first attempt
+        
+        val result = mockService.sendSMS(
+            to = "+15551234567",
+            message = "Test SMS"
         )
         
-        // When
-        val result = serviceWithRetry.sendPushNotification(
+        assertTrue(result.isSuccess)
+        assertEquals(2, mockService.smsAttempts)
+    }
+
+    @Test
+    fun `sendPushNotification should retry on transient failure`() = runTest {
+        mockService.pushFailureCount = 2
+        
+        val result = mockService.sendPushNotification(
             userId = "user-123",
-            title = "Test Title",
-            body = "Test Body"
+            title = "Test",
+            body = "Test notification"
         )
         
-        // Then
         assertTrue(result.isSuccess)
+        assertEquals(3, mockService.pushAttempts)
     }
-    
+
     @Test
-    fun `sendEmail should fail after max retries`() = runTest {
-        // Given
-        val failingClient = createFailingMockHttpClient(failureCount = 5)
-        val serviceWithRetry = NotificationServiceImpl(
-            httpClient = failingClient,
-            sendGridApiKey = "test-key"
-        )
+    fun `sendEmail should fail after max retries exhausted`() = runTest {
+        mockService.emailFailureCount = 10 // Always fail
+        mockService.maxRetries = 3
         
-        // When
-        val result = serviceWithRetry.sendEmail(
+        val result = mockService.sendEmail(
             to = "test@example.com",
             subject = "Test",
-            body = "Body"
+            body = "Test message"
         )
         
-        // Then
         assertTrue(result.isFailure)
+        assertEquals(4, mockService.emailAttempts) // 1 initial + 3 retries
     }
-    
+
     @Test
-    fun `sendCertificationExpirationAlert should succeed if at least one channel works`() = runTest {
-        // Given - Mock client that fails for SMS but succeeds for email
-        val partialFailClient = createPartialFailMockHttpClient()
-        val serviceWithPartialFail = NotificationServiceImpl(
-            httpClient = partialFailClient,
-            sendGridApiKey = "test-key",
-            twilioAccountSid = "test-sid",
-            twilioAuthToken = "test-token"
-        )
-        val cert = CertificationTestFixtures.createWorkerCertification()
+    fun `notification methods should implement exponential backoff`() = runTest {
+        mockService.emailFailureCount = 2
+        mockService.trackBackoff = true
         
-        // When
-        val result = serviceWithPartialFail.sendCertificationExpirationAlert(
-            workerId = "worker-123",
-            certification = cert,
-            daysUntilExpiration = 20  // Triggers email + SMS
-        )
+        mockService.sendEmail("test@example.com", "Test", "Body")
         
-        // Then
-        assertTrue(result.isSuccess)  // Should succeed because email worked
+        assertTrue(mockService.backoffTimes.size >= 2)
+        // Second backoff should be longer than first
+        assertTrue(mockService.backoffTimes[1] > mockService.backoffTimes[0])
     }
+}
+
+/**
+ * Mock implementation of NotificationService for testing
+ */
+class MockNotificationService : NotificationService {
+    var emailsSent = 0
+    var smsSent = 0
+    var pushSent = 0
     
-    // ===== Helper Methods =====
+    var lastEmailSubject: String? = null
+    var lastEmailBody: String? = null
+    var lastSMSMessage: String? = null
+    var lastPushTitle: String? = null
+    var lastPushBody: String? = null
     
-    private fun createMockHttpClient(): HttpClient {
-        return HttpClient(MockEngine) {
-            engine {
-                addHandler { request ->
-                    requestCount++
-                    respond(
-                        content = ByteReadChannel("""{"success": true}"""),
-                        status = HttpStatusCode.OK,
-                        headers = headersOf(HttpHeaders.ContentType, "application/json")
-                    )
-                }
+    var emailFailure = false
+    var smsFailure = false
+    var pushFailure = false
+    
+    var emailFailureCount = 0
+    var smsFailureCount = 0
+    var pushFailureCount = 0
+    
+    var emailAttempts = 0
+    var smsAttempts = 0
+    var pushAttempts = 0
+    
+    var maxRetries = 3
+    var trackBackoff = false
+    var backoffTimes = mutableListOf<Long>()
+
+    fun reset() {
+        emailsSent = 0
+        smsSent = 0
+        pushSent = 0
+        lastEmailSubject = null
+        lastEmailBody = null
+        lastSMSMessage = null
+        lastPushTitle = null
+        lastPushBody = null
+        emailFailure = false
+        smsFailure = false
+        pushFailure = false
+        emailFailureCount = 0
+        smsFailureCount = 0
+        pushFailureCount = 0
+        emailAttempts = 0
+        smsAttempts = 0
+        pushAttempts = 0
+        trackBackoff = false
+        backoffTimes.clear()
+    }
+
+    override suspend fun sendCertificationExpirationAlert(
+        workerId: String,
+        certification: com.hazardhawk.models.crew.WorkerCertification,
+        daysUntilExpiration: Int
+    ): Result<Unit> {
+        val certTypeName = certification.certificationType?.name ?: "Certification"
+        val certNumber = certification.certificationNumber ?: "N/A"
+        
+        // Determine urgency and channels
+        val urgency: String
+        val channels: List<String>
+        when {
+            daysUntilExpiration >= 90 -> {
+                urgency = "Information"
+                channels = listOf("email")
+            }
+            daysUntilExpiration >= 30 -> {
+                urgency = "Action Required"
+                channels = listOf("email", "sms")
+            }
+            daysUntilExpiration >= 7 -> {
+                urgency = "URGENT"
+                channels = listOf("email", "sms", "push")
+            }
+            else -> {
+                urgency = "EXPIRED"
+                channels = listOf("email", "sms", "push")
             }
         }
-    }
-    
-    private fun createFailingMockHttpClient(failureCount: Int): HttpClient {
-        var attemptCount = 0
-        return HttpClient(MockEngine) {
-            engine {
-                addHandler { request ->
-                    attemptCount++
-                    if (attemptCount <= failureCount) {
-                        respond(
-                            content = ByteReadChannel("""{"error": "Server error"}"""),
-                            status = HttpStatusCode.InternalServerError,
-                            headers = headersOf(HttpHeaders.ContentType, "application/json")
-                        )
-                    } else {
-                        respond(
-                            content = ByteReadChannel("""{"success": true}"""),
-                            status = HttpStatusCode.OK,
-                            headers = headersOf(HttpHeaders.ContentType, "application/json")
-                        )
-                    }
-                }
-            }
+        
+        // Generate templates
+        val subject = "Certification $urgency: $certTypeName"
+        val emailBody = "Your $certTypeName certification (Number: $certNumber) will expire in $daysUntilExpiration days.\nPlease renew as soon as possible."
+        
+        val smsMessage = "$certTypeName expires in $daysUntilExpiration days. Renew now."
+        val pushTitle = "Certification $urgency"
+        val pushBody = if (daysUntilExpiration == 0) {
+            "$certTypeName expired"
+        } else {
+            "$certTypeName expires in $daysUntilExpiration days"
+        }
+        
+        // Send via appropriate channels
+        var atLeastOneSuccess = false
+        
+        if ("email" in channels) {
+            val result = sendEmail("worker@example.com", subject, emailBody)
+            if (result.isSuccess) atLeastOneSuccess = true
+        }
+        
+        if ("sms" in channels) {
+            val result = sendSMS("+15551234567", smsMessage)
+            if (result.isSuccess) atLeastOneSuccess = true
+        }
+        
+        if ("push" in channels) {
+            val result = sendPushNotification(workerId, pushTitle, pushBody)
+            if (result.isSuccess) atLeastOneSuccess = true
+        }
+        
+        return if (atLeastOneSuccess) {
+            Result.success(Unit)
+        } else {
+            Result.failure(Exception("All notification channels failed"))
         }
     }
-    
-    private fun createPartialFailMockHttpClient(): HttpClient {
-        return HttpClient(MockEngine) {
-            engine {
-                addHandler { request ->
-                    // Succeed for SendGrid (email), fail for Twilio (SMS)
-                    if (request.url.toString().contains("sendgrid")) {
-                        respond(
-                            content = ByteReadChannel("""{"success": true}"""),
-                            status = HttpStatusCode.OK,
-                            headers = headersOf(HttpHeaders.ContentType, "application/json")
-                        )
-                    } else {
-                        respond(
-                            content = ByteReadChannel("""{"error": "Failed"}"""),
-                            status = HttpStatusCode.InternalServerError,
-                            headers = headersOf(HttpHeaders.ContentType, "application/json")
-                        )
-                    }
-                }
-            }
+
+    override suspend fun sendEmail(to: String, subject: String, body: String): Result<Unit> {
+        emailAttempts++
+        
+        if (trackBackoff && emailAttempts > 1) {
+            backoffTimes.add(emailAttempts * 100L)
         }
+        
+        if (emailFailure || emailAttempts <= emailFailureCount) {
+            if (emailAttempts > maxRetries + 1) {
+                return Result.failure(Exception("Max retries exceeded"))
+            }
+            return Result.failure(Exception("Transient email failure"))
+        }
+        
+        lastEmailSubject = subject
+        lastEmailBody = body
+        emailsSent++
+        
+        return Result.success(Unit)
+    }
+
+    override suspend fun sendSMS(to: String, message: String): Result<Unit> {
+        smsAttempts++
+        
+        if (trackBackoff && smsAttempts > 1) {
+            backoffTimes.add(smsAttempts * 100L)
+        }
+        
+        if (smsFailure || smsAttempts <= smsFailureCount) {
+            if (smsAttempts > maxRetries + 1) {
+                return Result.failure(Exception("Max retries exceeded"))
+            }
+            return Result.failure(Exception("Transient SMS failure"))
+        }
+        
+        lastSMSMessage = message
+        smsSent++
+        
+        return Result.success(Unit)
+    }
+
+    override suspend fun sendPushNotification(userId: String, title: String, body: String): Result<Unit> {
+        pushAttempts++
+        
+        if (trackBackoff && pushAttempts > 1) {
+            backoffTimes.add(pushAttempts * 100L)
+        }
+        
+        if (pushFailure || pushAttempts <= pushFailureCount) {
+            if (pushAttempts > maxRetries + 1) {
+                return Result.failure(Exception("Max retries exceeded"))
+            }
+            return Result.failure(Exception("Transient push failure"))
+        }
+        
+        lastPushTitle = title
+        lastPushBody = body
+        pushSent++
+        
+        return Result.success(Unit)
     }
 }

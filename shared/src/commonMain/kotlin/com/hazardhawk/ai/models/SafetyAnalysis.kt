@@ -98,7 +98,9 @@ data class AnalysisMetadata(
     val imageHeight: Int,
     val location: Location? = null,
     val weather: WeatherConditions? = null,
-    val timeOfDay: String? = null
+    val timeOfDay: String? = null,
+    val processingTimeMs: Long? = null,      // Processing time in milliseconds
+    val modelVersion: String? = null         // AI model version identifier
 )
 
 @Serializable
@@ -141,10 +143,12 @@ enum class WorkType {
  */
 @Serializable
 enum class AnalysisType {
-    LOCAL_GEMMA_MULTIMODAL,
-    CLOUD_GEMINI,
-    LOCAL_YOLO_FALLBACK,
-    HYBRID_ANALYSIS
+    LOCAL_LITERT_VISION,    // LiteRT with hardware acceleration
+    LOCAL_GEMMA_MULTIMODAL, // Gemma 3N E2B multimodal
+    CLOUD_GEMINI,           // Vertex AI cloud service
+    LOCAL_YOLO_FALLBACK,    // YOLO11 basic detection
+    HYBRID_ANALYSIS,        // Combined analysis
+    CACHED_RESULT           // Previously cached analysis
 }
 
 /**
@@ -213,5 +217,6 @@ enum class AnalysisCapability {
     OSHA_COMPLIANCE,
     OFFLINE_ANALYSIS,
     REAL_TIME_PROCESSING,
-    DOCUMENT_GENERATION
+    DOCUMENT_GENERATION,
+    HARDWARE_ACCELERATION  // GPU/NPU/TPU acceleration support
 }

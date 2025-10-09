@@ -1,13 +1,15 @@
 package com.hazardhawk.ai.core
+import kotlinx.datetime.Clock
 
 import com.hazardhawk.ai.models.SafetyAnalysis
+import com.hazardhawk.ai.models.AnalysisType
+import com.hazardhawk.ai.models.AnalysisCapability
+import com.hazardhawk.ai.models.WorkType
 import com.hazardhawk.ai.services.LiteRTVisionService
 import com.hazardhawk.ai.services.VertexAIGeminiService
-import com.hazardhawk.core.models.*
 import com.hazardhawk.performance.*
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.delay
-import kotlin.uuid.uuid4
 
 /**
  * Simplified orchestrator prioritizing real AI analysis over mock services.
@@ -83,7 +85,7 @@ class SimplifiedAIOrchestrator(
         workType: WorkType
     ): Result<SafetyAnalysis> {
         
-        val startTime = System.currentTimeMillis()
+        val startTime = Clock.System.now().toEpochMilliseconds()
         var lastError: Exception? = null
         
         // Apply AI processing throttling (2 FPS) - maintains compatibility
@@ -189,7 +191,7 @@ class SimplifiedAIOrchestrator(
         
         return when {
             result?.isSuccess == true -> {
-                val analysisTime = System.currentTimeMillis() - startTime
+                val analysisTime = Clock.System.now().toEpochMilliseconds() - startTime
                 orchestratorStats.recordLiteRTSuccess(analysisTime)
                 performanceMonitor.recordAIAnalysis(analysisTime, true)
                 
@@ -208,12 +210,12 @@ class SimplifiedAIOrchestrator(
                 result
             }
             result == null -> {
-                val analysisTime = System.currentTimeMillis() - startTime
+                val analysisTime = Clock.System.now().toEpochMilliseconds() - startTime
                 performanceMonitor.recordAIAnalysis(analysisTime, false)
                 Result.failure(Exception("LiteRT analysis timeout after ${timeout}ms"))
             }
             else -> {
-                val analysisTime = System.currentTimeMillis() - startTime
+                val analysisTime = Clock.System.now().toEpochMilliseconds() - startTime
                 performanceMonitor.recordAIAnalysis(analysisTime, false)
                 result
             }
@@ -236,7 +238,7 @@ class SimplifiedAIOrchestrator(
         
         return when {
             result?.isSuccess == true -> {
-                val analysisTime = System.currentTimeMillis() - startTime
+                val analysisTime = Clock.System.now().toEpochMilliseconds() - startTime
                 orchestratorStats.recordVertexAISuccess(analysisTime)
                 
                 // Cache result with cloud fallback metadata
@@ -290,11 +292,11 @@ class SimplifiedAIOrchestrator(
         val capabilities = mutableMapOf<String, Set<String>>()
         
         // Test LiteRT Vision
-        val liteRTStart = System.currentTimeMillis()
+        val liteRTStart = Clock.System.now().toEpochMilliseconds()
         try {
             val isAvailable = liteRTVision.isAvailable
             results["LiteRTVision"] = isAvailable
-            timings["LiteRTVision"] = System.currentTimeMillis() - liteRTStart
+            timings["LiteRTVision"] = Clock.System.now().toEpochMilliseconds() - liteRTStart
             
             if (isAvailable) {
                 val metrics = liteRTVision.getPerformanceMetrics()
@@ -310,10 +312,10 @@ class SimplifiedAIOrchestrator(
         }
         
         // Test Vertex AI
-        val vertexStart = System.currentTimeMillis()
+        val vertexStart = Clock.System.now().toEpochMilliseconds()
         try {
             results["VertexAI"] = networkMonitor.isConnected && vertexAI.isAvailable
-            timings["VertexAI"] = System.currentTimeMillis() - vertexStart
+            timings["VertexAI"] = Clock.System.now().toEpochMilliseconds() - vertexStart
             
             if (results["VertexAI"] == true) {
                 capabilities["VertexAI"] = setOf(
@@ -427,13 +429,3 @@ enum class AnalysisStrategy {
     UNAVAILABLE     // No services available
 }
 
-/**
- * Extended analysis type to include LiteRT processing.
- */
-enum class AnalysisType {
-    LOCAL_LITERT_VISION,    // New: Real LiteRT analysis
-    LOCAL_GEMMA_MULTIMODAL, // Existing: Gemma mock analysis
-    LOCAL_YOLO_FALLBACK,    // Existing: YOLO fallback
-    CLOUD_GEMINI,           // Existing: Vertex AI cloud
-    CACHED_RESULT           // Existing: Cached analysis
-}

@@ -8,6 +8,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.hours
 
 /**
  * Implementation of UserProfileRepository for dashboard user profile management.
@@ -128,11 +130,13 @@ class UserProfileRepositoryImpl {
         return when (permission) {
             UserPermission.CREATE_PTP,
             UserPermission.CREATE_TOOLBOX_TALK,
+            UserPermission.CREATE_INCIDENT_REPORT,
             UserPermission.ASSIGN_TASKS -> tier == UserTier.SAFETY_LEAD || tier == UserTier.PROJECT_ADMIN
 
             UserPermission.MANAGE_USERS,
             UserPermission.VIEW_ANALYTICS,
-            UserPermission.CONFIGURE_SETTINGS -> tier == UserTier.PROJECT_ADMIN
+            UserPermission.CONFIGURE_SETTINGS,
+            UserPermission.MANAGE_PROJECTS -> tier == UserTier.PROJECT_ADMIN
 
             UserPermission.CAPTURE_PHOTOS,
             UserPermission.VIEW_REPORTS,
@@ -273,8 +277,8 @@ class UserProfileRepositoryImpl {
             currentProjectId = "project_downtown_001",
             avatarUrl = null,
             phoneNumber = "+1 (555) 123-4567",
-            createdAt = now.minus(90, kotlinx.datetime.DateTimeUnit.DAY),
-            lastLogin = now.minus(2, kotlinx.datetime.DateTimeUnit.HOUR),
+            createdAt = now.minus(90.days),
+            lastLogin = now.minus(2.hours),
             lastUpdated = now,
             preferences = UserPreferences(
                 enableNotifications = true,

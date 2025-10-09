@@ -1,4 +1,5 @@
 package com.hazardhawk.performance
+import kotlinx.datetime.Clock
 
 import com.hazardhawk.ai.core.SimplifiedAIOrchestrator
 import com.hazardhawk.ai.core.SmartAIOrchestrator
@@ -43,7 +44,7 @@ class LiteRTPerformanceValidator(
      * Returns comprehensive analysis of whether performance targets are met.
      */
     suspend fun executeCompleteValidation(): LiteRTValidationReport = withContext(Dispatchers.Default) {
-        val startTime = System.currentTimeMillis()
+        val startTime = Clock.System.now().toEpochMilliseconds()
         val deviceCapabilities = deviceDetector.detectCapabilities()
         
         _validationProgress.value = 0f
@@ -104,8 +105,8 @@ class LiteRTPerformanceValidator(
                 .flatMap { it.issues }
             
             LiteRTValidationReport(
-                timestamp = System.currentTimeMillis(),
-                validationDurationMs = System.currentTimeMillis() - startTime,
+                timestamp = Clock.System.now().toEpochMilliseconds(),
+                validationDurationMs = Clock.System.now().toEpochMilliseconds() - startTime,
                 deviceCapabilities = deviceCapabilities,
                 validationResults = validationResults,
                 overallScore = overallScore,
@@ -119,8 +120,8 @@ class LiteRTPerformanceValidator(
             _currentTest.value = "Validation failed: ${e.message}"
             
             LiteRTValidationReport(
-                timestamp = System.currentTimeMillis(),
-                validationDurationMs = System.currentTimeMillis() - startTime,
+                timestamp = Clock.System.now().toEpochMilliseconds(),
+                validationDurationMs = Clock.System.now().toEpochMilliseconds() - startTime,
                 deviceCapabilities = deviceCapabilities,
                 validationResults = validationResults,
                 overallScore = 0f,
@@ -156,7 +157,7 @@ class LiteRTPerformanceValidator(
         
         for (backend in supportedBackends) {
             try {
-                val backendStart = System.currentTimeMillis()
+                val backendStart = Clock.System.now().toEpochMilliseconds()
                 
                 // Initialize backend
                 val initResult = engine.initialize("performance_test_model", backend)
@@ -172,7 +173,7 @@ class LiteRTPerformanceValidator(
                     workType = WorkType.GENERAL_CONSTRUCTION
                 )
                 
-                val testDuration = System.currentTimeMillis() - backendStart
+                val testDuration = Clock.System.now().toEpochMilliseconds() - backendStart
                 val metrics = engine.getPerformanceMetrics()
                 
                 val expectedTokens = backend.expectedTokensPerSecond
@@ -243,9 +244,9 @@ class LiteRTPerformanceValidator(
         // Test SimplifiedAIOrchestrator (LiteRT-enhanced)
         val simplifiedTimes = mutableListOf<Long>()
         repeat(numTests) {
-            val start = System.currentTimeMillis()
+            val start = Clock.System.now().toEpochMilliseconds()
             val result = simplifiedOrchestrator.analyzePhoto(testImage, workType)
-            val duration = System.currentTimeMillis() - start
+            val duration = Clock.System.now().toEpochMilliseconds() - start
             
             if (result.isSuccess) {
                 simplifiedTimes.add(duration)
@@ -255,9 +256,9 @@ class LiteRTPerformanceValidator(
         // Test SmartAIOrchestrator (legacy)
         val smartTimes = mutableListOf<Long>()
         repeat(numTests) {
-            val start = System.currentTimeMillis()
+            val start = Clock.System.now().toEpochMilliseconds()
             val result = smartOrchestrator.analyzePhoto(testImage, workType)
-            val duration = System.currentTimeMillis() - start
+            val duration = Clock.System.now().toEpochMilliseconds() - start
             
             if (result.isSuccess) {
                 smartTimes.add(duration)
@@ -316,12 +317,12 @@ class LiteRTPerformanceValidator(
         
         liteRTEngine?.let { engine ->
             repeat(numTests) {
-                val start = System.currentTimeMillis()
+                val start = Clock.System.now().toEpochMilliseconds()
                 val result = engine.generateSafetyAnalysis(
                     imageData = testImage,
                     workType = WorkType.GENERAL_CONSTRUCTION
                 )
-                val duration = System.currentTimeMillis() - start
+                val duration = Clock.System.now().toEpochMilliseconds() - start
                 
                 if (result.isSuccess) {
                     realTimes.add(duration)
@@ -333,9 +334,9 @@ class LiteRTPerformanceValidator(
         // Test mock generation
         val mockTimes = mutableListOf<Long>()
         repeat(numTests) {
-            val start = System.currentTimeMillis()
+            val start = Clock.System.now().toEpochMilliseconds()
             generateMockAnalysis() // Fast mock generation
-            val duration = System.currentTimeMillis() - start
+            val duration = Clock.System.now().toEpochMilliseconds() - start
             mockTimes.add(duration)
         }
         

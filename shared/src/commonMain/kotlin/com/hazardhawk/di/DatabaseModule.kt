@@ -1,44 +1,41 @@
 package com.hazardhawk.di
 
+import com.hazardhawk.database.HazardHawkDatabase
+import app.cash.sqldelight.db.SqlDriver
 import org.koin.dsl.module
 
 /**
- * Database module for SQLDelight database configuration.
- * Platform-specific implementations will provide the actual database driver.
- * 
- * Usage in platform modules:
- * - Android: Provide SqlDriver with AndroidSqliteDriver
- * - iOS: Provide SqlDriver with NativeSqliteDriver
- * - Desktop: Provide SqlDriver with JdbcSqliteDriver
- * - Web: Provide SqlDriver with WebWorkerDriver or IndexedDbDriver
+ * Database module for data persistence.
+ * Contains database driver and configuration.
  */
 val databaseModule = module {
     
-    // Database instance will be created once the platform-specific driver is provided
-    // single<HazardHawkDatabase> {
-    //     HazardHawkDatabase(
-    //         driver = get<SqlDriver>() // Platform-specific driver
-    //     )
-    // }
-    
-    // Database-related utilities that don't depend on platform
-    // These can be uncommented once we have the actual database schema
-    
-    // Note: The actual database and driver setup will be done in platform-specific modules
-    // This keeps the shared module free from platform dependencies while allowing
-    // repositories to be defined here that depend on the database
+    // Database instance - driver will be provided by platform-specific modules
+    single<HazardHawkDatabase> {
+        HazardHawkDatabase(get<SqlDriver>())
+    }
 }
 
 /**
- * Module for database-related constants and configurations
+ * Database configuration module for settings and constants.
  */
 val databaseConfigModule = module {
     
-    // Database configuration constants
-    single(qualifier = org.koin.core.qualifier.named("DatabaseName")) { "hazard_hawk.db" }
-    single(qualifier = org.koin.core.qualifier.named("DatabaseVersion")) { 6 }
+    // Database configuration
+    // single<DatabaseConfig> {
+    //     DatabaseConfig(
+    //         name = "hazard_hawk.db",
+    //         version = 6,
+    //         enableWAL = true,
+    //         enableForeignKeys = true
+    //     )
+    // }
     
-    // Database migration settings
-    single(qualifier = org.koin.core.qualifier.named("EnableMigrations")) { true }
-    single(qualifier = org.koin.core.qualifier.named("EnableWAL")) { true }
+    // Query timeout settings
+    // single<QueryTimeoutConfig> {
+    //     QueryTimeoutConfig(
+    //         shortQuery = 5000L,  // 5 seconds
+    //         longQuery = 30000L   // 30 seconds
+    //     )
+    // }
 }

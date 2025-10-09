@@ -1,6 +1,10 @@
 package com.hazardhawk.ai.core
+import kotlinx.datetime.Clock
 
-import com.hazardhawk.core.models.*
+import com.hazardhawk.ai.models.SafetyAnalysis
+import com.hazardhawk.ai.models.AnalysisType
+import com.hazardhawk.ai.models.AnalysisCapability
+import com.hazardhawk.ai.models.WorkType
 import com.hazardhawk.ai.services.Gemma3NE2BVisionService
 import com.hazardhawk.ai.services.VertexAIGeminiService
 import com.hazardhawk.ai.services.YOLO11LocalService
@@ -9,7 +13,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
-import kotlinx.uuid.uuid4
 
 /**
  * Smart orchestrator that manages multiple AI services with intelligent fallback logic.
@@ -76,7 +79,7 @@ class SmartAIOrchestrator(
         workType: WorkType
     ): Result<SafetyAnalysis> {
         
-        val startTime = System.currentTimeMillis()
+        val startTime = Clock.System.now().toEpochMilliseconds()
         var lastError: Exception? = null
         
         // Apply AI processing throttling (2 FPS)
@@ -116,7 +119,7 @@ class SmartAIOrchestrator(
                 }
                 
                 if (result?.isSuccess == true) {
-                    val analysisTime = System.currentTimeMillis() - startTime
+                    val analysisTime = Clock.System.now().toEpochMilliseconds() - startTime
                     orchestratorStats.recordSuccess(AnalysisType.LOCAL_GEMMA_MULTIMODAL)
                     performanceMonitor.recordAIAnalysis(analysisTime, true)
                     
@@ -133,14 +136,14 @@ class SmartAIOrchestrator(
                         )
                     }
                 } else {
-                    val analysisTime = System.currentTimeMillis() - startTime
+                    val analysisTime = Clock.System.now().toEpochMilliseconds() - startTime
                     lastError = result?.exceptionOrNull() as? Exception 
                         ?: Exception("Gemma analysis timeout")
                     orchestratorStats.recordFailure(AnalysisType.LOCAL_GEMMA_MULTIMODAL)
                     performanceMonitor.recordAIAnalysis(analysisTime, false)
                 }
             } catch (e: Exception) {
-                val analysisTime = System.currentTimeMillis() - startTime
+                val analysisTime = Clock.System.now().toEpochMilliseconds() - startTime
                 lastError = e
                 orchestratorStats.recordFailure(AnalysisType.LOCAL_GEMMA_MULTIMODAL)
                 performanceMonitor.recordAIAnalysis(analysisTime, false)
@@ -268,28 +271,28 @@ class SmartAIOrchestrator(
         val timings = mutableMapOf<String, Long>()
         
         // Test Gemma 3N E2B
-        val gemmaStart = System.currentTimeMillis()
+        val gemmaStart = Clock.System.now().toEpochMilliseconds()
         try {
             results["Gemma3NE2B"] = gemma3NE2B.isAvailable
-            timings["Gemma3NE2B"] = System.currentTimeMillis() - gemmaStart
+            timings["Gemma3NE2B"] = Clock.System.now().toEpochMilliseconds() - gemmaStart
         } catch (e: Exception) {
             results["Gemma3NE2B"] = false
         }
         
         // Test Vertex AI
-        val vertexStart = System.currentTimeMillis() 
+        val vertexStart = Clock.System.now().toEpochMilliseconds() 
         try {
             results["VertexAI"] = networkMonitor.isConnected && vertexAI.isAvailable
-            timings["VertexAI"] = System.currentTimeMillis() - vertexStart
+            timings["VertexAI"] = Clock.System.now().toEpochMilliseconds() - vertexStart
         } catch (e: Exception) {
             results["VertexAI"] = false
         }
         
         // Test YOLO11
-        val yoloStart = System.currentTimeMillis()
+        val yoloStart = Clock.System.now().toEpochMilliseconds()
         try {
             results["YOLO11"] = yolo11.isAvailable  
-            timings["YOLO11"] = System.currentTimeMillis() - yoloStart
+            timings["YOLO11"] = Clock.System.now().toEpochMilliseconds() - yoloStart
         } catch (e: Exception) {
             results["YOLO11"] = false
         }
@@ -366,7 +369,7 @@ class AIFrameLimiter(private val targetFPS: Float) {
     private var lastProcessTime = 0L
     
     fun shouldProcess(): Boolean {
-        val currentTime = System.currentTimeMillis()
+        val currentTime = Clock.System.now().toEpochMilliseconds()
         val elapsed = currentTime - lastProcessTime
         
         return if (elapsed >= frameIntervalMs) {
@@ -378,7 +381,7 @@ class AIFrameLimiter(private val targetFPS: Float) {
     }
     
     fun getTimeUntilNextProcessMs(): Long {
-        val currentTime = System.currentTimeMillis()
+        val currentTime = Clock.System.now().toEpochMilliseconds()
         val elapsed = currentTime - lastProcessTime
         val remaining = frameIntervalMs - elapsed
         return remaining.coerceAtLeast(0)

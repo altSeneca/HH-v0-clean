@@ -1,210 +1,122 @@
 package com.hazardhawk.data.repositories
 
+import com.hazardhawk.database.HazardHawkDatabase
+import com.hazardhawk.domain.entities.Photo
 import com.hazardhawk.domain.repositories.PhotoRepository
-import com.hazardhawk.models.Photo
-import com.hazardhawk.models.WorkType
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flow
 
-/**
- * Default implementation of PhotoRepository.
- * This is a basic implementation that can be extended with actual database operations.
- * 
- * TODO: Replace with actual database implementation (SQLDelight, Room, etc.)
- */
-class PhotoRepositoryImpl : PhotoRepository {
-    
-    // In-memory storage for demo purposes - replace with actual database
-    private val photos = mutableMapOf<String, Photo>()
+class PhotoRepositoryImpl(
+    private val database: HazardHawkDatabase?,
+    private val fileManager: FileManager? = null
+) : PhotoRepository {
     
     override suspend fun savePhoto(photo: Photo): Result<Photo> {
         return try {
-            photos[photo.id] = photo
+            // TODO: Implement database save operation
+            // database.photoDao().insertPhoto(photo.toEntity())
             Result.success(photo)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
     
-    override suspend fun getPhoto(id: String): Photo? {
-        return photos[id]
-    }
-    
-    override suspend fun updatePhoto(photo: Photo): Result<Photo> {
-        return if (photos.containsKey(photo.id)) {
-            savePhoto(photo)
-        } else {
-            Result.failure(IllegalArgumentException("Photo not found: ${photo.id}"))
-        }
-    }
-    
-    override suspend fun deletePhoto(id: String): Result<Unit> {
+    override suspend fun getPhoto(photoId: String): Photo? {
         return try {
-            photos.remove(id)
-            Result.success(Unit)
+            // TODO: Implement database query
+            // database.photoDao().getPhotoById(photoId)?.toDomain()
+            null
         } catch (e: Exception) {
-            Result.failure(e)
+            null
         }
     }
     
-    override suspend fun getAllPhotos(): Flow<List<Photo>> {
-        return flowOf(photos.values.toList())
+    override suspend fun getPhotos(): Flow<List<Photo>> = flow {
+        emit(getAllPhotosFromDatabase())
     }
     
-    override suspend fun getPhotosByProject(projectId: String): Flow<List<Photo>> {
-        val filtered = photos.values.filter { it.projectId == projectId }
-        return flowOf(filtered)
+    override suspend fun getAllPhotos(): List<Photo> {
+        return getAllPhotosFromDatabase()
     }
     
-    override suspend fun getPhotosByWorkType(workType: WorkType): Flow<List<Photo>> {
-        val filtered = photos.values.filter { it.workType == workType }
-        return flowOf(filtered)
-    }
-    
-    override suspend fun getAnalyzedPhotos(): Flow<List<Photo>> {
-        val filtered = photos.values.filter { it.isAnalyzed }
-        return flowOf(filtered)
-    }
-    
-    override suspend fun getUnanalyzedPhotos(): Flow<List<Photo>> {
-        val filtered = photos.values.filter { !it.isAnalyzed }
-        return flowOf(filtered)
-    }
-    
-    override suspend fun getPhotosNeedingUpload(): List<Photo> {
-        return photos.values.filter { !it.isUploaded }
-    }
-    
-    override suspend fun getPhotosByTags(tags: List<String>): Flow<List<Photo>> {
-        val filtered = photos.values.filter { photo ->
-            photo.tags.any { it in tags }
-        }
-        return flowOf(filtered)
-    }
-    
-    override suspend fun searchPhotos(query: String): Flow<List<Photo>> {
-        val filtered = photos.values.filter { photo ->
-            photo.fileName.contains(query, ignoreCase = true) ||
-            photo.metadata?.contains(query, ignoreCase = true) == true
-        }
-        return flowOf(filtered)
-    }
-    
-    override suspend fun markPhotoUploaded(photoId: String, remoteUrl: String): Result<Unit> {
+    override suspend fun deletePhoto(photoId: String): Result<Unit> {
         return try {
-            val photo = photos[photoId] ?: return Result.failure(
-                IllegalArgumentException("Photo not found: $photoId")
-            )
-            
-            photos[photoId] = photo.copy(
-                isUploaded = true,
-                metadata = photo.metadata?.plus("\nRemote URL: $remoteUrl") ?: "Remote URL: $remoteUrl"
-            )
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-    
-    override suspend fun markPhotoAnalyzed(photoId: String, analysisId: String): Result<Unit> {
-        return try {
-            val photo = photos[photoId] ?: return Result.failure(
-                IllegalArgumentException("Photo not found: $photoId")
-            )
-            
-            photos[photoId] = photo.copy(
-                isAnalyzed = true,
-                analysisId = analysisId
-            )
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-    
-    override suspend fun updatePhotoTags(photoId: String, tags: List<String>): Result<Unit> {
-        return try {
-            val photo = photos[photoId] ?: return Result.failure(
-                IllegalArgumentException("Photo not found: $photoId")
-            )
-            
-            photos[photoId] = photo.copy(tags = tags)
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-    
-    override suspend fun savePhotosBatch(photos: List<Photo>): Result<Int> {
-        return try {
-            var saved = 0
-            photos.forEach { photo ->
-                savePhoto(photo).onSuccess { saved++ }
+            // 1. Get photo details for file deletion
+            val photo = getPhoto(photoId)
+
+            // 2. Remove from database
+            // database.photoDao().deletePhoto(photoId)
+
+            // 3. Delete physical file if it exists (delegated to platform-specific FileManager)
+            if (photo != null && fileManager != null) {
+                fileManager.deleteFile(photo.filePath)
             }
-            Result.success(saved)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-    
-    override suspend fun deletePhotosBatch(photoIds: List<String>): Result<Int> {
-        return try {
-            var deleted = 0
-            photoIds.forEach { photoId ->
-                deletePhoto(photoId).onSuccess { deleted++ }
-            }
-            Result.success(deleted)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-    
-    override suspend fun updateUploadStatusBatch(
-        photoIds: List<String>, 
-        uploaded: Boolean
-    ): Result<Unit> {
-        return try {
-            photoIds.forEach { photoId ->
-                val photo = photos[photoId]
-                if (photo != null) {
-                    photos[photoId] = photo.copy(isUploaded = uploaded)
-                }
-            }
+
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
     
-    override suspend fun getPhotosCount(): Int {
-        return photos.size
+    override suspend fun updatePhotoTags(photoId: String, tags: List<String>): Result<Photo> {
+        return try {
+            // Get the existing photo
+            val existingPhoto = getPhoto(photoId)
+            
+            if (existingPhoto != null) {
+                // Create updated photo with new tags
+                val updatedPhoto = existingPhoto.copy(tags = tags)
+                
+                // Save the updated photo back to database
+                // database.photoDao().updatePhoto(updatedPhoto.toEntity())
+                
+                Result.success(updatedPhoto)
+            } else {
+                Result.failure(Exception("Photo with ID $photoId not found"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
     
-    override suspend fun getPhotosCountByProject(projectId: String): Int {
-        return photos.values.count { it.projectId == projectId }
+    private suspend fun getAllPhotosFromDatabase(): List<Photo> {
+        return try {
+            // TODO: Replace with actual database query
+            // database.photoDao().getAllPhotos().map { it.toDomain() }
+            createSamplePhotos() // Temporary for development
+        } catch (e: Exception) {
+            emptyList()
+        }
     }
     
-    override suspend fun getAnalyzedPhotosCount(): Int {
-        return photos.values.count { it.isAnalyzed }
+    // Temporary method to provide sample data for development
+    private fun createSamplePhotos(): List<Photo> {
+        val currentTime = kotlinx.datetime.Clock.System.now()
+        val oneHourAgo = kotlinx.datetime.Instant.fromEpochMilliseconds(currentTime.toEpochMilliseconds() - 3600000)
+        
+        return listOf(
+            Photo(
+                id = "sample_1",
+                fileName = "sample1.jpg",
+                filePath = "/path/to/sample1.jpg",
+                capturedAt = currentTime,
+                location = null,
+                tags = emptyList()
+            ),
+            Photo(
+                id = "sample_2", 
+                fileName = "sample2.jpg",
+                filePath = "/path/to/sample2.jpg",
+                capturedAt = oneHourAgo,
+                location = null,
+                tags = listOf("Fall Protection", "PPE Required")
+            )
+        )
     }
-    
-    override suspend fun getTotalStorageSize(): Long {
-        return photos.values.sumOf { it.fileSize }
-    }
-    
-    override suspend fun getPhotosWithLocation(): Flow<List<Photo>> {
-        val filtered = photos.values.filter { it.hasLocation() }
-        return flowOf(filtered)
-    }
-    
-    override suspend fun cleanupOrphanedPhotos(): Result<Int> {
-        // TODO: Implement logic to find photos not referenced by any analysis
-        // For now, return 0 as no orphaned photos found
-        return Result.success(0)
-    }
-    
-    override suspend fun optimizeStorage(): Result<Unit> {
-        // Placeholder for storage optimization
-        return Result.success(Unit)
-    }
+}
+
+// Placeholder for file manager interface
+interface FileManager {
+    suspend fun deleteFile(filePath: String): Result<Unit>
+    suspend fun getPhotoPath(photoId: String): String
 }

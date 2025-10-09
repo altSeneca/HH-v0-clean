@@ -1,4 +1,5 @@
 package com.hazardhawk.ai.services
+import kotlinx.datetime.Clock
 
 import com.hazardhawk.ai.core.AIPhotoAnalyzer
 import com.hazardhawk.ai.models.*
@@ -62,7 +63,7 @@ class YOLO11LocalService : AIPhotoAnalyzer {
             return Result.failure(Exception("YOLO11 model not loaded"))
         }
 
-        val startTime = System.currentTimeMillis()
+        val startTime = Clock.System.now().toEpochMilliseconds()
 
         try {
             // Simulate fast local inference
@@ -125,7 +126,7 @@ class YOLO11LocalService : AIPhotoAnalyzer {
 
         return SafetyAnalysis(
             id = uuid4().toString(),
-            timestamp = System.currentTimeMillis(),
+            timestamp = Clock.System.now().toEpochMilliseconds(),
             analysisType = AnalysisType.LOCAL_YOLO_FALLBACK,
             workType = workType,
             hazards = hazards, // NOW WITH BOUNDING BOXES!
@@ -133,7 +134,7 @@ class YOLO11LocalService : AIPhotoAnalyzer {
             recommendations = generateYOLORecommendations(hazards, workType),
             overallRiskLevel = riskLevel,
             confidence = calculateOverallConfidence(detections),
-            processingTimeMs = System.currentTimeMillis() - startTime,
+            processingTimeMs = Clock.System.now().toEpochMilliseconds() - startTime,
             oshaViolations = generateOSHAViolations(hazards)
         )
     }
@@ -406,7 +407,7 @@ class YOLO11LocalService : AIPhotoAnalyzer {
         
         return SafetyAnalysis(
             id = uuid4().toString(),
-            timestamp = System.currentTimeMillis(),
+            timestamp = Clock.System.now().toEpochMilliseconds(),
             analysisType = AnalysisType.LOCAL_YOLO_FALLBACK,
             workType = workType,
             hazards = hazards,
@@ -427,7 +428,7 @@ class YOLO11LocalService : AIPhotoAnalyzer {
             ),
             overallRiskLevel = RiskLevel.MODERATE, // Conservative assessment
             confidence = 0.62f, // Lower confidence for basic detection
-            processingTimeMs = System.currentTimeMillis() - startTime,
+            processingTimeMs = Clock.System.now().toEpochMilliseconds() - startTime,
             oshaViolations = emptyList() // YOLO cannot reliably determine OSHA violations
         )
     }

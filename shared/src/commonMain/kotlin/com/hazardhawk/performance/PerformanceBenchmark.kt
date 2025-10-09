@@ -1,4 +1,5 @@
 package com.hazardhawk.performance
+import kotlinx.datetime.Clock
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -118,7 +119,7 @@ class PerformanceBenchmark(
                     tests = results,
                     overallScore = overallScore,
                     recommendations = generateRecommendations(results, deviceCapabilities),
-                    timestamp = System.currentTimeMillis()
+                    timestamp = Clock.System.now().toEpochMilliseconds()
                 )
                 
             } catch (e: Exception) {
@@ -132,7 +133,7 @@ class PerformanceBenchmark(
      * Test device detection accuracy and performance.
      */
     private suspend fun benchmarkDeviceDetection(): BenchmarkTest {
-        val startTime = System.currentTimeMillis()
+        val startTime = Clock.System.now().toEpochMilliseconds()
         var success = true
         val results = mutableMapOf<String, Any>()
         
@@ -156,7 +157,7 @@ class PerformanceBenchmark(
             results["error"] = e.message ?: "Unknown error"
         }
         
-        val duration = System.currentTimeMillis() - startTime
+        val duration = Clock.System.now().toEpochMilliseconds() - startTime
         val score = if (success && duration < 1000) 100f else if (success) 70f else 0f
         
         return BenchmarkTest(
@@ -172,7 +173,7 @@ class PerformanceBenchmark(
      * Test memory management efficiency.
      */
     private suspend fun benchmarkMemoryManagement(): BenchmarkTest {
-        val startTime = System.currentTimeMillis()
+        val startTime = Clock.System.now().toEpochMilliseconds()
         var success = true
         val results = mutableMapOf<String, Any>()
         
@@ -214,7 +215,7 @@ class PerformanceBenchmark(
             results["error"] = e.message ?: "Unknown error"
         }
         
-        val duration = System.currentTimeMillis() - startTime
+        val duration = Clock.System.now().toEpochMilliseconds() - startTime
         val cacheEfficiency = results["cacheEfficiency"] as? Float ?: 0f
         val score = if (success) (cacheEfficiency * 100f).coerceAtLeast(10f) else 0f
         
@@ -231,7 +232,7 @@ class PerformanceBenchmark(
      * Test AI model loading performance.
      */
     private suspend fun benchmarkModelLoading(): BenchmarkTest {
-        val startTime = System.currentTimeMillis()
+        val startTime = Clock.System.now().toEpochMilliseconds()
         var success = true
         val results = mutableMapOf<String, Any>()
         
@@ -240,7 +241,7 @@ class PerformanceBenchmark(
             val modelComplexities = ModelComplexity.values()
             
             for (complexity in modelComplexities) {
-                val modelStartTime = System.currentTimeMillis()
+                val modelStartTime = Clock.System.now().toEpochMilliseconds()
                 
                 // Simulate model loading
                 val modelSize = when (complexity) {
@@ -263,7 +264,7 @@ class PerformanceBenchmark(
                         "mock_model_data_$complexity"
                     }
                     
-                    val loadTime = System.currentTimeMillis() - modelStartTime
+                    val loadTime = Clock.System.now().toEpochMilliseconds() - modelStartTime
                     modelLoadTimes.add(loadTime)
                     
                     results["loadTime_$complexity"] = loadTime
@@ -282,7 +283,7 @@ class PerformanceBenchmark(
             results["error"] = e.message ?: "Unknown error"
         }
         
-        val duration = System.currentTimeMillis() - startTime
+        val duration = Clock.System.now().toEpochMilliseconds() - startTime
         val avgLoadTime = results["avgLoadTime"] as? Double ?: Double.MAX_VALUE
         val score = if (success) {
             when {
@@ -306,7 +307,7 @@ class PerformanceBenchmark(
      * Test image processing performance.
      */
     private suspend fun benchmarkImageProcessing(): BenchmarkTest {
-        val startTime = System.currentTimeMillis()
+        val startTime = Clock.System.now().toEpochMilliseconds()
         var success = true
         val results = mutableMapOf<String, Any>()
         
@@ -315,12 +316,12 @@ class PerformanceBenchmark(
             val testImages = generateTestImages(5)
             
             testImages.forEach { (_, imageData) ->
-                val processStartTime = System.currentTimeMillis()
+                val processStartTime = Clock.System.now().toEpochMilliseconds()
                 
                 // Simulate image processing
                 delay(Random.nextLong(50, 200)) // Simulate processing time
                 
-                val processTime = System.currentTimeMillis() - processStartTime
+                val processTime = Clock.System.now().toEpochMilliseconds() - processStartTime
                 processingTimes.add(processTime)
             }
             
@@ -339,7 +340,7 @@ class PerformanceBenchmark(
             results["error"] = e.message ?: "Unknown error"
         }
         
-        val duration = System.currentTimeMillis() - startTime
+        val duration = Clock.System.now().toEpochMilliseconds() - startTime
         val avgProcessingTime = results["avgProcessingTime"] as? Double ?: Double.MAX_VALUE
         val score = if (success) {
             when {
@@ -363,7 +364,7 @@ class PerformanceBenchmark(
      * Test cache performance and hit rates.
      */
     private suspend fun benchmarkCachePerformance(): BenchmarkTest {
-        val startTime = System.currentTimeMillis()
+        val startTime = Clock.System.now().toEpochMilliseconds()
         var success = true
         val results = mutableMapOf<String, Any>()
         
@@ -414,7 +415,7 @@ class PerformanceBenchmark(
             results["error"] = e.message ?: "Unknown error"
         }
         
-        val duration = System.currentTimeMillis() - startTime
+        val duration = Clock.System.now().toEpochMilliseconds() - startTime
         val hitRate = results["hitRate"] as? Float ?: 0f
         val score = if (success) hitRate * 100f else 0f
         
@@ -431,7 +432,7 @@ class PerformanceBenchmark(
      * Test frame rate performance and UI responsiveness.
      */
     private suspend fun benchmarkFrameRate(): BenchmarkTest {
-        val startTime = System.currentTimeMillis()
+        val startTime = Clock.System.now().toEpochMilliseconds()
         var success = true
         val results = mutableMapOf<String, Any>()
         
@@ -442,13 +443,13 @@ class PerformanceBenchmark(
             
             // Simulate 5 seconds of operation
             val testDurationMs = 5000L
-            val endTime = System.currentTimeMillis() + testDurationMs
+            val endTime = Clock.System.now().toEpochMilliseconds() + testDurationMs
             
             var uiFrames = 0
             var aiProcesses = 0
             var skippedAI = 0
             
-            while (System.currentTimeMillis() < endTime) {
+            while (Clock.System.now().toEpochMilliseconds() < endTime) {
                 // UI frame processing
                 if (uiLimiter.shouldRenderFrame()) {
                     frameCounter.recordFrame(Random.nextLong(10, 30)) // 10-30ms frame time
@@ -484,7 +485,7 @@ class PerformanceBenchmark(
             results["error"] = e.message ?: "Unknown error"
         }
         
-        val duration = System.currentTimeMillis() - startTime
+        val duration = Clock.System.now().toEpochMilliseconds() - startTime
         val actualUiFPS = results["actualUiFPS"] as? Float ?: 0f
         val actualAiRate = results["actualAiRate"] as? Float ?: 0f
         
@@ -505,7 +506,7 @@ class PerformanceBenchmark(
      * Test memory pressure handling.
      */
     private suspend fun benchmarkMemoryPressure(): BenchmarkTest {
-        val startTime = System.currentTimeMillis()
+        val startTime = Clock.System.now().toEpochMilliseconds()
         var success = true
         val results = mutableMapOf<String, Any>()
         
@@ -554,7 +555,7 @@ class PerformanceBenchmark(
             results["error"] = e.message ?: "Unknown error"
         }
         
-        val duration = System.currentTimeMillis() - startTime
+        val duration = Clock.System.now().toEpochMilliseconds() - startTime
         val freePercentage = results["freePercentage"] as? Float ?: 0f
         val score = if (success) (freePercentage * 100f).coerceAtMost(100f) else 0f
         
@@ -571,7 +572,7 @@ class PerformanceBenchmark(
      * Test battery impact assessment.
      */
     private suspend fun benchmarkBatteryImpact(): BenchmarkTest {
-        val startTime = System.currentTimeMillis()
+        val startTime = Clock.System.now().toEpochMilliseconds()
         var success = true
         val results = mutableMapOf<String, Any>()
         
@@ -582,13 +583,13 @@ class PerformanceBenchmark(
             
             // Simulate continuous operation for battery impact
             val testDurationMs = 3000L // 3 seconds test
-            val endTime = System.currentTimeMillis() + testDurationMs
+            val endTime = Clock.System.now().toEpochMilliseconds() + testDurationMs
             
             var operations = 0
             val cpuIntensiveTasks = mutableListOf<Long>()
             
-            while (System.currentTimeMillis() < endTime) {
-                val taskStartTime = System.currentTimeMillis()
+            while (Clock.System.now().toEpochMilliseconds() < endTime) {
+                val taskStartTime = Clock.System.now().toEpochMilliseconds()
                 
                 // Simulate CPU-intensive operation
                 var sum = 0L
@@ -596,14 +597,14 @@ class PerformanceBenchmark(
                     sum += i * i
                 }
                 
-                val taskDuration = System.currentTimeMillis() - taskStartTime
+                val taskDuration = Clock.System.now().toEpochMilliseconds() - taskStartTime
                 cpuIntensiveTasks.add(taskDuration)
                 operations++
                 
                 delay(10) // Brief pause between operations
             }
             
-            val actualDuration = System.currentTimeMillis() - startTime - testDurationMs
+            val actualDuration = Clock.System.now().toEpochMilliseconds() - startTime - testDurationMs
             val avgTaskTime = cpuIntensiveTasks.average()
             val operationsPerSecond = operations.toFloat() / (actualDuration / 1000f)
             
@@ -621,7 +622,7 @@ class PerformanceBenchmark(
             results["error"] = e.message ?: "Unknown error"
         }
         
-        val duration = System.currentTimeMillis() - startTime
+        val duration = Clock.System.now().toEpochMilliseconds() - startTime
         val operationsPerSecond = results["operationsPerSecond"] as? Float ?: 0f
         
         // Lower operations per second is better for battery (inverse score)
@@ -648,7 +649,7 @@ class PerformanceBenchmark(
      * Validates CPU (243 t/s), GPU (1876 t/s), NPU (5836 t/s) performance.
      */
     private suspend fun benchmarkLiteRTBackends(): BenchmarkTest {
-        val startTime = System.currentTimeMillis()
+        val startTime = Clock.System.now().toEpochMilliseconds()
         var success = true
         val results = mutableMapOf<String, Any>()
         
@@ -667,7 +668,7 @@ class PerformanceBenchmark(
             val performanceResults = mutableMapOf<String, Map<String, Any>>()
             
             for (backend in supportedBackends) {
-                val backendStartTime = System.currentTimeMillis()
+                val backendStartTime = Clock.System.now().toEpochMilliseconds()
                 
                 try {
                     // Initialize with specific backend
@@ -681,7 +682,7 @@ class PerformanceBenchmark(
                             workType = WorkType.GENERAL_CONSTRUCTION
                         )
                         
-                        val backendDuration = System.currentTimeMillis() - backendStartTime
+                        val backendDuration = Clock.System.now().toEpochMilliseconds() - backendStartTime
                         val metrics = engine.getPerformanceMetrics()
                         
                         val expectedTokens = backend.expectedTokensPerSecond
@@ -733,7 +734,7 @@ class PerformanceBenchmark(
             results["error"] = e.message ?: "Unknown error"
         }
         
-        val duration = System.currentTimeMillis() - startTime
+        val duration = Clock.System.now().toEpochMilliseconds() - startTime
         val avgRatio = results["avgPerformanceRatio"] as? Float ?: 0f
         val score = if (success) (avgRatio * 100f).coerceAtMost(100f) else 0f
         
@@ -750,7 +751,7 @@ class PerformanceBenchmark(
      * Compare SimplifiedAIOrchestrator vs SmartAIOrchestrator performance.
      */
     private suspend fun benchmarkOrchestratorComparison(): BenchmarkTest {
-        val startTime = System.currentTimeMillis()
+        val startTime = Clock.System.now().toEpochMilliseconds()
         var success = true
         val results = mutableMapOf<String, Any>()
         
@@ -763,9 +764,9 @@ class PerformanceBenchmark(
             val simplifiedResults = mutableListOf<Long>()
             simplifiedOrchestrator?.let { orchestrator ->
                 repeat(numTests) {
-                    val analysisStart = System.currentTimeMillis()
+                    val analysisStart = Clock.System.now().toEpochMilliseconds()
                     val result = orchestrator.analyzePhoto(testImage, workType)
-                    val analysisDuration = System.currentTimeMillis() - analysisStart
+                    val analysisDuration = Clock.System.now().toEpochMilliseconds() - analysisStart
                     
                     if (result.isSuccess) {
                         simplifiedResults.add(analysisDuration)
@@ -777,9 +778,9 @@ class PerformanceBenchmark(
             val smartResults = mutableListOf<Long>()
             smartOrchestrator?.let { orchestrator ->
                 repeat(numTests) {
-                    val analysisStart = System.currentTimeMillis()
+                    val analysisStart = Clock.System.now().toEpochMilliseconds()
                     val result = orchestrator.analyzePhoto(testImage, workType)
-                    val analysisDuration = System.currentTimeMillis() - analysisStart
+                    val analysisDuration = Clock.System.now().toEpochMilliseconds() - analysisStart
                     
                     if (result.isSuccess) {
                         smartResults.add(analysisDuration)
@@ -811,7 +812,7 @@ class PerformanceBenchmark(
             results["error"] = e.message ?: "Unknown error"
         }
         
-        val duration = System.currentTimeMillis() - startTime
+        val duration = Clock.System.now().toEpochMilliseconds() - startTime
         val improvement = results["performanceImprovement"]?.toString()
             ?.removeSuffix("x")?.toFloatOrNull() ?: 1f
         
@@ -838,7 +839,7 @@ class PerformanceBenchmark(
      * Test production workload scenarios.
      */
     private suspend fun benchmarkProductionLoad(): BenchmarkTest {
-        val startTime = System.currentTimeMillis()
+        val startTime = Clock.System.now().toEpochMilliseconds()
         var success = true
         val results = mutableMapOf<String, Any>()
         
@@ -866,9 +867,9 @@ class PerformanceBenchmark(
             
             for ((scenarioName, scenarioTest) in scenarios) {
                 try {
-                    val scenarioStart = System.currentTimeMillis()
+                    val scenarioStart = Clock.System.now().toEpochMilliseconds()
                     val scenarioResult = scenarioTest()
-                    val scenarioDuration = System.currentTimeMillis() - scenarioStart
+                    val scenarioDuration = Clock.System.now().toEpochMilliseconds() - scenarioStart
                     
                     scenarioResults[scenarioName] = mapOf(
                         "success" to true,
@@ -895,7 +896,7 @@ class PerformanceBenchmark(
             results["error"] = e.message ?: "Unknown error"
         }
         
-        val duration = System.currentTimeMillis() - startTime
+        val duration = Clock.System.now().toEpochMilliseconds() - startTime
         val successfulScenarios = results["successfulScenarios"] as? Int ?: 0
         val totalScenarios = results["totalScenarios"] as? Int ?: 1
         val score = if (success) (successfulScenarios.toFloat() / totalScenarios * 100f) else 0f
@@ -913,7 +914,7 @@ class PerformanceBenchmark(
      * Compare real AI analysis vs mock JSON generation performance.
      */
     private suspend fun benchmarkRealVsMockPerformance(): BenchmarkTest {
-        val startTime = System.currentTimeMillis()
+        val startTime = Clock.System.now().toEpochMilliseconds()
         var success = true
         val results = mutableMapOf<String, Any>()
         
@@ -927,12 +928,12 @@ class PerformanceBenchmark(
             
             liteRTEngine?.let { engine ->
                 repeat(numTests) {
-                    val analysisStart = System.currentTimeMillis()
+                    val analysisStart = Clock.System.now().toEpochMilliseconds()
                     val result = engine.generateSafetyAnalysis(
                         imageData = testImage,
                         workType = WorkType.GENERAL_CONSTRUCTION
                     )
-                    val analysisDuration = System.currentTimeMillis() - analysisStart
+                    val analysisDuration = Clock.System.now().toEpochMilliseconds() - analysisStart
                     
                     if (result.isSuccess) {
                         realAnalysisTimes.add(analysisDuration)
@@ -944,10 +945,10 @@ class PerformanceBenchmark(
             // Test mock JSON generation (simulate legacy behavior)
             val mockGenerationTimes = mutableListOf<Long>()
             repeat(numTests) {
-                val mockStart = System.currentTimeMillis()
+                val mockStart = Clock.System.now().toEpochMilliseconds()
                 // Simulate mock JSON generation (much faster but lower quality)
                 val mockJson = generateMockAnalysisJson()
-                val mockDuration = System.currentTimeMillis() - mockStart
+                val mockDuration = Clock.System.now().toEpochMilliseconds() - mockStart
                 mockGenerationTimes.add(mockDuration)
             }
             
@@ -976,7 +977,7 @@ class PerformanceBenchmark(
             results["error"] = e.message ?: "Unknown error"
         }
         
-        val duration = System.currentTimeMillis() - startTime
+        val duration = Clock.System.now().toEpochMilliseconds() - startTime
         val qualityScore = results["qualityScore"] as? Float ?: 0f
         val worthwhile = results["worthwhileTradeoff"] as? Boolean ?: false
         
@@ -1017,7 +1018,7 @@ class PerformanceBenchmark(
     private fun createFailedTest(testName: String, startTime: Long, results: Map<String, Any>): BenchmarkTest {
         return BenchmarkTest(
             name = testName,
-            durationMs = System.currentTimeMillis() - startTime,
+            durationMs = Clock.System.now().toEpochMilliseconds() - startTime,
             success = false,
             score = 0f,
             results = results
@@ -1033,9 +1034,9 @@ class PerformanceBenchmark(
         
         // Simulate rapid photo capture scenario (site walk-through)
         for (image in testImages) {
-            val start = System.currentTimeMillis()
+            val start = Clock.System.now().toEpochMilliseconds()
             val result = orchestrator.analyzePhoto(image, WorkType.GENERAL_CONSTRUCTION)
-            val duration = System.currentTimeMillis() - start
+            val duration = Clock.System.now().toEpochMilliseconds() - start
             
             if (result.isSuccess) {
                 analysisResults.add(duration)
@@ -1058,11 +1059,11 @@ class PerformanceBenchmark(
         val batchImages = (1..20).map { generateTestImage() } // Larger batch
         
         // Simulate batch processing (end-of-day review)
-        val batchStart = System.currentTimeMillis()
+        val batchStart = Clock.System.now().toEpochMilliseconds()
         val batchResults = batchImages.map { image ->
             orchestrator.analyzePhoto(image, WorkType.GENERAL_CONSTRUCTION)
         }
-        val batchDuration = System.currentTimeMillis() - batchStart
+        val batchDuration = Clock.System.now().toEpochMilliseconds() - batchStart
         
         val successCount = batchResults.count { it.isSuccess }
         
@@ -1086,9 +1087,9 @@ class PerformanceBenchmark(
         
         // Test analysis under memory pressure
         val testImage = generateTestImage()
-        val analysisStart = System.currentTimeMillis()
+        val analysisStart = Clock.System.now().toEpochMilliseconds()
         val analysisResult = orchestrator.analyzePhoto(testImage, WorkType.GENERAL_CONSTRUCTION)
-        val analysisDuration = System.currentTimeMillis() - analysisStart
+        val analysisDuration = Clock.System.now().toEpochMilliseconds() - analysisStart
         
         // Clean up memory pressure objects
         memoryPressureObjects.clear()
@@ -1105,7 +1106,7 @@ class PerformanceBenchmark(
         val results = mutableMapOf<String, Any>()
         
         // Simulate thermal load with CPU intensive work
-        val thermalStart = System.currentTimeMillis()
+        val thermalStart = Clock.System.now().toEpochMilliseconds()
         repeat(100) {
             // CPU intensive work to generate heat
             var sum = 0L
@@ -1113,13 +1114,13 @@ class PerformanceBenchmark(
                 sum += i * i
             }
         }
-        val thermalDuration = System.currentTimeMillis() - thermalStart
+        val thermalDuration = Clock.System.now().toEpochMilliseconds() - thermalStart
         
         // Test analysis after thermal load
         val testImage = generateTestImage()
-        val analysisStart = System.currentTimeMillis()
+        val analysisStart = Clock.System.now().toEpochMilliseconds()
         val analysisResult = orchestrator.analyzePhoto(testImage, WorkType.GENERAL_CONSTRUCTION)
-        val analysisDuration = System.currentTimeMillis() - analysisStart
+        val analysisDuration = Clock.System.now().toEpochMilliseconds() - analysisStart
         
         results["thermalLoadTimeMs"] = thermalDuration
         results["postThermalAnalysisSuccess"] = analysisResult.isSuccess

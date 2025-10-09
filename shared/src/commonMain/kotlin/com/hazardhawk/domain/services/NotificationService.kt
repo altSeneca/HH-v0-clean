@@ -3,18 +3,23 @@ package com.hazardhawk.domain.services
 import com.hazardhawk.models.crew.WorkerCertification
 
 /**
- * Service for sending multi-channel notifications.
- * Supports email, SMS, and push notifications with retry logic.
+ * Multi-channel notification service for critical alerts.
+ * Supports Email, SMS, and Push notifications with automatic channel selection.
  */
 interface NotificationService {
     /**
-     * Sends a certification expiration alert to the worker.
-     * Automatically selects appropriate template based on days until expiration.
+     * Sends certification expiration alert using appropriate channels based on urgency.
      *
-     * @param workerId The ID of the worker to notify
-     * @param certification The certification that is expiring
-     * @param daysUntilExpiration Number of days until expiration (can be negative if expired)
-     * @return Result indicating success or failure
+     * Channel Selection Strategy:
+     * - 90+ days: Email only (Blue - Information)
+     * - 30 days: Email + SMS (Amber - Action Required)
+     * - 7 days: Email + SMS + Push (Orange - URGENT)
+     * - 0 days: Email + SMS + Push (Red - EXPIRED)
+     *
+     * @param workerId Worker's unique identifier
+     * @param certification Certification about to expire
+     * @param daysUntilExpiration Days until expiration (negative if expired)
+     * @return Result with Unit on success, or error on failure
      */
     suspend fun sendCertificationExpirationAlert(
         workerId: String,
@@ -24,12 +29,11 @@ interface NotificationService {
 
     /**
      * Sends an email notification.
-     * Includes automatic retry logic (3 attempts) for failed deliveries.
      *
      * @param to Recipient email address
      * @param subject Email subject line
-     * @param body Email body content (supports HTML)
-     * @return Result indicating success or failure
+     * @param body Email body (supports HTML)
+     * @return Result with Unit on success, or error on failure
      */
     suspend fun sendEmail(
         to: String,
@@ -39,11 +43,10 @@ interface NotificationService {
 
     /**
      * Sends an SMS notification.
-     * Includes automatic retry logic (3 attempts) for failed deliveries.
      *
-     * @param to Recipient phone number (E.164 format)
-     * @param message SMS message content
-     * @return Result indicating success or failure
+     * @param to Recipient phone number (E.164 format recommended)
+     * @param message SMS message content (max 160 chars recommended)
+     * @return Result with Unit on success, or error on failure
      */
     suspend fun sendSMS(
         to: String,
@@ -51,13 +54,12 @@ interface NotificationService {
     ): Result<Unit>
 
     /**
-     * Sends a push notification.
-     * Includes automatic retry logic (3 attempts) for failed deliveries.
+     * Sends a push notification to the user's device.
      *
-     * @param userId The user ID to send the notification to
+     * @param userId User's unique identifier
      * @param title Notification title
-     * @param body Notification body text
-     * @return Result indicating success or failure
+     * @param body Notification body
+     * @return Result with Unit on success, or error on failure
      */
     suspend fun sendPushNotification(
         userId: String,

@@ -135,6 +135,22 @@ interface CertificationRepository {
         daysUntilExpiration: Int = 30
     ): Map<String, List<WorkerCertification>> // workerId to certifications
 
+    /**
+     * Send expiration reminder notification for a certification
+     */
+    suspend fun sendExpirationReminder(
+        certificationId: String,
+        channels: List<NotificationChannel> = listOf(NotificationChannel.EMAIL)
+    ): Result<ExpirationReminderResult>
+
+    /**
+     * Send bulk expiration reminders
+     */
+    suspend fun sendBulkExpirationReminders(
+        certificationIds: List<String>,
+        channels: List<NotificationChannel> = listOf(NotificationChannel.EMAIL)
+    ): Result<BulkReminderResult>
+
     // ===== OCR and Document Processing =====
 
     /**
@@ -180,6 +196,27 @@ interface CertificationRepository {
         query: String,
         limit: Int = 20
     ): List<CertificationType>
+
+    // ===== Bulk Operations =====
+
+    /**
+     * Import certifications from CSV
+     */
+    suspend fun importCertificationsFromCSV(
+        companyId: String,
+        csvData: String,
+        validateOnly: Boolean = false
+    ): Result<CSVImportResult>
+
+    // ===== Advanced Search =====
+
+    /**
+     * Search certifications with advanced filters
+     */
+    suspend fun searchCertifications(
+        companyId: String,
+        filters: CertificationSearchFilters
+    ): PaginatedResult<WorkerCertification>
 
     // ===== Statistics =====
 
@@ -259,3 +296,94 @@ data class CertificationComplianceMetrics(
     val workersCertified: Int,
     val workersWithExpiredCerts: Int
 )
+
+/**
+ * Notification channels for expiration reminders
+ */
+enum class NotificationChannel {
+    EMAIL,
+    SMS,
+    PUSH,
+    IN_APP
+}
+
+/**
+ * Result of sending an expiration reminder
+ */
+data class ExpirationReminderResult(
+    val certificationId: String,
+    val workerName: String?,
+    val certificationType: String,
+    val expirationDate: LocalDate?,
+    val sentChannels: List<NotificationChannel>,
+    val failedChannels: List<NotificationChannel>,
+    val sentAt: String
+)
+
+/**
+ * Result of sending bulk expiration reminders
+ */
+data class BulkReminderResult(
+    val totalRequested: Int,
+    val successCount: Int,
+    val failureCount: Int,
+    val results: List<ExpirationReminderResult>
+)
+
+/**
+ * CSV import result
+ */
+data class CSVImportResult(
+    val totalRows: Int,
+    val successCount: Int,
+    val errorCount: Int,
+    val errors: List<CSVImportError>,
+    val createdCertifications: List<WorkerCertification>
+)
+
+/**
+ * CSV import error
+ */
+data class CSVImportError(
+    val rowNumber: Int,
+    val field: String?,
+    val value: String?,
+    val error: String
+)
+
+/**
+ * Advanced certification search filters
+ */
+data class CertificationSearchFilters(
+    val query: String? = null,
+    val status: CertificationStatus? = null,
+    val certificationTypeIds: List<String>? = null,
+    val workerIds: List<String>? = null,
+    val expirationDateFrom: LocalDate? = null,
+    val expirationDateTo: LocalDate? = null,
+    val issueDateFrom: LocalDate? = null,
+    val issueDateTo: LocalDate? = null,
+    val pagination: PaginationRequest = PaginationRequest(),
+    val sortBy: CertificationSortField = CertificationSortField.CREATED_AT,
+    val sortDirection: SortDirection = SortDirection.DESC
+)
+
+/**
+ * Sort field for certifications
+ */
+enum class CertificationSortField {
+    CREATED_AT,
+    UPDATED_AT,
+    EXPIRATION_DATE,
+    ISSUE_DATE,
+    WORKER_NAME,
+    CERTIFICATION_TYPE
+}
+
+/**
+ * Sort direction
+ */
+enum class SortDirection {
+    ASC,
+    DESC
+}

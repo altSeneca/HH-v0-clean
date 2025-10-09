@@ -1,6 +1,7 @@
 package com.hazardhawk.performance
 
 import kotlin.math.roundToInt
+import kotlinx.datetime.Clock
 
 /**
  * Device tier classification for performance optimization.
@@ -142,7 +143,7 @@ expect class DeviceTierDetector {
  * Performance metrics for monitoring and optimization.
  */
 data class PerformanceMetrics(
-    val timestamp: Long = System.currentTimeMillis(),
+    val timestamp: Long = Clock.System.now().toEpochMilliseconds(),
     val memoryUsedMB: Float,
     val availableMemoryMB: Float,
     val cpuUsagePercent: Float,
@@ -177,9 +178,10 @@ class AdaptivePerformanceManager(
     
     suspend fun getCurrentConfig(): PerformanceConfig {
         // Adapt configuration every 30 seconds at most
-        if (System.currentTimeMillis() - lastAdaptation > 30_000) {
+        val now = Clock.System.now().toEpochMilliseconds()
+        if (now - lastAdaptation > 30_000) {
             adaptConfiguration()
-            lastAdaptation = System.currentTimeMillis()
+            lastAdaptation = now
         }
         return currentConfig
     }
