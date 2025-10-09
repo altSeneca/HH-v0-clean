@@ -504,7 +504,8 @@ class SQLDelightPTPRepository(
                 timestamp = kotlinx.datetime.Clock.System.now().toEpochMilliseconds(),
                 successful = if (successful) 1L else 0L
             )
-            println("PTPRepository: Stored token usage for PTP $ptpId - ${usage.totalTokenCount} tokens, cost: $${String.format("%.4f", usage.estimatedCost)}")
+            val formattedCost = (usage.estimatedCost * 10000).toInt() / 10000.0
+            println("PTPRepository: Stored token usage for PTP $ptpId - ${usage.totalTokenCount} tokens, cost: $$$formattedCost")
             Result.success(Unit)
         } catch (e: Exception) {
             println("PTPRepository: Error storing token usage: ${e.message}")

@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.android.ext.android.inject
 import org.koin.androidx.compose.get
@@ -130,19 +131,18 @@ fun HazardHawkNavigation(
     val currentProject by metadataSettingsManager.currentProject.collectAsStateWithLifecycle()
 
     // Calculate dynamic start destination
-    // ClearCamera is now the default camera interface (minimalist design)
-    // Users can switch to SafetyHUD camera via Settings if they prefer the HUD interface
+    // Home dashboard is now the default start destination
     val startDestination = remember(appSettings, userProfile, currentProject) {
         val hasData = userProfile.company.isNotBlank() && currentProject.projectName.isNotBlank()
         val showOnLaunch = appSettings.startup.showCompanyProjectOnLaunch
         val firstToday = appStateManager.isFirstLaunchToday()
 
-        // ClearCamera is the default - provides minimalist, distraction-free capture
+        // Home dashboard is the new default starting point
         when {
             !hasData -> "company_project_entry"  // First time setup
-            !showOnLaunch -> "clear_camera"      // Setting disabled - use ClearCamera (default)
+            !showOnLaunch -> "home"              // Setting disabled - use Home dashboard (new default)
             firstToday -> "company_project_entry" // First launch today
-            else -> "clear_camera"               // Subsequent launches - ClearCamera default
+            else -> "home"                       // Subsequent launches - Home dashboard default
         }.also {
             Log.d("HazardHawk", "Navigation decision: hasData=$hasData, showOnLaunch=$showOnLaunch, firstToday=$firstToday -> $it")
         }
@@ -152,10 +152,45 @@ fun HazardHawkNavigation(
     val mockDatabase: HazardHawkDatabase? = null // This will be properly injected
     val photoRepository: PhotoRepository = PhotoRepositoryCompat(context)
 
-    NavHost(
-        navController = navController,
-        startDestination = startDestination
-    ) {
+    // Track current route for bottom navigation
+    val currentBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = currentBackStackEntry?.destination?.route ?: startDestination
+
+    // Import SafetyNavigationBar
+    val showBottomBar = currentRoute in listOf("home", "clear_camera", "safety", "gallery", "settings")
+
+    Scaffold(
+        bottomBar = {
+            if (showBottomBar) {
+                com.hazardhawk.ui.navigation.SafetyNavigationBar(
+                    currentRoute = currentRoute,
+                    onNavigate = { route ->
+                        navController.navigate(route) {
+                            // Pop up to the start destination to avoid building up a large stack
+                            popUpTo(navController.graph.startDestinationId) {
+                                saveState = true
+                            }
+                            // Avoid multiple copies of the same destination
+                            launchSingleTop = true
+                            // Restore state when navigating back
+                            restoreState = true
+                        }
+                    },
+                    notifications = com.hazardhawk.ui.navigation.NavigationNotifications(
+                        homeCount = 0,
+                        safetyCount = 0,
+                        galleryCount = 0,
+                        profileCount = 0
+                    )
+                )
+            }
+        }
+    ) { paddingValues ->
+        NavHost(
+            navController = navController,
+            startDestination = startDestination,
+            modifier = Modifier.padding(paddingValues)
+        ) {
         // Company/Project entry screen - new starting point
         composable("company_project_entry") {
             CompanyProjectEntryScreen(
@@ -169,16 +204,26 @@ fun HazardHawkNavigation(
                 }
             )
         }
-        
-        // Home screen disabled - app launches directly to camera
-        // Keeping route for potential future use
+
+        // Home screen - Redesigned Dashboard
         composable("home") {
-            // Redirect to camera if somehow accessed
-            LaunchedEffect(Unit) {
-                navController.navigate("camera") {
-                    popUpTo("home") { inclusive = true }
+            com.hazardhawk.ui.home.HomeScreen(
+                onNavigateToCamera = {
+                    navController.navigate("clear_camera")
+                },
+                onNavigateToGallery = {
+                    navController.navigate("gallery")
+                },
+                onNavigateToPTP = {
+                    navController.navigate("ptp/list")
+                },
+                onNavigateToSafety = {
+                    navController.navigate("safety")
+                },
+                onNavigateToSettings = {
+                    navController.navigate("settings")
                 }
-            }
+            )
         }
         
         // Main camera route - uses ClearCamera (minimalist design)
@@ -272,8 +317,21 @@ fun HazardHawkNavigation(
             )
         }
 
+        // Safety Hub Screen
+        composable("safety") {
+            com.hazardhawk.ui.safety.SafetyHubScreen(
+                onNavigateToPTPs = {
+                    navController.navigate("ptp/list")
+                },
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
         // PTP Feature Navigation Graph
         ptpNavGraph(navController)
+    }
     }
 }
 

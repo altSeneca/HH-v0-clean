@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HazardHawk Safety Features Completion Research</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        header {
+            background: linear-gradient(135deg, #FF6B35 0%, #FFA500 100%);
+            color: white;
+            padding: 40px 20px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .subtitle { font-size: 1.2em; opacity: 0.9; }
+        .exec-summary {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border-left: 5px solid #FF6B35;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .status-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status-card.complete { border-left: 5px solid #4CAF50; }
+        .status-card.in-progress { border-left: 5px solid #FFA500; }
+        .status-card.planned { border-left: 5px solid #2196F3; }
+        .section {
+            background: white;
+            padding: 30px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #FF6B35;
+            margin: 30px 0 15px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #FF6B35;
+        }
+        h3 { color: #666; margin: 20px 0 10px 0; }
+        .priority-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .priority-1 { background: #f44336; color: white; }
+        .priority-2 { background: #ff9800; color: white; }
+        .priority-3 { background: #2196f3; color: white; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #FF6B35;
+            color: white;
+            font-weight: 600;
+        }
+        tr:hover { background: #f9f9f9; }
+        .feature-box {
+            background: #f9f9f9;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 6px;
+            border-left: 4px solid #FF6B35;
+        }
+        .risk-matrix {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .risk-item {
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .risk-low { background: #c8e6c9; }
+        .risk-medium { background: #fff9c4; }
+        .risk-high { background: #ffccbc; }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .checklist { list-style: none; }
+        .checklist li { padding: 5px 0; }
+        .checklist li:before { content: "☐ "; color: #FF6B35; font-weight: bold; }
+        .nav-toc {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            position: sticky;
+            top: 20px;
+        }
+        .nav-toc a {
+            display: block;
+            padding: 8px 0;
+            color: #FF6B35;
+            text-decoration: none;
+        }
+        .nav-toc a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏗️ HazardHawk Safety Features Completion Research</h1>
+            <p class="subtitle">Comprehensive Analysis: Remaining Features for Simple, Loveable, Complete App</p>
+            <p>Date: October 8, 2025 | Research Duration: 45 minutes | Parallel Agent Analysis</p>
+        </header>
+
+        <div class="exec-summary">
+            <h2>📊 Executive Summary</h2>
+            <p><strong>Current Completion Status: 40%</strong></p>
+            <p>HazardHawk has a solid foundation with working PTP generation, photo capture/gallery, and home dashboard. Five major safety documentation features are marked as "Coming Soon" and require implementation to achieve completeness.</p>
+
+            <div class="status-grid">
+                <div class="status-card complete">
+                    <h3>✅ Complete Features</h3>
+                    <ul>
+                        <li>Pre-Task Plans (PTP) with AI</li>
+                        <li>Home Dashboard & Command Center</li>
+                        <li>Photo Capture (3 camera modes)</li>
+                        <li>Photo Gallery with AI analysis</li>
+                        <li>Settings & Configuration</li>
+                    </ul>
+                </div>
+                <div class="status-card planned">
+                    <h3>🔴 Missing Features (High Priority)</h3>
+                    <ul>
+                        <li>Toolbox Talk Generation (2-3 weeks)</li>
+                        <li>Incident Reporting (3-4 weeks)</li>
+                        <li>Pre-Shift Meetings (2-3 weeks)</li>
+                        <li>Crew/Task Assignment (4-5 weeks)</li>
+                        <li>Job Hazard Analysis (4 weeks)</li>
+                    </ul>
+                </div>
+                <div class="status-card in-progress">
+                    <h3>⚡ Quick Wins Available</h3>
+                    <ul>
+                        <li>Toolbox Talks: 90% code reuse from PTPs</li>
+                        <li>Pre-Shift: Integrates existing components</li>
+                        <li>Estimated: 5-8 weeks for both</li>
+                        <li>High user value</li>
+                        <li>Daily workflow features</li>
+                    </ul>
+                </div>
+                <div class="status-card in-progress">
+                    <h3>📈 Estimated Timeline</h3>
+                    <ul>
+                        <li><strong>Total Time:</strong> 14-19 weeks</li>
+                        <li><strong>Phase 1 (Quick Wins):</strong> 5-8 weeks</li>
+                        <li><strong>Phase 2 (Safety Critical):</strong> 4 weeks</li>
+                        <li><strong>Phase 3 (Advanced):</strong> 7-8 weeks</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📋 Table of Contents</h2>
+            <div class="nav-toc">
+                <a href="#feature-analysis">1. Feature Analysis & Priorities</a>
+                <a href="#toolbox-talks">2. Toolbox Talks (Priority 1)</a>
+                <a href="#incident-reporting">3. Incident Reporting (Priority 2)</a>
+                <a href="#pre-shift">4. Pre-Shift Meetings (Priority 3)</a>
+                <a href="#crew-management">5. Crew Management (Priority 4-5)</a>
+                <a href="#architecture">6. Reusable Architecture Patterns</a>
+                <a href="#ux-guidelines">7. UX Guidelines & Best Practices</a>
+                <a href="#compliance">8. OSHA Compliance Requirements</a>
+                <a href="#testing">9. Testing Strategy</a>
+                <a href="#risks">10. Risks & Mitigation</a>
+                <a href="#recommendations">11. Recommendations</a>
+            </div>
+        </div>
+
+        <div class="section" id="feature-analysis">
+            <h2>1. Feature Analysis & Current State</h2>
+
+            <h3>✅ Implemented Features (40% Complete)</h3>
+            <div class="feature-box">
+                <h4>Pre-Task Plan (PTP) Generation - FULLY FUNCTIONAL</h4>
+                <p><strong>Status:</strong> Complete end-to-end workflow</p>
+                <p><strong>Components:</strong></p>
+                <ul>
+                    <li>Questionnaire Interface: <code>PTPCreationScreen.kt</code> - Hierarchical work type selector, guided input</li>
+                    <li>AI Generation: <code>PTPAIService.kt</code> - Gemini 2.5 Flash integration with token tracking</li>
+                    <li>Document Editor: <code>PTPDocumentEditor.kt</code> - Review/edit AI content, signature capture</li>
+                    <li>PDF Generation: <code>AndroidPTPPDFGenerator.kt</code> - OSHA-compliant 3-page layout</li>
+                    <li>List View: <code>PTPListScreen.kt</code> - Status filtering, search, export</li>
+                </ul>
+                <p><strong>Reusability:</strong> This complete workflow serves as template for all remaining features</p>
+            </div>
+
+            <h3>🔴 Missing Features (60% Remaining)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Priority</th>
+                        <th>Complexity</th>
+                        <th>Time Estimate</th>
+                        <th>Code Reuse</th>
+                        <th>Dependencies</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Toolbox Talks</strong></td>
+                        <td><span class="priority-badge priority-1">P1</span></td>
+                        <td>SIMPLE</td>
+                        <td>2-3 weeks</td>
+                        <td>90% from PTP</td>
+                        <td>None</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Incident Reporting</strong></td>
+                        <td><span class="priority-badge priority-1">P1</span></td>
+                        <td>MEDIUM-HIGH</td>
+                        <td>3-4 weeks</td>
+                        <td>60% from PTP</td>
+                        <td>None</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Pre-Shift Meetings</strong></td>
+                        <td><span class="priority-badge priority-2">P2</span></td>
+                        <td>MEDIUM</td>
+                        <td>2-3 weeks</td>
+                        <td>70% from PTP + Toolbox</td>
+                        <td>Crew roster (partial)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Crew Management</strong></td>
+                        <td><span class="priority-badge priority-3">P3</span></td>
+                        <td>HIGH</td>
+                        <td>4-5 weeks</td>
+                        <td>New architecture</td>
+                        <td>User auth system</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Job Hazard Analysis</strong></td>
+                        <td><span class="priority-badge priority-3">P3</span></td>
+                        <td>MEDIUM</td>
+                        <td>4 weeks</td>
+                        <td>80% from PTP</td>
+                        <td>None</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section" id="toolbox-talks">
+            <h2>2. Toolbox Talks Generation <span class="priority-badge priority-1">PRIORITY 1</span></h2>
+
+            <h3>Why Priority 1?</h3>
+            <ul>
+                <li>✅ <strong>Highest ROI:</strong> Daily/weekly use, 90% code reuse from PTPs</li>
+                <li>✅ <strong>Industry Standard:</strong> Required weekly by Cal/OSHA, recommended daily</li>
+                <li>✅ <strong>Quick Implementation:</strong> 2-3 weeks (clone PTP workflow)</li>
+                <li>✅ <strong>High User Value:</strong> Saves 25 minutes per meeting (30 min → 3 min)</li>
+            </ul>
+
+            <h3>The "Wow" Moment</h3>
+            <p><strong>5-Second Toolbox Talk:</strong> User selects topic from visual cards, AI generates complete 5-10 minute safety talk with images, workers sign in via QR code.</p>
+
+            <h3>Key Features</h3>
+            <div class="feature-box">
+                <h4>1. Visual Topic Library (50+ Pre-built Topics)</h4>
+                <ul>
+                    <li>Grid of safety topics with photos/icons</li>
+                    <li>Categories: Fall Protection, Electrical, Heat Stress, PPE, Scaffolding, etc.</li>
+                    <li>Voice search: "Tell me about ladder safety"</li>
+                    <li>Smart suggestions based on weather/hazards detected</li>
+                    <li>Recently used topics at top</li>
+                </ul>
+            </div>
+
+            <div class="feature-box">
+                <h4>2. QR Code Sign-In (RECOMMENDED)</h4>
+                <ul>
+                    <li>App generates unique QR code for each talk</li>
+                    <li>Workers scan with their phones</li>
+                    <li>Real-time attendance counter</li>
+                    <li>Automatic timestamps</li>
+                    <li>2 minutes total for entire crew (vs 5 minutes paper)</li>
+                </ul>
+            </div>
+
+            <div class="feature-box">
+                <h4>3. AI Content Generation</h4>
+                <ul>
+                    <li>Generate 5-7 key discussion points from topic</li>
+                    <li>Include real-world construction examples</li>
+                    <li>Add discussion questions for engagement</li>
+                    <li>Reference OSHA standards</li>
+                    <li>150-200 words (5-7 minute presentation)</li>
+                </ul>
+            </div>
+
+            <h3>Implementation Files</h3>
+            <code>
+                HazardHawk/androidApp/src/main/java/com/hazardhawk/ui/safety/toolbox/<br>
+                ├── ToolboxTalkCreationScreen.kt<br>
+                ├── ToolboxTalkListScreen.kt<br>
+                ├── ToolboxTalkViewModel.kt<br>
+                └── components/<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;├── TopicSelector.kt<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;└── AttendanceTracker.kt
+            </code>
+
+            <h3>Time Savings Analysis</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Process Step</th>
+                        <th>Paper Method</th>
+                        <th>HazardHawk Digital</th>
+                        <th>Time Saved</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Find/print template</td>
+                        <td>5 minutes</td>
+                        <td>30 seconds</td>
+                        <td><strong>4.5 min</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Write content</td>
+                        <td>10 minutes</td>
+                        <td>15 seconds (AI)</td>
+                        <td><strong>9.75 min</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Collect signatures</td>
+                        <td>5 minutes</td>
+                        <td>90 seconds (QR)</td>
+                        <td><strong>3.5 min</strong></td>
+                    </tr>
+                    <tr>
+                        <td>File/store</td>
+                        <td>2 minutes</td>
+                        <td>Auto-save (0 sec)</td>
+                        <td><strong>2 min</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>TOTAL</strong></td>
+                        <td><strong>22 minutes</strong></td>
+                        <td><strong>3.5 minutes</strong></td>
+                        <td><strong>18.5 min saved (84%)</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>OSHA Compliance Requirements</h3>
+            <ul class="checklist">
+                <li>Date and time of meeting</li>
+                <li>Topic/subject matter</li>
+                <li>Duration (5-10 minutes recommended)</li>
+                <li>Presenter name and title</li>
+                <li>All attendee names and signatures</li>
+                <li>Project/site identification</li>
+                <li>5+ year retention requirement</li>
+            </ul>
+        </div>
+
+        <div class="section" id="incident-reporting">
+            <h2>3. Incident Reporting <span class="priority-badge priority-1">PRIORITY 1 (Safety Critical)</span></h2>
+
+            <h3>Why Priority 1?</h3>
+            <ul>
+                <li>🚨 <strong>Safety Critical:</strong> Required by OSHA for compliance</li>
+                <li>🚨 <strong>Legal Implications:</strong> Proper documentation protects company</li>
+                <li>🚨 <strong>Time-Sensitive:</strong> Fatalities must be reported within 8 hours</li>
+                <li>⚠️ <strong>Complexity:</strong> OSHA Form 300/301 compliance, offline support critical</li>
+            </ul>
+
+            <h3>The "Wow" Moment</h3>
+            <p><strong>Emergency Mode:</strong> Big red button triggers camera, GPS, and timestamp in one tap. Voice dictation captures witness statements hands-free while securing the scene.</p>
+
+            <h3>Emergency vs Non-Emergency Flows</h3>
+
+            <div class="feature-box">
+                <h4>🔴 EMERGENCY FLOW (Injury, Hospitalization, Fatality)</h4>
+                <ol>
+                    <li><strong>RED BUTTON</strong> → Camera Auto-Launch → GPS + Timestamp Captured</li>
+                    <li><strong>Voice Dictation:</strong> "Describe what happened"</li>
+                    <li><strong>Injury Severity:</strong> Critical/Serious/Minor (large buttons)</li>
+                    <li><strong>Auto-notify:</strong> EHS Manager + Safety Lead + 911 integration prompt</li>
+                    <li><strong>Witness Quick-Add:</strong> Photo ID or type name</li>
+                    <li><strong>Auto-save:</strong> Every 10 seconds (prevent data loss)</li>
+                    <li><strong>Submit:</strong> Instant PDF to stakeholders</li>
+                </ol>
+                <p><strong>Time to first save: Under 60 seconds</strong></p>
+            </div>
+
+            <div class="feature-box">
+                <h4>🟡 NON-EMERGENCY FLOW (Near-miss, Property Damage)</h4>
+                <ol>
+                    <li>"Report Incident" button → Select Type</li>
+                    <li>Progressive disclosure: Only show relevant fields</li>
+                    <li>Optional photo evidence (multi-select)</li>
+                    <li>Description with smart prompts</li>
+                    <li>Assign corrective actions</li>
+                    <li>Set follow-up date</li>
+                </ol>
+            </div>
+
+            <h3>OSHA Reporting Deadlines</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Incident Type</th>
+                        <th>OSHA Notification Deadline</th>
+                        <th>Form Completion Deadline</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Fatality</td>
+                        <td><strong>8 hours</strong></td>
+                        <td>7 days (Form 301)</td>
+                    </tr>
+                    <tr>
+                        <td>In-patient hospitalization</td>
+                        <td><strong>24 hours</strong></td>
+                        <td>7 days (Form 301)</td>
+                    </tr>
+                    <tr>
+                        <td>Amputation</td>
+                        <td><strong>24 hours</strong></td>
+                        <td>7 days (Form 301)</td>
+                    </tr>
+                    <tr>
+                        <td>Loss of eye</td>
+                        <td><strong>24 hours</strong></td>
+                        <td>7 days (Form 301)</td>
+                    </tr>
+                    <tr>
+                        <td>Recordable injury/illness</td>
+                        <td>Not required</td>
+                        <td>7 days (Form 300/301)</td>
+                    </tr>
+                    <tr>
+                        <td>Near-miss</td>
+                        <td>Not required</td>
+                        <td>Not required (but recommended)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Critical Offline Support Requirements</h3>
+            <p>⚠️ <strong>Incidents often occur in basements, remote areas with no signal</strong></p>
+            <ul class="checklist">
+                <li>Full incident reporting capability offline (no internet required)</li>
+                <li>Photo capture and local storage (up to 50MB per incident)</li>
+                <li>Draft auto-save to SQLDelight database every 10 seconds</li>
+                <li>Signature capture offline</li>
+                <li>Queue for upload with retry logic</li>
+                <li>Visual indicator: "Will sync when online" with pending count</li>
+                <li>Background sync when connection restored</li>
+            </ul>
+
+            <h3>Incident Severity Classification (Visual Decision Tree)</h3>
+            <div class="risk-matrix">
+                <div class="risk-item risk-low">
+                    <strong>🟢 FIRST AID ONLY</strong><br>
+                    No lost work time<br>
+                    Band-aid, ice pack
+                </div>
+                <div class="risk-item risk-medium">
+                    <strong>🟡 MEDICAL TREATMENT</strong><br>
+                    Doctor visit required<br>
+                    Stitches, x-ray
+                </div>
+                <div class="risk-item risk-high">
+                    <strong>🟠 LOST WORK TIME</strong><br>
+                    Days away or restricted<br>
+                    OSHA recordable
+                </div>
+                <div class="risk-item" style="background: #f44336; color: white;">
+                    <strong>🔴 HOSPITALIZATION</strong><br>
+                    Emergency room<br>
+                    OSHA reportable (8-24 hrs)
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="pre-shift">
+            <h2>4. Pre-Shift Meetings <span class="priority-badge priority-2">PRIORITY 2</span></h2>
+
+            <h3>The "Wow" Moment</h3>
+            <p><strong>5-Minute Briefing:</strong> Safety lead taps "Start Pre-Shift," app auto-populates today's weather, active PTPs, recent hazards detected by AI, and crew roster. Everyone signs in via QR code in 90 seconds.</p>
+
+            <h3>Daily Briefing Flow (6-7 minutes total)</h3>
+            <ol>
+                <li><strong>Attendance (90 seconds)</strong> - QR code sign-in</li>
+                <li><strong>Yesterday's Safety (30 seconds)</strong> - Auto-generated</li>
+                <li><strong>Today's Weather (30 seconds)</strong> - Live data</li>
+                <li><strong>Active PTPs (1 minute)</strong> - Pull from system</li>
+                <li><strong>New Hazards (1 minute)</strong> - From AI photo analysis</li>
+                <li><strong>Task Assignments (2 minutes)</strong> - Crew board</li>
+                <li><strong>Questions (1 minute)</strong> - Open discussion</li>
+                <li><strong>Sign-Off (30 seconds)</strong> - Confirm understanding</li>
+            </ol>
+
+            <h3>Quick vs Comprehensive Modes</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Mode</th>
+                        <th>Duration</th>
+                        <th>Use Case</th>
+                        <th>Content</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Quick Mode</strong> (Default)</td>
+                        <td>3 minutes</td>
+                        <td>Daily routine</td>
+                        <td>Auto-populated, "What's Different Today" approach</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Comprehensive Mode</strong></td>
+                        <td>10-15 minutes</td>
+                        <td>Monday mornings, post-incident</td>
+                        <td>Full agenda with manual notes for each section</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>AI-Powered Hazard Feed</h3>
+            <div class="feature-box">
+                <h4>NEW HAZARDS DETECTED THIS WEEK:</h4>
+                <p>🔴 <strong>CRITICAL</strong> - Electrical panel cover missing<br>
+                Location: Building A, Level 2 | Detected: Yesterday 3:42pm by camera AI<br>
+                Status: ⚠️ NOT RESOLVED<br>
+                [TAP TO VIEW DETAILS] [ASSIGN CORRECTIVE ACTION]</p>
+
+                <p>🟡 <strong>MEDIUM</strong> - Ladder exceeding angle limit<br>
+                Location: Building B, Roof Access | Detected: Monday 8:15am by camera AI<br>
+                Status: ✅ RESOLVED (Ladder repositioned)<br>
+                [TAP TO VIEW]</p>
+            </div>
+
+            <h3>Integration with Dashboard</h3>
+            <ul>
+                <li>✅ Weather data: Already available from DashboardViewModel</li>
+                <li>✅ Site conditions: Already collected in HomeScreen</li>
+                <li>✅ Active PTPs: Pull from PTPRepository</li>
+                <li>✅ Photo hazards: Pull from SafetyAnalysis database</li>
+                <li>⚠️ Crew roster: Need to implement crew management (or use simplified list)</li>
+            </ul>
+        </div>
+
+        <div class="section" id="crew-management">
+            <h2>5. Crew & Task Assignment <span class="priority-badge priority-3">PRIORITY 3</span></h2>
+
+            <h3>The "Wow" Moment</h3>
+            <p><strong>Drag-and-Drop Crew Board:</strong> Visual Kanban board shows all tasks and workers. Drag worker avatar onto task card to assign. Real-time updates push to worker's phone: "You're assigned to Frame North Wall - PTP #3421. Tap to view."</p>
+
+            <h3>Visual Crew Board (Kanban-Style Layout)</h3>
+            <code>
+                ┌─────────────┬─────────────┬─────────────┬─────────────┐<br>
+                │   BACKLOG   │  TODAY      │ IN PROGRESS │  COMPLETE   │<br>
+                ├─────────────┼─────────────┼─────────────┼─────────────┤<br>
+                │ Task Card 1 │ Task Card 3 │ Task Card 5 │ Task Card 7 │<br>
+                │ Task Card 2 │ Task Card 4 │ Task Card 6 │ Task Card 8 │<br>
+                └─────────────┴─────────────┴─────────────┴─────────────┘<br><br>
+                AVAILABLE CREW (Bottom Drawer):<br>
+                👤 John Smith (Framer) 👤 Mike Johnson (Electrician) 👤 Sarah Lee (Plumber)
+            </code>
+
+            <h3>Features</h3>
+            <ul>
+                <li><strong>Skill Matching:</strong> AI highlights workers with matching certifications</li>
+                <li><strong>Workload Balancing:</strong> Visual indicators (0-70% green, 70-90% yellow, 90%+ orange/red)</li>
+                <li><strong>Real-Time Updates:</strong> Push notifications to worker phones on assignment</li>
+                <li><strong>Offline Sync:</strong> Assignments stored locally, sync when online</li>
+            </ul>
+
+            <h3>Complexity Note</h3>
+            <p>⚠️ <strong>HIGH Complexity:</strong> Requires user management system, push notifications, complex data relationships. Consider combining "Assign Tasks" and "Manage Crew" buttons into single feature (currently two separate buttons).</p>
+        </div>
+
+        <div class="section" id="architecture">
+            <h2>6. Reusable Architecture Patterns</h2>
+
+            <h3>Pattern 1: AI Document Generation (Clone from PTP)</h3>
+            <div class="feature-box">
+                <h4>7-Step Workflow (Proven with PTPs)</h4>
+                <ol>
+                    <li><strong>Questionnaire Screen</strong> → Collect user inputs with validation</li>
+                    <li><strong>ViewModel</strong> → Manage state, validation, AI request</li>
+                    <li><strong>AI Service</strong> → Call Gemini API with structured prompt</li>
+                    <li><strong>Repository</strong> → Store result in SQLDelight database</li>
+                    <li><strong>Editor Screen</strong> → Review/edit AI-generated content</li>
+                    <li><strong>PDF Generator</strong> → Export to OSHA-compliant PDF</li>
+                    <li><strong>List Screen</strong> → Display all documents with filtering</li>
+                </ol>
+
+                <p><strong>Reuse for:</strong> Toolbox Talks, Incident Reports, Pre-Shift Meetings, Job Hazard Analysis</p>
+            </div>
+
+            <h3>Key Files to Clone</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>PTP File (Source)</th>
+                        <th>New Feature File (Target)</th>
+                        <th>Modifications Needed</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>PTPCreationScreen.kt</td>
+                        <td>[Feature]CreationScreen.kt</td>
+                        <td>Update form fields, validation rules</td>
+                    </tr>
+                    <tr>
+                        <td>PTPViewModel.kt</td>
+                        <td>[Feature]ViewModel.kt</td>
+                        <td>Adjust state properties</td>
+                    </tr>
+                    <tr>
+                        <td>PTPAIService.kt</td>
+                        <td>[Feature]AIService.kt</td>
+                        <td>Update AI prompts for document type</td>
+                    </tr>
+                    <tr>
+                        <td>PTPRepository.kt</td>
+                        <td>[Feature]Repository.kt</td>
+                        <td>Update database table name</td>
+                    </tr>
+                    <tr>
+                        <td>AndroidPTPPDFGenerator.kt</td>
+                        <td>Android[Feature]PDFGenerator.kt</td>
+                        <td>Adjust PDF layout/sections</td>
+                    </tr>
+                    <tr>
+                        <td>PTPListScreen.kt</td>
+                        <td>[Feature]ListScreen.kt</td>
+                        <td>Update status filters</td>
+                    </tr>
+                    <tr>
+                        <td>PTPNavigation.kt</td>
+                        <td>[Feature]Navigation.kt</td>
+                        <td>Update route names</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Pattern 2: Reusable UI Components</h3>
+            <ul>
+                <li>✅ <strong>SignatureCaptureComponent.kt</strong> - Used by PTP, reuse for Toolbox Talks & Incidents</li>
+                <li>✅ <strong>TokenUsageCard.kt</strong> - Display AI costs, reuse for all AI features</li>
+                <li>✅ <strong>PhotoAttachment.kt</strong> - Link photos to documents, universal component</li>
+                <li>✅ <strong>ValidationErrorCard.kt</strong> - Form validation display, reuse everywhere</li>
+                <li>✅ <strong>WorkTypeCategorySelector.kt</strong> - Hierarchical picker, adapt for topic selection</li>
+            </ul>
+        </div>
+
+        <div class="section" id="ux-guidelines">
+            <h2>7. UX Guidelines: Simple, Loveable, Complete</h2>
+
+            <h3>Construction-Specific Design Principles</h3>
+
+            <div class="feature-box">
+                <h4>1. Glove-Friendly Touch Targets</h4>
+                <ul>
+                    <li><strong>Minimum:</strong> 60dp × 60dp (Apple standard: 44pt × 44pt)</li>
+                    <li><strong>Recommended for construction:</strong> 72dp × 72dp</li>
+                    <li><strong>Optimal:</strong> 80dp+ for winter gloves</li>
+                    <li><strong>Spacing:</strong> 12-16dp minimum between targets</li>
+                </ul>
+            </div>
+
+            <div class="feature-box">
+                <h4>2. Outdoor Visibility</h4>
+                <ul>
+                    <li><strong>Contrast ratio:</strong> 7:1 or higher (exceeds WCAG AA 4.5:1)</li>
+                    <li><strong>Avoid:</strong> Light gray text on white backgrounds</li>
+                    <li><strong>Warning colors:</strong> Yellow/orange (visible in sunlight)</li>
+                    <li><strong>Maximum brightness:</strong> Mode for outdoor use</li>
+                </ul>
+            </div>
+
+            <div class="feature-box">
+                <h4>3. Voice-First for Dirty Hands</h4>
+                <ul>
+                    <li>Voice input for all text fields</li>
+                    <li>Large microphone buttons (64dp)</li>
+                    <li>Visual feedback: Waveform animation while recording</li>
+                    <li>Auto-transcription with Gemini AI</li>
+                    <li>Edit transcribed text if needed</li>
+                </ul>
+            </div>
+
+            <div class="feature-box">
+                <h4>4. Offline-First Architecture</h4>
+                <ul>
+                    <li>All features work offline (SQLDelight local database)</li>
+                    <li>Clear visual indicators: "Offline Mode" banner</li>
+                    <li>Queue sync operations: "3 items will sync when online"</li>
+                    <li>Background sync when connection restored</li>
+                    <li>Conflict resolution UI</li>
+                </ul>
+            </div>
+
+            <h3>Performance Targets</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Target Performance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>App Launch</td>
+                        <td>&lt; 2 seconds to home screen</td>
+                    </tr>
+                    <tr>
+                        <td>Photo Capture</td>
+                        <td>&lt; 1 second shutter lag</td>
+                    </tr>
+                    <tr>
+                        <td>AI Analysis</td>
+                        <td>&lt; 30 seconds for hazard detection</td>
+                    </tr>
+                    <tr>
+                        <td>PDF Generation</td>
+                        <td>&lt; 10 seconds for 10-page PTP</td>
+                    </tr>
+                    <tr>
+                        <td>Sync Operation</td>
+                        <td>&lt; 5 seconds for 10 items</td>
+                    </tr>
+                    <tr>
+                        <td>Search Results</td>
+                        <td>&lt; 500ms for local search</td>
+                    </tr>
+                    <tr>
+                        <td>Screen Transitions</td>
+                        <td>60 FPS (no jank)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section" id="compliance">
+            <h2>8. OSHA Compliance Requirements</h2>
+
+            <h3>Document Retention Requirements</h3>
+            <ul>
+                <li><strong>OSHA Forms 300/301:</strong> 5 years following the year covered</li>
+                <li><strong>Training Records:</strong> Duration of employment + 5 years (Toolbox Talks, PTPs)</li>
+                <li><strong>Exposure Records:</strong> 30 years (hazardous materials)</li>
+                <li><strong>Medical Records:</strong> 30 years (workplace injuries)</li>
+                <li><strong>Incident Investigations:</strong> 5 years minimum</li>
+            </ul>
+
+            <h3>AI-Assisted Document Generation Guidelines</h3>
+            <div class="feature-box">
+                <h4>⚠️ Critical: Recent Research Findings (November 2024)</h4>
+                <ul>
+                    <li><strong>GPT-4o accuracy:</strong> 84.6% on standardized safety exams</li>
+                    <li><strong>Prompt engineering impact:</strong> Up to 13.5% accuracy variation</li>
+                    <li><strong>No single prompt configuration</strong> works perfectly for all scenarios</li>
+                    <li><strong>REQUIRED:</strong> Human expert review for all AI-generated safety documents</li>
+                </ul>
+            </div>
+
+            <h3>Recommended AI Approach</h3>
+            <p><strong>Hybrid Method:</strong></p>
+            <ul>
+                <li>✅ Use <strong>structured templates</strong> for compliance sections (forms, signatures, required fields)</li>
+                <li>✅ Use <strong>AI generation</strong> for content within template (hazard descriptions, recommendations)</li>
+                <li>✅ Always include <strong>human review</strong> before finalization</li>
+                <li>✅ <strong>Never</strong> rely solely on AI without safety manager approval</li>
+            </ul>
+
+            <h3>Quality Validation Strategy (3-Layer)</h3>
+            <ol>
+                <li><strong>Layer 1: Automated Validation</strong>
+                    <ul>
+                        <li>Field completeness check</li>
+                        <li>Format validation (dates, signatures)</li>
+                        <li>OSHA standard reference verification</li>
+                    </ul>
+                </li>
+                <li><strong>Layer 2: AI Self-Review</strong>
+                    <ul>
+                        <li>Quality assessment prompt</li>
+                        <li>Accuracy verification</li>
+                        <li>Flag uncertainties</li>
+                    </ul>
+                </li>
+                <li><strong>Layer 3: Human Expert Review</strong> (REQUIRED)
+                    <ul>
+                        <li>Safety manager approval</li>
+                        <li>Site-specific adjustments</li>
+                        <li>Final compliance check</li>
+                        <li>Digital signature</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+
+        <div class="section" id="testing">
+            <h2>9. Testing Strategy</h2>
+
+            <h3>Test Coverage Requirements</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Test Type</th>
+                        <th>Coverage Target</th>
+                        <th>Critical Paths</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Unit Tests</td>
+                        <td>80%+ overall</td>
+                        <td>100% for document generation, validation, OSHA compliance</td>
+                    </tr>
+                    <tr>
+                        <td>Integration Tests</td>
+                        <td>All cross-feature flows</td>
+                        <td>Dashboard → Features, Photo → PTP, Safety Hub aggregation</td>
+                    </tr>
+                    <tr>
+                        <td>UI Tests</td>
+                        <td>Critical user paths</td>
+                        <td>Document creation, signature capture, PDF export</td>
+                    </tr>
+                    <tr>
+                        <td>Accessibility Tests</td>
+                        <td>100% compliance</td>
+                        <td>60dp touch targets, 4.5:1 contrast, screen reader labels</td>
+                    </tr>
+                    <tr>
+                        <td>Performance Tests</td>
+                        <td>All SLA targets</td>
+                        <td>30s AI generation, 10s PDF export, 60 FPS animations</td>
+                    </tr>
+                    <tr>
+                        <td>Offline Tests</td>
+                        <td>All features</td>
+                        <td>Queue operations, sync reliability, conflict resolution</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Test Execution Plan (6-Week Timeline)</h3>
+            <ul>
+                <li><strong>Week 1-2:</strong> Unit Testing (document generators, repositories, validation)</li>
+                <li><strong>Week 3:</strong> Integration Testing (navigation, data sharing, Safety Hub)</li>
+                <li><strong>Week 4:</strong> UI/UX Testing (accessibility, touch targets, contrast)</li>
+                <li><strong>Week 5:</strong> Performance Testing (benchmarks, memory profiling, sync)</li>
+                <li><strong>Week 6:</strong> End-to-End Testing (complete workflows, field testing)</li>
+            </ul>
+        </div>
+
+        <div class="section" id="risks">
+            <h2>10. Risks & Mitigation Strategies</h2>
+
+            <h3>Risk Matrix</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Risk</th>
+                        <th>Likelihood</th>
+                        <th>Impact</th>
+                        <th>Severity</th>
+                        <th>Mitigation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>AI generates inaccurate OSHA info</td>
+                        <td>Medium</td>
+                        <td>Critical</td>
+                        <td><span style="background: #f44336; color: white; padding: 4px 8px; border-radius: 4px;">HIGH</span></td>
+                        <td>Require human review, use structured templates, validation layers</td>
+                    </tr>
+                    <tr>
+                        <td>Offline sync conflicts/data loss</td>
+                        <td>Medium</td>
+                        <td>High</td>
+                        <td><span style="background: #ff9800; color: white; padding: 4px 8px; border-radius: 4px;">MEDIUM</span></td>
+                        <td>Robust conflict resolution UI, auto-save every 10 seconds, server timestamp wins</td>
+                    </tr>
+                    <tr>
+                        <td>Incident reporting delays (8-hour deadline)</td>
+                        <td>Low</td>
+                        <td>Critical</td>
+                        <td><span style="background: #ff9800; color: white; padding: 4px 8px; border-radius: 4px;">MEDIUM</span></td>
+                        <td>Emergency mode with offline support, auto-notifications, countdown timer</td>
+                    </tr>
+                    <tr>
+                        <td>Scope creep (14-19 weeks → 6 months)</td>
+                        <td>High</td>
+                        <td>Medium</td>
+                        <td><span style="background: #ff9800; color: white; padding: 4px 8px; border-radius: 4px;">MEDIUM</span></td>
+                        <td>Strict MVP scope, phase implementation, regular stakeholder check-ins</td>
+                    </tr>
+                    <tr>
+                        <td>Poor user adoption (features too complex)</td>
+                        <td>Low</td>
+                        <td>High</td>
+                        <td><span style="background: #fff9c4; padding: 4px 8px; border-radius: 4px;">LOW</span></td>
+                        <td>Follow PTP pattern (proven successful), user testing with construction workers</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Technical Debt Considerations</h3>
+            <ul>
+                <li><strong>Missing Infrastructure:</strong> Push notifications, user auth, cloud sync needed before Crew Management</li>
+                <li><strong>Database Gaps:</strong> 8 new tables required (ToolboxTalks, IncidentReports, PreShiftMeetings, Crews, etc.)</li>
+                <li><strong>Repository Duplication:</strong> Slight differences between implementations - consider base classes</li>
+                <li><strong>No Background Sync:</strong> All operations foreground-only currently</li>
+            </ul>
+        </div>
+
+        <div class="section" id="recommendations">
+            <h2>11. Final Recommendations</h2>
+
+            <h3>Implementation Roadmap (Prioritized)</h3>
+
+            <div class="feature-box">
+                <h4>🚀 Phase 1: Quick Wins (5-8 weeks) - START HERE</h4>
+                <ul>
+                    <li><strong>Week 1-3:</strong> Toolbox Talks (90% code reuse from PTP)</li>
+                    <li><strong>Week 4-6:</strong> Pre-Shift Meetings (reuse Toolbox Talk + dashboard data)</li>
+                    <li><strong>Week 7-8:</strong> Polish, testing, documentation</li>
+                </ul>
+                <p><strong>Value Delivered:</strong> Daily/weekly workflow features, high user engagement, immediate time savings</p>
+            </div>
+
+            <div class="feature-box">
+                <h4>⚠️ Phase 2: Safety Critical (4 weeks)</h4>
+                <ul>
+                    <li><strong>Week 9-12:</strong> Incident Reporting (OSHA compliance, offline-critical)</li>
+                </ul>
+                <p><strong>Value Delivered:</strong> Legal compliance, emergency response capability</p>
+            </div>
+
+            <div class="feature-box">
+                <h4>🔧 Phase 3: Advanced Features (7-8 weeks)</h4>
+                <ul>
+                    <li><strong>Week 13-16:</strong> Job Hazard Analysis (reusable templates)</li>
+                    <li><strong>Week 17-20:</strong> Crew Management (complex, new architecture)</li>
+                </ul>
+                <p><strong>Value Delivered:</strong> Strategic planning tools, team coordination</p>
+            </div>
+
+            <h3>Success Criteria</h3>
+            <p>Each feature must pass the <strong>Simple, Loveable, Complete</strong> test:</p>
+
+            <ul class="checklist">
+                <li><strong>SIMPLE:</strong> New user completes core task in &lt; 2 minutes</li>
+                <li><strong>SIMPLE:</strong> UI understandable without training</li>
+                <li><strong>SIMPLE:</strong> Touch targets large enough for gloved hands (60dp+)</li>
+                <li><strong>LOVEABLE:</strong> Saves significant time vs paper/manual process</li>
+                <li><strong>LOVEABLE:</strong> Delightful micro-interactions present</li>
+                <li><strong>LOVEABLE:</strong> Users say "I wish we had this years ago"</li>
+                <li><strong>COMPLETE:</strong> Works offline (critical for construction)</li>
+                <li><strong>COMPLETE:</strong> Export to PDF for records</li>
+                <li><strong>COMPLETE:</strong> Meets OSHA compliance requirements</li>
+                <li><strong>COMPLETE:</strong> Audit trail for legal purposes</li>
+            </ul>
+
+            <h3>Estimated ROI by Feature</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Development Time</th>
+                        <th>Time Saved per Use</th>
+                        <th>Frequency</th>
+                        <th>Annual Time Savings (per site)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Toolbox Talks</td>
+                        <td>2-3 weeks</td>
+                        <td>18.5 minutes</td>
+                        <td>52/year (weekly)</td>
+                        <td><strong>16 hours/year</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Pre-Shift Meetings</td>
+                        <td>2-3 weeks</td>
+                        <td>9 minutes</td>
+                        <td>250/year (daily)</td>
+                        <td><strong>37.5 hours/year</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Incident Reporting</td>
+                        <td>3-4 weeks</td>
+                        <td>35 minutes</td>
+                        <td>12/year (avg)</td>
+                        <td><strong>7 hours/year</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Job Hazard Analysis</td>
+                        <td>4 weeks</td>
+                        <td>75 minutes</td>
+                        <td>24/year</td>
+                        <td><strong>30 hours/year</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Crew Assignment</td>
+                        <td>4-5 weeks</td>
+                        <td>12 minutes</td>
+                        <td>250/year (daily)</td>
+                        <td><strong>50 hours/year</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>TOTAL</strong></td>
+                        <td><strong>15-19 weeks</strong></td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td><strong>140.5 hours/year saved</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Key Takeaways</h3>
+            <ol>
+                <li><strong>Start with Toolbox Talks:</strong> Highest ROI, easiest implementation (90% code reuse)</li>
+                <li><strong>Follow the PTP Pattern:</strong> Proven successful, well-architected, fully functional</li>
+                <li><strong>Prioritize Offline Support:</strong> Critical for construction sites, especially incident reporting</li>
+                <li><strong>Require Human Review:</strong> AI assists but doesn't replace safety manager judgment</li>
+                <li><strong>Test with Real Workers:</strong> Validate glove usability, outdoor visibility, voice input</li>
+                <li><strong>Track Metrics:</strong> Time savings, user adoption, OSHA audit pass rates</li>
+            </ol>
+
+            <h3>Next Steps</h3>
+            <ol>
+                <li>✅ Review this research document with stakeholders</li>
+                <li>✅ Approve Phase 1 implementation (Toolbox Talks + Pre-Shift Meetings)</li>
+                <li>🔲 Create detailed implementation plan for Toolbox Talks</li>
+                <li>🔲 Set up development environment and clone PTP structure</li>
+                <li>🔲 Begin implementation Week 1</li>
+            </ol>
+        </div>
+
+        <footer style="text-align: center; padding: 40px 20px; background: #333; color: white; margin-top: 40px; border-radius: 8px;">
+            <p><strong>Research Conducted:</strong> October 8, 2025</p>
+            <p><strong>Research Team:</strong> 4 Parallel Agents (Architecture, UX, Compliance, Testing)</p>
+            <p><strong>Document Version:</strong> 1.0</p>
+            <p style="margin-top: 20px; opacity: 0.8;">
+                <strong>HazardHawk:</strong> Simple, Loveable, Complete Safety Platform for Construction Workers
+            </p>
+        </footer>
+    </div>
+</body>
+</html>

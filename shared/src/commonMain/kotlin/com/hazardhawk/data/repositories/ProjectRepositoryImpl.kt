@@ -1,63 +1,67 @@
 package com.hazardhawk.data.repositories
 
 import com.hazardhawk.domain.repositories.*
-import com.hazardhawk.models.WorkType
+import com.hazardhawk.models.crew.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
+import java.util.UUID
 
 /**
  * Default implementation of ProjectRepository.
- * This is a basic implementation that can be extended with actual database operations.
- * 
+ * This is a basic in-memory implementation for demonstration.
+ *
  * TODO: Replace with actual database implementation (SQLDelight, Room, etc.)
  */
 class ProjectRepositoryImpl : ProjectRepository {
-    
+
     // In-memory storage for demo purposes - replace with actual database
     private val projects = mutableMapOf<String, Project>()
-    private val projectMembers = mutableMapOf<String, MutableList<ProjectMember>>()
-    private val safetyConfigs = mutableMapOf<String, ProjectSafetyConfig>()
-    private val analyticsSettings = mutableMapOf<String, ProjectAnalyticsSettings>()
-    private val activities = mutableListOf<ProjectActivity>()
     
-    override suspend fun createProject(project: Project): Result<Project> {
+    // ===== Core CRUD Operations =====
+
+    override suspend fun createProject(
+        companyId: String,
+        name: String,
+        projectNumber: String?,
+        startDate: kotlinx.datetime.LocalDate,
+        endDate: kotlinx.datetime.LocalDate?,
+        clientName: String?,
+        streetAddress: String?,
+        city: String?,
+        state: String?,
+        zip: String?,
+        generalContractor: String?,
+        projectManagerId: String?,
+        superintendentId: String?
+    ): Result<Project> {
         return try {
-            val newProject = project.copy(
-                createdAt = Clock.System.now(),
-                updatedAt = Clock.System.now()
+            val projectId = UUID.randomUUID().toString()
+            val newProject = Project(
+                id = projectId,
+                companyId = companyId,
+                name = name,
+                projectNumber = projectNumber,
+                location = buildLocationString(streetAddress, city, state, zip),
+                startDate = startDate,
+                endDate = endDate,
+                status = ProjectStatus.ACTIVE.name.lowercase(),
+                projectManagerId = projectManagerId,
+                superintendentId = superintendentId,
+                clientName = clientName,
+                clientContact = null,
+                clientPhone = null,
+                clientEmail = null,
+                streetAddress = streetAddress,
+                city = city,
+                state = state,
+                zip = zip,
+                generalContractor = generalContractor
             )
-            projects[project.id] = newProject
-            
-            // Initialize default settings
-            val defaultSafetyConfig = ProjectSafetyConfig(
-                projectId = project.id,
-                requiredPpe = emptyList(),
-                hazardTypes = emptyList(),
-                oshaStandards = emptyList(),
-                customSafetyRules = emptyList(),
-                emergencyProcedures = null,
-                incidentReportingProcess = null,
-                updatedAt = Clock.System.now()
-            )
-            safetyConfigs[project.id] = defaultSafetyConfig
-            
-            val defaultAnalyticsSettings = ProjectAnalyticsSettings(
-                projectId = project.id,
-                updatedAt = Clock.System.now()
-            )
-            analyticsSettings[project.id] = defaultAnalyticsSettings
-            
-            projectMembers[project.id] = mutableListOf()
-            
-            recordProjectActivity(
-                project.id,
-                "Project created",
-                "system",
-                mapOf("projectName" to project.name)
-            )
-            
+
+            projects[projectId] = newProject
             Result.success(newProject)
         } catch (e: Exception) {
             Result.failure(e)

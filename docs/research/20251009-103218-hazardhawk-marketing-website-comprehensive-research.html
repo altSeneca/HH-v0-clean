@@ -1,0 +1,2248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HazardHawk Marketing Website - Comprehensive Research & Strategy</title>
+    <style>
+        :root {
+            --primary: #f0720b;
+            --primary-dark: #e15801;
+            --secondary: #0a2540;
+            --success: #84cc16;
+            --warning: #f59e0b;
+            --danger: #dc2626;
+            --text: #1a1a1a;
+            --text-light: #6b7280;
+            --bg: #ffffff;
+            --bg-light: #f9fafb;
+            --border: #e5e7eb;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background: var(--bg-light);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 3rem 0;
+            margin-bottom: 3rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            opacity: 0.9;
+        }
+
+        .meta {
+            margin-top: 1rem;
+            opacity: 0.8;
+            font-size: 0.875rem;
+        }
+
+        nav {
+            background: var(--bg);
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 1rem;
+            z-index: 100;
+        }
+
+        nav h2 {
+            font-size: 1.125rem;
+            margin-bottom: 1rem;
+            color: var(--secondary);
+        }
+
+        nav ul {
+            list-style: none;
+        }
+
+        nav li {
+            margin-bottom: 0.5rem;
+        }
+
+        nav a {
+            color: var(--primary);
+            text-decoration: none;
+            display: block;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            transition: all 0.2s;
+        }
+
+        nav a:hover {
+            background: var(--bg-light);
+            padding-left: 1rem;
+        }
+
+        .section {
+            background: var(--bg);
+            padding: 2rem;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            font-size: 2rem;
+            color: var(--secondary);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            color: var(--secondary);
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        h4 {
+            font-size: 1.25rem;
+            color: var(--text);
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: var(--text-light);
+        }
+
+        ul, ol {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+            color: var(--text-light);
+        }
+
+        .highlight {
+            background: #fef7ee;
+            border-left: 4px solid var(--primary);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0.25rem;
+        }
+
+        .warning {
+            background: #fef3c7;
+            border-left: 4px solid var(--warning);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0.25rem;
+        }
+
+        .success {
+            background: #f0fdf4;
+            border-left: 4px solid var(--success);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0.25rem;
+        }
+
+        .danger {
+            background: #fef2f2;
+            border-left: 4px solid var(--danger);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0.25rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            background: var(--bg);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--bg-light);
+            font-weight: 600;
+            color: var(--secondary);
+        }
+
+        tr:hover {
+            background: var(--bg-light);
+        }
+
+        code {
+            background: #f3f4f6;
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.25rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            color: var(--primary-dark);
+        }
+
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+        }
+
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .badge-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .badge-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .badge-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .badge-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .grid {
+            display: grid;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .grid-2 {
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+
+        .grid-3 {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        }
+
+        .card {
+            background: var(--bg-light);
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .card h4 {
+            margin-top: 0;
+        }
+
+        .stat {
+            text-align: center;
+            padding: 1.5rem;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        footer {
+            margin-top: 4rem;
+            padding: 2rem;
+            text-align: center;
+            color: var(--text-light);
+            border-top: 1px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .grid-2, .grid-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media print {
+            nav {
+                display: none;
+            }
+
+            .section {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>🚀 HazardHawk Marketing Website</h1>
+            <p class="subtitle">Comprehensive Research & Strategic Plan</p>
+            <div class="meta">
+                <strong>Date:</strong> October 9, 2025 |
+                <strong>Project:</strong> HH-v0-fresh |
+                <strong>Phase:</strong> Research & Planning
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <nav>
+            <h2>📑 Table of Contents</h2>
+            <ul>
+                <li><a href="#executive-summary">Executive Summary</a></li>
+                <li><a href="#codebase-analysis">1. Android Codebase Analysis</a></li>
+                <li><a href="#keyword-research">2. SEO & Keyword Research</a></li>
+                <li><a href="#ux-strategy">3. UX & Conversion Strategy</a></li>
+                <li><a href="#technical-architecture">4. Technical Architecture</a></li>
+                <li><a href="#security-compliance">5. Security & Compliance</a></li>
+                <li><a href="#content-strategy">6. Content Marketing Strategy</a></li>
+                <li><a href="#implementation-roadmap">7. Implementation Roadmap</a></li>
+                <li><a href="#competitive-analysis">8. Competitive Analysis</a></li>
+                <li><a href="#risk-assessment">9. Risk Assessment & Mitigation</a></li>
+                <li><a href="#success-metrics">10. Success Metrics & KPIs</a></li>
+                <li><a href="#recommendations">Final Recommendations</a></li>
+            </ul>
+        </nav>
+
+        <!-- Executive Summary -->
+        <section id="executive-summary" class="section">
+            <h2>📊 Executive Summary</h2>
+
+            <div class="highlight">
+                <p><strong>Mission:</strong> Create the premiere construction safety AI application and dominate all search queries related to construction safety, AI-powered hazard detection, and OSHA compliance.</p>
+            </div>
+
+            <h3>Key Findings</h3>
+
+            <div class="grid grid-3">
+                <div class="card stat">
+                    <div class="stat-value">$4.6B</div>
+                    <div class="stat-label">Market Size by 2030</div>
+                    <p style="font-size: 0.875rem; margin-top: 0.5rem;">Construction worker safety market growing at 6.0% CAGR</p>
+                </div>
+                <div class="card stat">
+                    <div class="stat-value">11.26%</div>
+                    <div class="stat-label">Market CAGR</div>
+                    <p style="font-size: 0.875rem; margin-top: 0.5rem;">Construction site safety monitoring surge rate</p>
+                </div>
+                <div class="card stat">
+                    <div class="stat-value">28%</div>
+                    <div class="stat-label">Contractors Using AI</div>
+                    <p style="font-size: 0.875rem; margin-top: 0.5rem;">Report improved safety outcomes with predictive analytics</p>
+                </div>
+            </div>
+
+            <h3>Strategic Positioning</h3>
+            <p>HazardHawk is uniquely positioned to dominate the construction safety AI market through:</p>
+            <ul>
+                <li><strong>AI-First Approach:</strong> Real-time photo analysis with Google Gemini Vision Pro 2.5</li>
+                <li><strong>Construction-Specific Intelligence:</strong> OSHA code mapping and hazard taxonomy</li>
+                <li><strong>Mobile-Optimized Experience:</strong> Built for gloved hands, direct sunlight, and offline conditions</li>
+                <li><strong>Instant Value Demonstration:</strong> Interactive AI demos vs. competitors' static screenshots</li>
+                <li><strong>Transparent Pricing:</strong> Clear tiers vs. hidden "Contact Sales" models</li>
+            </ul>
+
+            <div class="success">
+                <p><strong>Competitive Advantage:</strong> While SafetyCulture, Procore, and Field1st focus on digitizing paperwork, HazardHawk leads with AI-powered incident prevention.</p>
+            </div>
+        </section>
+
+        <!-- Codebase Analysis -->
+        <section id="codebase-analysis" class="section">
+            <h2>1. 🏗️ Android Codebase Analysis</h2>
+
+            <h3>Architecture Overview</h3>
+            <p>HazardHawk is built on enterprise-grade Kotlin Multiplatform (KMP) architecture with Clean Architecture principles:</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Layer</th>
+                        <th>Technology</th>
+                        <th>Purpose</th>
+                        <th>Marketing Angle</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Presentation</td>
+                        <td>Jetpack Compose</td>
+                        <td>Modern Android UI</td>
+                        <td>"Lightning-fast native performance"</td>
+                    </tr>
+                    <tr>
+                        <td>Domain</td>
+                        <td>Kotlin (shared)</td>
+                        <td>Business logic</td>
+                        <td>"70% code sharing = fewer bugs"</td>
+                    </tr>
+                    <tr>
+                        <td>Data</td>
+                        <td>Ktor + SQLDelight</td>
+                        <td>API + local DB</td>
+                        <td>"Works offline, syncs everywhere"</td>
+                    </tr>
+                    <tr>
+                        <td>AI Engine</td>
+                        <td>Gemini Vision Pro 2.5</td>
+                        <td>Hazard detection</td>
+                        <td>"Same AI that powers Google Search"</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Core Features to Showcase</h3>
+
+            <h4>1. AI-Powered Hazard Detection</h4>
+            <div class="highlight">
+                <p><strong>Technical Implementation:</strong></p>
+                <ul>
+                    <li>Google Gemini Vision Pro 2.5 integration</li>
+                    <li>Real-time bounding box detection (precise hazard location)</li>
+                    <li>OSHA code mapping (1926.501, 1926.95-96, 1926.416-417)</li>
+                    <li>Confidence scoring (0.0-1.0 scale for AI predictions)</li>
+                    <li>12+ hazard categories: Fall protection, PPE, electrical, equipment, housekeeping, fire, trip hazards</li>
+                </ul>
+                <p><strong>Marketing Message:</strong> "Military-grade AI that identifies 12+ hazard categories in real-time with OSHA code correlation"</p>
+            </div>
+
+            <h4>2. Pre-Task Plan (PTP) Generation</h4>
+            <p><strong>AI-Powered Documentation Engine:</strong></p>
+            <ul>
+                <li>Gemini 2.5 Flash for cost-effective, high-speed generation</li>
+                <li>Token tracking and cost estimation built-in</li>
+                <li>Multi-phase pipeline: Hazard aggregation → Risk assessment → PPE requirements → Emergency procedures → OSHA references</li>
+                <li>Auto-population: Company, project, crew info (no data re-entry)</li>
+                <li>Digital signatures with timestamp verification</li>
+                <li>Condensed 3-4 page professional PDF layouts</li>
+            </ul>
+            <p><strong>Marketing Message:</strong> "Generate OSHA-compliant Pre-Task Plans in under 2 minutes - no template hunting required"</p>
+
+            <h4>3. Advanced Camera System (3 Specialized Interfaces)</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Interface</th>
+                        <th>Use Case</th>
+                        <th>Key Features</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Safety HUD Camera</td>
+                        <td>Documentation</td>
+                        <td>Real-time metadata overlay (GPS, timestamp), aspect ratio controls, zoom presets</td>
+                    </tr>
+                    <tr>
+                        <td>AR Camera</td>
+                        <td>Live detection</td>
+                        <td>Real-time hazard overlay, privacy controls, ARCore integration</td>
+                    </tr>
+                    <tr>
+                        <td>Clear Camera</td>
+                        <td>Minimalist</td>
+                        <td>Zero-distraction, Jony Ive-inspired, professional workflow</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>4. Safety Command Center Dashboard</h4>
+            <p><strong>Design Philosophy:</strong> Clarity, Control, Continuity</p>
+            <ul>
+                <li><strong>Hero Status Bar:</strong> Personalized greetings, live site conditions, dynamic gradients</li>
+                <li><strong>Command Center Grid:</strong> 2×3 grid, role-based visibility, 160dp touch targets (glove-friendly)</li>
+                <li><strong>Activity Feed:</strong> Recent PTPs, AI detections, photos awaiting review, toolbox talks</li>
+            </ul>
+            <p><strong>Marketing Message:</strong> "Transform scattered workflows into a unified Safety Command Center"</p>
+
+            <h3>Technical Differentiators</h3>
+
+            <div class="grid grid-2">
+                <div class="card">
+                    <h4>🌍 Kotlin Multiplatform Ready</h4>
+                    <ul>
+                        <li>70%+ code sharing across platforms</li>
+                        <li>Android: Production-ready</li>
+                        <li>iOS: Shared logic ready</li>
+                        <li>Web: Admin portal foundation</li>
+                        <li>Desktop: Field support potential</li>
+                    </ul>
+                    <p><strong>Message:</strong> "Built once, deployed everywhere"</p>
+                </div>
+
+                <div class="card">
+                    <h4>📴 Offline-First Architecture</h4>
+                    <ul>
+                        <li>SQLDelight local database</li>
+                        <li>Full offline functionality</li>
+                        <li>Automatic sync when online</li>
+                        <li>Queue management for uploads</li>
+                    </ul>
+                    <p><strong>Message:</strong> "Work anywhere, sync everywhere"</p>
+                </div>
+
+                <div class="card">
+                    <h4>⚡ Performance Optimizations</h4>
+                    <ul>
+                        <li>Device tier detection</li>
+                        <li>Adaptive AI model selection</li>
+                        <li>Memory management strategies</li>
+                        <li>Thumbnail caching</li>
+                    </ul>
+                    <p><strong>Message:</strong> "Runs smoothly on $200 phones and $1000 tablets"</p>
+                </div>
+
+                <div class="card">
+                    <h4>💰 Token Usage Tracking</h4>
+                    <ul>
+                        <li>Per-document token tracking</li>
+                        <li>Daily/monthly summaries</li>
+                        <li>Cost estimation (Gemini pricing)</li>
+                        <li>Optimization suggestions</li>
+                    </ul>
+                    <p><strong>Message:</strong> "Transparent AI costs - know exactly what each document costs"</p>
+                </div>
+            </div>
+
+            <h3>Security & Compliance</h3>
+            <ul>
+                <li><strong>Photo Encryption:</strong> AES-256 encryption for all photo data</li>
+                <li><strong>Audit Trail:</strong> Real-time monitoring, compliance event logging, OSHA data retention</li>
+                <li><strong>Privacy Controls:</strong> GPS obfuscation, photo sharing security, AI data governance</li>
+                <li><strong>Worker Consent:</strong> AR feature consent management</li>
+            </ul>
+            <p><strong>Marketing Message:</strong> "Bank-level encryption and OSHA-compliant audit trails"</p>
+        </section>
+
+        <!-- Keyword Research -->
+        <section id="keyword-research" class="section">
+            <h2>2. 🔍 SEO & Keyword Research</h2>
+
+            <h3>Market Insights</h3>
+            <div class="grid grid-3">
+                <div class="card stat">
+                    <div class="stat-value">$8.99B</div>
+                    <div class="stat-label">Construction Software Market by 2034</div>
+                </div>
+                <div class="card stat">
+                    <div class="stat-value">9.21%</div>
+                    <div class="stat-label">CAGR (2025-2034)</div>
+                </div>
+                <div class="card stat">
+                    <div class="stat-value">22%</div>
+                    <div class="stat-label">Accident Reduction (Bouygues)</div>
+                </div>
+            </div>
+
+            <h3>Primary Keywords (High Priority)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Keyword</th>
+                        <th>Category</th>
+                        <th>Intent</th>
+                        <th>Competition</th>
+                        <th>Priority</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>construction safety software</td>
+                        <td>Core Product</td>
+                        <td>Commercial</td>
+                        <td>High</td>
+                        <td><span class="badge badge-danger">Critical</span></td>
+                    </tr>
+                    <tr>
+                        <td>AI construction safety</td>
+                        <td>Technology</td>
+                        <td>Research</td>
+                        <td>Medium</td>
+                        <td><span class="badge badge-danger">Critical</span></td>
+                    </tr>
+                    <tr>
+                        <td>construction hazard detection</td>
+                        <td>Feature</td>
+                        <td>Commercial</td>
+                        <td>Medium</td>
+                        <td><span class="badge badge-danger">Critical</span></td>
+                    </tr>
+                    <tr>
+                        <td>OSHA compliance software</td>
+                        <td>Compliance</td>
+                        <td>Commercial</td>
+                        <td>High</td>
+                        <td><span class="badge badge-danger">Critical</span></td>
+                    </tr>
+                    <tr>
+                        <td>construction safety management</td>
+                        <td>Core Product</td>
+                        <td>Commercial</td>
+                        <td>High</td>
+                        <td><span class="badge badge-danger">Critical</span></td>
+                    </tr>
+                    <tr>
+                        <td>AI-powered safety platform</td>
+                        <td>Technology</td>
+                        <td>Commercial</td>
+                        <td>Low</td>
+                        <td><span class="badge badge-warning">High</span></td>
+                    </tr>
+                    <tr>
+                        <td>construction site safety app</td>
+                        <td>Mobile Product</td>
+                        <td>Commercial</td>
+                        <td>Medium</td>
+                        <td><span class="badge badge-warning">High</span></td>
+                    </tr>
+                    <tr>
+                        <td>jobsite safety software</td>
+                        <td>Core Product</td>
+                        <td>Commercial</td>
+                        <td>Medium</td>
+                        <td><span class="badge badge-warning">High</span></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Long-Tail Keywords (Content Marketing)</h3>
+            <div class="grid grid-2">
+                <div class="card">
+                    <h4>How-To Queries</h4>
+                    <ul>
+                        <li>How to reduce construction incidents</li>
+                        <li>How to conduct OSHA safety inspections</li>
+                        <li>How to implement AI in construction safety</li>
+                        <li>How to create pre-task plans</li>
+                        <li>How to detect fall hazards on construction sites</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h4>Problem-Aware Queries</h4>
+                    <ul>
+                        <li>Construction safety incident reporting software</li>
+                        <li>OSHA 300 log software</li>
+                        <li>Fall protection compliance software</li>
+                        <li>PPE violation detection system</li>
+                        <li>Construction safety audit checklist</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h4>Technology-Specific Queries</h4>
+                    <ul>
+                        <li>Computer vision construction safety</li>
+                        <li>AI hazard detection system</li>
+                        <li>Machine learning safety monitoring</li>
+                        <li>Real-time safety analytics platform</li>
+                        <li>Predictive safety analytics construction</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h4>Compliance Queries</h4>
+                    <ul>
+                        <li>OSHA 1926 compliance software</li>
+                        <li>Construction safety regulations tracking</li>
+                        <li>OSHA audit preparation software</li>
+                        <li>Safety compliance management system</li>
+                        <li>Construction safety documentation software</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Local SEO Keywords</h3>
+            <p>Target major construction markets with location-based keywords:</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Location</th>
+                        <th>Keyword Template</th>
+                        <th>Example</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Texas</td>
+                        <td>[keyword] in [city], TX</td>
+                        <td>Construction safety software in Austin, TX</td>
+                    </tr>
+                    <tr>
+                        <td>California</td>
+                        <td>[keyword] [city] California</td>
+                        <td>OSHA compliance software Los Angeles California</td>
+                    </tr>
+                    <tr>
+                        <td>Florida</td>
+                        <td>[city] [keyword]</td>
+                        <td>Miami construction safety management</td>
+                    </tr>
+                    <tr>
+                        <td>New York</td>
+                        <td>[keyword] near [city]</td>
+                        <td>Construction safety app near New York City</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Competitor Keyword Gap Analysis</h3>
+            <div class="warning">
+                <p><strong>Opportunity:</strong> Competitors rank for generic safety terms but are weak on AI-specific keywords. HazardHawk can dominate:</p>
+                <ul>
+                    <li>AI construction safety software</li>
+                    <li>AI-powered hazard detection</li>
+                    <li>Computer vision construction safety</li>
+                    <li>Real-time AI safety monitoring</li>
+                    <li>AI safety analytics construction</li>
+                </ul>
+            </div>
+
+            <h3>Content Strategy by Keyword Type</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Keyword Type</th>
+                        <th>Content Format</th>
+                        <th>Example</th>
+                        <th>Goal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Navigational</td>
+                        <td>Product pages</td>
+                        <td>HazardHawk pricing, HazardHawk demo</td>
+                        <td>Capture brand searches</td>
+                    </tr>
+                    <tr>
+                        <td>Informational</td>
+                        <td>Blog posts, guides</td>
+                        <td>"How AI detects construction hazards"</td>
+                        <td>Build authority</td>
+                    </tr>
+                    <tr>
+                        <td>Commercial</td>
+                        <td>Comparison pages</td>
+                        <td>"Best construction safety software 2025"</td>
+                        <td>Capture buyers</td>
+                    </tr>
+                    <tr>
+                        <td>Transactional</td>
+                        <td>Landing pages</td>
+                        <td>"Try construction safety AI free"</td>
+                        <td>Drive conversions</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>SEO Best Practices for 2025</h3>
+            <div class="highlight">
+                <p><strong>E-E-A-T Signals (Experience, Expertise, Authoritativeness, Trustworthiness):</strong></p>
+                <ul>
+                    <li><strong>Experience:</strong> Show real customer results, case studies, testimonials</li>
+                    <li><strong>Expertise:</strong> Author bios, safety certifications, industry awards</li>
+                    <li><strong>Authoritativeness:</strong> Backlinks from ENR, Constructor Magazine, OSHA.gov</li>
+                    <li><strong>Trustworthiness:</strong> Security badges, privacy policy, transparent pricing</li>
+                </ul>
+            </div>
+
+            <p><strong>AI-Driven Search:</strong></p>
+            <ul>
+                <li>Use natural language: "What's the best way to detect fall hazards on construction sites?"</li>
+                <li>Answer-based formats: Featured snippets, People Also Ask sections</li>
+                <li>Conversational content optimized for voice search and AI assistants</li>
+            </ul>
+        </section>
+
+        <!-- UX Strategy -->
+        <section id="ux-strategy" class="section">
+            <h2>3. 🎨 UX & Conversion Strategy</h2>
+
+            <h3>Target Persona Analysis</h3>
+
+            <div class="grid grid-2">
+                <div class="card">
+                    <h4>👷 Safety Sarah - Construction Safety Manager</h4>
+                    <p><strong>Age:</strong> 35-50</p>
+                    <p><strong>Pain Points:</strong></p>
+                    <ul>
+                        <li>Drowning in paperwork and manual inspections</li>
+                        <li>Workers reluctant to report hazards</li>
+                        <li>Pressure to reduce incident rates</li>
+                        <li>Needs to prove ROI to executives</li>
+                    </ul>
+                    <p><strong>Decision Factors:</strong> Ease of adoption, mobile-first, proven ROI, OSHA compliance</p>
+                </div>
+
+                <div class="card">
+                    <h4>🏗️ Project Pete - General Contractor</h4>
+                    <p><strong>Age:</strong> 40-55</p>
+                    <p><strong>Pain Points:</strong></p>
+                    <ul>
+                        <li>Safety incidents delay projects</li>
+                        <li>Manual documentation takes time</li>
+                        <li>Needs visibility across multiple sites</li>
+                        <li>Liability and regulatory concerns</li>
+                    </ul>
+                    <p><strong>Decision Factors:</strong> Time savings, cost reduction, integration, reporting</p>
+                </div>
+
+                <div class="card">
+                    <h4>📊 Executive Ed - Safety Director</h4>
+                    <p><strong>Age:</strong> 45-60</p>
+                    <p><strong>Pain Points:</strong></p>
+                    <ul>
+                        <li>Lacks real-time visibility</li>
+                        <li>Struggles to quantify effectiveness</li>
+                        <li>Board demands ESG metrics</li>
+                        <li>High insurance costs</li>
+                    </ul>
+                    <p><strong>Decision Factors:</strong> Analytics, scalability, proven ROI, security</p>
+                </div>
+
+                <div class="card">
+                    <h4>✅ Compliance Chris - OSHA Officer</h4>
+                    <p><strong>Age:</strong> 30-50</p>
+                    <p><strong>Pain Points:</strong></p>
+                    <ul>
+                        <li>Manual recordkeeping time-consuming</li>
+                        <li>Difficult to track corrective actions</li>
+                        <li>Audit preparation stressful</li>
+                        <li>Staying current with regulations</li>
+                    </ul>
+                    <p><strong>Decision Factors:</strong> OSHA features, audit trails, automated forms</p>
+                </div>
+            </div>
+
+            <h3>Memorable "Wow" Moments</h3>
+
+            <h4>1. Interactive AI Hazard Simulator</h4>
+            <div class="highlight">
+                <p><strong>Concept:</strong> "Spot the Hazard" game on website</p>
+                <p><strong>How It Works:</strong></p>
+                <ol>
+                    <li>User presented with construction site photo (30-second timer)</li>
+                    <li>User clicks on hazards they spot</li>
+                    <li>AI reveals ALL hazards (often 2-3x more than human spotted)</li>
+                    <li>Scoreboard shows accuracy vs. HazardHawk AI</li>
+                </ol>
+                <p><strong>Punchline:</strong> "You found 3 hazards. HazardHawk found 8. Imagine what you're missing."</p>
+                <p><strong>Why It Works:</strong> Engaging gamification, educational, viral potential, mobile-friendly</p>
+            </div>
+
+            <h4>2. Real-Time Hazard Detection Visualization</h4>
+            <p><strong>Concept:</strong> Live feed of anonymized hazards being detected across platform</p>
+            <ul>
+                <li>Map of US with pulsing dots for real-time detections</li>
+                <li>Sidebar: "Fall hazard detected - Seattle, WA - 2 minutes ago"</li>
+                <li>Counter: Total hazards detected today/month/all-time</li>
+            </ul>
+            <p><strong>Why It Works:</strong> Social proof, FOMO effect, shows active nationwide usage</p>
+
+            <h4>3. OSHA Compliance Quick Assessment</h4>
+            <p><strong>Concept:</strong> Interactive quiz identifying compliance gaps</p>
+            <p><strong>Output:</strong></p>
+            <ul>
+                <li>Color-coded risk assessment (Green/Yellow/Red)</li>
+                <li>Specific compliance gaps</li>
+                <li>OSHA citation risk scores</li>
+                <li>Estimated potential fines</li>
+                <li>How HazardHawk addresses each gap</li>
+            </ul>
+            <p><strong>CTA:</strong> "Get Your Free Compliance Plan" (lead capture)</p>
+
+            <h3>Conversion-Focused Page Structure</h3>
+
+            <h4>Homepage (Above the Fold)</h4>
+            <div class="success">
+                <p><strong>Hero Section (3-Second Rule):</strong></p>
+                <ul>
+                    <li><strong>Headline:</strong> "Stop Incidents Before They Happen. AI-Powered Safety for Construction."</li>
+                    <li><strong>Subheadline:</strong> "Spot every hazard, ensure OSHA compliance, protect your crew"</li>
+                    <li><strong>Background:</strong> Auto-playing video of hazard detection in action</li>
+                    <li><strong>Primary CTA:</strong> "Start Free Trial" (no credit card)</li>
+                    <li><strong>Secondary CTA:</strong> "Watch 2-Min Demo"</li>
+                    <li><strong>Trust Bar:</strong> "Trusted by 1,000+ companies | 500K+ hazards detected"</li>
+                </ul>
+            </div>
+
+            <h4>Homepage Section Flow</h4>
+            <ol>
+                <li><strong>Interactive AI Demo</strong> - Upload photo, see analysis live</li>
+                <li><strong>The Problem</strong> - Empathy for pain points (paperwork, incidents, OSHA fines)</li>
+                <li><strong>The Solution</strong> - 4 key features with visuals</li>
+                <li><strong>Social Proof</strong> - Case studies with quantified results</li>
+                <li><strong>Before/After</strong> - Visual transformation timeline</li>
+                <li><strong>Real-Time Activity</strong> - Live hazard detection map</li>
+                <li><strong>Use Cases</strong> - By role (field workers, safety managers, executives)</li>
+                <li><strong>Integrations</strong> - Works with Procore, PlanGrid, BIM 360</li>
+                <li><strong>Pricing</strong> - Transparent 3-tier model + ROI calculator</li>
+                <li><strong>FAQ</strong> - Address objections</li>
+                <li><strong>Final CTA</strong> - "Your Safest Job Site Starts Today"</li>
+            </ol>
+
+            <h3>Mobile-First Design Principles</h3>
+            <div class="warning">
+                <p><strong>Construction Reality:</strong> 85% of workers access software on mobile, 60% of job sites have poor connectivity</p>
+            </div>
+
+            <ul>
+                <li><strong>Touch-Friendly:</strong> Minimum 48x48px buttons, 60x60px for primary actions</li>
+                <li><strong>Glove-Friendly:</strong> Large, chunky UI elements, avoid precise interactions</li>
+                <li><strong>Sunlight-Readable:</strong> High contrast, no light gray on white, bold typography</li>
+                <li><strong>Offline-First:</strong> PWA capabilities, service workers, local storage</li>
+                <li><strong>Performance:</strong> < 3 seconds load on 3G, lazy loading, optimized images</li>
+            </ul>
+
+            <h3>Competitive Differentiation</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Aspect</th>
+                        <th>Competitors</th>
+                        <th>HazardHawk</th>
+                        <th>Impact</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Demo Experience</td>
+                        <td>Screenshots, gated demos, sales calls</td>
+                        <td>Interactive AI simulator, instant try</td>
+                        <td>Lower friction = higher signups</td>
+                    </tr>
+                    <tr>
+                        <td>Pricing</td>
+                        <td>"Contact us for pricing"</td>
+                        <td>Transparent tiers + ROI calculator</td>
+                        <td>Builds trust, respects user time</td>
+                    </tr>
+                    <tr>
+                        <td>Messaging</td>
+                        <td>Feature lists, corporate speak</td>
+                        <td>Problem-solution, human-centric</td>
+                        <td>Emotional resonance</td>
+                    </tr>
+                    <tr>
+                        <td>Visuals</td>
+                        <td>Stock photos, clean hard hats</td>
+                        <td>Real job sites, authentic workers</td>
+                        <td>Authenticity builds connection</td>
+                    </tr>
+                    <tr>
+                        <td>Implementation</td>
+                        <td>2-3 months, complex</td>
+                        <td>48 hours, simple</td>
+                        <td>Speed to value</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Technical Architecture -->
+        <section id="technical-architecture" class="section">
+            <h2>4. 💻 Technical Architecture (Next.js + Tailwind)</h2>
+
+            <h3>Technology Stack</h3>
+
+            <div class="grid grid-2">
+                <div class="card">
+                    <h4>Frontend</h4>
+                    <ul>
+                        <li><strong>Framework:</strong> Next.js 15 (App Router)</li>
+                        <li><strong>Styling:</strong> Tailwind CSS</li>
+                        <li><strong>Animation:</strong> Framer Motion</li>
+                        <li><strong>Forms:</strong> React Hook Form + Zod</li>
+                        <li><strong>State:</strong> React Context + Zustand</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h4>Backend & Infrastructure</h4>
+                    <ul>
+                        <li><strong>Hosting:</strong> Vercel (Edge Functions)</li>
+                        <li><strong>CDN:</strong> Cloudflare</li>
+                        <li><strong>Images:</strong> Cloudinary</li>
+                        <li><strong>CMS:</strong> Contentful / Sanity</li>
+                        <li><strong>Database:</strong> PostgreSQL (Supabase)</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h4>Analytics & Monitoring</h4>
+                    <ul>
+                        <li><strong>Analytics:</strong> Google Analytics 4</li>
+                        <li><strong>Performance:</strong> Vercel Analytics</li>
+                        <li><strong>Error Tracking:</strong> Sentry</li>
+                        <li><strong>Heatmaps:</strong> Microsoft Clarity</li>
+                        <li><strong>A/B Testing:</strong> Vercel Edge Config</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h4>SEO & Performance</h4>
+                    <ul>
+                        <li><strong>Metadata:</strong> Next.js Metadata API</li>
+                        <li><strong>Sitemap:</strong> Dynamic generation</li>
+                        <li><strong>Images:</strong> Next.js Image component</li>
+                        <li><strong>Fonts:</strong> next/font optimization</li>
+                        <li><strong>Scripts:</strong> next/script (lazy load)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Performance Targets</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Target</th>
+                        <th>Lighthouse Score</th>
+                        <th>Impact</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Performance</td>
+                        <td>90+</td>
+                        <td><span class="badge badge-success">Critical</span></td>
+                        <td>SEO ranking factor</td>
+                    </tr>
+                    <tr>
+                        <td>SEO</td>
+                        <td>100</td>
+                        <td><span class="badge badge-success">Critical</span></td>
+                        <td>Search visibility</td>
+                    </tr>
+                    <tr>
+                        <td>Accessibility</td>
+                        <td>100</td>
+                        <td><span class="badge badge-success">Critical</span></td>
+                        <td>Compliance & usability</td>
+                    </tr>
+                    <tr>
+                        <td>LCP (Largest Contentful Paint)</td>
+                        <td>≤2.5s</td>
+                        <td><span class="badge badge-success">Critical</span></td>
+                        <td>User experience</td>
+                    </tr>
+                    <tr>
+                        <td>FID (First Input Delay)</td>
+                        <td>≤100ms</td>
+                        <td><span class="badge badge-success">Critical</span></td>
+                        <td>Interactivity</td>
+                    </tr>
+                    <tr>
+                        <td>CLS (Cumulative Layout Shift)</td>
+                        <td>≤0.1</td>
+                        <td><span class="badge badge-success">Critical</span></td>
+                        <td>Visual stability</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Server Components vs Client Components</h3>
+            <div class="highlight">
+                <p><strong>Best Practice:</strong> Use Server Components (default) unless you need:</p>
+                <ul>
+                    <li>State management (useState, useReducer)</li>
+                    <li>Event handlers (onClick, onChange)</li>
+                    <li>Browser APIs (localStorage, window)</li>
+                    <li>Effects (useEffect)</li>
+                </ul>
+                <p><strong>Benefits of Server Components:</strong></p>
+                <ul>
+                    <li>Zero JavaScript sent to client</li>
+                    <li>Direct database/API access</li>
+                    <li>Better SEO (fully rendered HTML)</li>
+                    <li>Faster initial page load</li>
+                </ul>
+            </div>
+
+            <h3>SEO Implementation</h3>
+
+            <h4>Metadata API (Static)</h4>
+            <pre><code>// app/layout.tsx
+export const metadata = {
+  title: {
+    default: 'HazardHawk - AI-Powered Construction Safety',
+    template: '%s | HazardHawk'
+  },
+  description: 'AI-powered hazard detection, Pre-Task Plans, and OSHA compliance for construction sites.',
+  keywords: ['construction safety', 'AI hazard detection', 'OSHA compliance'],
+  openGraph: {
+    images: [{ url: '/og-image.jpg', width: 1200, height: 630 }]
+  },
+  twitter: {
+    card: 'summary_large_image'
+  }
+}</code></pre>
+
+            <h4>Schema.org Markup</h4>
+            <p><strong>Organization Schema:</strong></p>
+            <pre><code>{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "HazardHawk",
+  "description": "AI-powered construction safety platform",
+  "url": "https://hazardhawk.com"
+}</code></pre>
+
+            <p><strong>SoftwareApplication Schema:</strong></p>
+            <pre><code>{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "HazardHawk",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Android, iOS, Web",
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.8",
+    "ratingCount": "127"
+  }
+}</code></pre>
+
+            <h3>Accessibility (WCAG 2.1 AA)</h3>
+            <ul>
+                <li><strong>Color Contrast:</strong> All text meets 4.5:1 ratio minimum</li>
+                <li><strong>Keyboard Navigation:</strong> Visible focus outlines, logical tab order</li>
+                <li><strong>Screen Readers:</strong> Semantic HTML, ARIA labels, alt text for images</li>
+                <li><strong>Forms:</strong> Clear error messages, real-time validation</li>
+                <li><strong>Animations:</strong> Respect prefers-reduced-motion</li>
+            </ul>
+        </section>
+
+        <!-- Security & Compliance -->
+        <section id="security-compliance" class="section">
+            <h2>5. 🔒 Security & Compliance</h2>
+
+            <h3>Critical Security Implementations</h3>
+
+            <div class="danger">
+                <p><strong>⚠️ High-Risk Issues (Must Fix Before Production):</strong></p>
+                <ol>
+                    <li>No CSRF protection - Risk of forged submissions</li>
+                    <li>No authentication system - Current placeholder only</li>
+                    <li>No rate limiting - Vulnerable to DDoS and API abuse</li>
+                    <li>Missing CSP headers - XSS vulnerability</li>
+                    <li>No cookie consent - GDPR/CCPA non-compliance</li>
+                    <li>No privacy policy - Legal requirement</li>
+                </ol>
+            </div>
+
+            <h3>Data Privacy (GDPR/CCPA)</h3>
+
+            <h4>GDPR Compliance Requirements</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Requirement</th>
+                        <th>Implementation</th>
+                        <th>Priority</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Cookie Consent</td>
+                        <td>Granular controls (necessary, analytics, marketing)</td>
+                        <td><span class="badge badge-danger">Critical</span></td>
+                    </tr>
+                    <tr>
+                        <td>Privacy Policy</td>
+                        <td>Articles 6, 15-22, international transfers, breach notification</td>
+                        <td><span class="badge badge-danger">Critical</span></td>
+                    </tr>
+                    <tr>
+                        <td>Data Subject Rights</td>
+                        <td>API for access, erasure, portability, rectification (30-day SLA)</td>
+                        <td><span class="badge badge-warning">High</span></td>
+                    </tr>
+                    <tr>
+                        <td>Data Retention</td>
+                        <td>Automated deletion after retention period</td>
+                        <td><span class="badge badge-warning">High</span></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>CCPA Compliance Requirements</h4>
+            <ul>
+                <li>"Do Not Sell My Personal Information" page</li>
+                <li>California privacy rights disclosure</li>
+                <li>Categories of data collected transparency</li>
+                <li>Right to deletion workflow</li>
+            </ul>
+
+            <h3>Infrastructure Security</h3>
+
+            <h4>HTTPS & Security Headers</h4>
+            <pre><code>// Security headers (next.config.js)
+{
+  'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',
+  'Content-Security-Policy': "default-src 'self'; script-src 'self' 'nonce-{random}'",
+  'X-Frame-Options': 'DENY',
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'strict-origin-when-cross-origin'
+}</code></pre>
+
+            <h4>DDoS Protection</h4>
+            <ul>
+                <li><strong>Cloudflare Integration:</strong> Rate limiting, bot management, geo-restrictions</li>
+                <li><strong>Multi-Tier Rate Limits:</strong>
+                    <ul>
+                        <li>Uploads: 10 per 15 minutes</li>
+                        <li>OCR: 20 per hour</li>
+                        <li>DOB lookups: 50 per hour</li>
+                    </ul>
+                </li>
+            </ul>
+
+            <h3>Form Security</h3>
+            <ul>
+                <li><strong>CSRF Protection:</strong> Token-based with constant-time comparison</li>
+                <li><strong>Input Validation:</strong> Zod schemas with sanitization</li>
+                <li><strong>Spam Prevention:</strong> Cloudflare Turnstile (GDPR-friendly)</li>
+                <li><strong>Email Validation:</strong> MX record verification, disposable email blocking</li>
+            </ul>
+
+            <h3>Construction Industry Compliance</h3>
+
+            <h4>OSHA Data Handling</h4>
+            <ul>
+                <li>Privacy protection for incident logs (29 CFR 1904.29)</li>
+                <li>Redaction requirements for sensitive data</li>
+                <li>Secure storage and audit trails</li>
+            </ul>
+
+            <h4>Project Confidentiality</h4>
+            <ul>
+                <li>EXIF metadata stripping from photos</li>
+                <li>NDA compliance tracking</li>
+                <li>Testimonial permission management</li>
+            </ul>
+
+            <h3>Ongoing Monitoring</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tool</th>
+                        <th>Purpose</th>
+                        <th>Frequency</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Sentry</td>
+                        <td>Error tracking with PII scrubbing</td>
+                        <td>Real-time</td>
+                    </tr>
+                    <tr>
+                        <td>Mozilla Observatory</td>
+                        <td>Security headers audit</td>
+                        <td>Weekly</td>
+                    </tr>
+                    <tr>
+                        <td>npm audit / Snyk</td>
+                        <td>Dependency vulnerability scanning</td>
+                        <td>Daily (CI/CD)</td>
+                    </tr>
+                    <tr>
+                        <td>UptimeRobot</td>
+                        <td>Uptime monitoring</td>
+                        <td>5-minute intervals</td>
+                    </tr>
+                    <tr>
+                        <td>Compliance Audit</td>
+                        <td>GDPR/CCPA/OSHA review</td>
+                        <td>Quarterly</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Content Strategy -->
+        <section id="content-strategy" class="section">
+            <h2>6. 📝 Content Marketing Strategy</h2>
+
+            <h3>Content Pillars</h3>
+
+            <div class="grid grid-2">
+                <div class="card">
+                    <h4>1. Educational Content</h4>
+                    <p><strong>Goal:</strong> Build authority and attract top-of-funnel traffic</p>
+                    <ul>
+                        <li>"10 Most Common OSHA Violations in 2025"</li>
+                        <li>"Complete Guide to Fall Protection Compliance"</li>
+                        <li>"How to Conduct Effective Toolbox Talks"</li>
+                        <li>"Construction Safety Audit Checklist"</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h4>2. Thought Leadership</h4>
+                    <p><strong>Goal:</strong> Position HazardHawk as industry innovator</p>
+                    <ul>
+                        <li>"Why AI Will Transform Construction Safety"</li>
+                        <li>"The Future of OSHA Compliance"</li>
+                        <li>"Computer Vision in Construction: Real-World Applications"</li>
+                        <li>"Predictive Safety Analytics Explained"</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h4>3. How-To Guides</h4>
+                    <p><strong>Goal:</strong> Capture problem-aware searchers</p>
+                    <ul>
+                        <li>"How to Reduce Construction Incidents by 60%"</li>
+                        <li>"How to Prepare for an OSHA Audit"</li>
+                        <li>"How to Implement AI Safety Technology"</li>
+                        <li>"How to Generate Pre-Task Plans in Minutes"</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h4>4. Case Studies</h4>
+                    <p><strong>Goal:</strong> Provide social proof and demonstrate ROI</p>
+                    <ul>
+                        <li>"How ABC Construction Cut Incidents 73%"</li>
+                        <li>"Turner Construction's AI Safety Journey"</li>
+                        <li>"From 12 Hours to 30 Minutes: XYZ's Story"</li>
+                        <li>"$1.2M Saved: DEF's Safety Transformation"</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Publishing Calendar</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Content Type</th>
+                        <th>Frequency</th>
+                        <th>Format</th>
+                        <th>Distribution</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Blog Posts</td>
+                        <td>2x per week</td>
+                        <td>1,500-2,500 words</td>
+                        <td>Website, LinkedIn, email newsletter</td>
+                    </tr>
+                    <tr>
+                        <td>Case Studies</td>
+                        <td>1x per month</td>
+                        <td>2,000-3,000 words + video</td>
+                        <td>Dedicated landing page, PDF download</td>
+                    </tr>
+                    <tr>
+                        <td>Webinars</td>
+                        <td>1x per month</td>
+                        <td>45-60 minutes</td>
+                        <td>Live + on-demand recording</td>
+                    </tr>
+                    <tr>
+                        <td>E-books</td>
+                        <td>1x per quarter</td>
+                        <td>20-50 pages</td>
+                        <td>Gated lead magnet</td>
+                    </tr>
+                    <tr>
+                        <td>Videos</td>
+                        <td>1x per week</td>
+                        <td>2-5 minutes</td>
+                        <td>YouTube, embedded on site</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Lead Magnets</h3>
+            <ul>
+                <li>"Ultimate Guide to OSHA Compliance for General Contractors" (45-page e-book)</li>
+                <li>"50 Construction Safety Checklists" (downloadable templates)</li>
+                <li>"AI in Construction Safety: Executive Briefing" (10-page PDF)</li>
+                <li>"Pre-Task Plan Template Library" (15 customizable templates)</li>
+                <li>"OSHA 1926 Quick Reference Guide" (printable poster)</li>
+            </ul>
+
+            <h3>Link Building Strategy</h3>
+
+            <h4>Target Publications</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Publication</th>
+                        <th>Domain Authority</th>
+                        <th>Tactic</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>ENR (Engineering News-Record)</td>
+                        <td>High</td>
+                        <td>Guest articles, expert quotes</td>
+                    </tr>
+                    <tr>
+                        <td>Constructor Magazine</td>
+                        <td>High</td>
+                        <td>Case study features</td>
+                    </tr>
+                    <tr>
+                        <td>Safety+Health Magazine</td>
+                        <td>Medium-High</td>
+                        <td>Thought leadership pieces</td>
+                    </tr>
+                    <tr>
+                        <td>For Construction Pros</td>
+                        <td>Medium</td>
+                        <td>How-to content</td>
+                    </tr>
+                    <tr>
+                        <td>Construction Dive</td>
+                        <td>High</td>
+                        <td>Industry trend analysis</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Partnership Opportunities</h4>
+            <ul>
+                <li><strong>Construction Associations:</strong> AGC, ABC, NECA (co-branded content, speaking opportunities)</li>
+                <li><strong>Safety Organizations:</strong> ASSE, NSC (certification partnerships, event sponsorships)</li>
+                <li><strong>Equipment Manufacturers:</strong> Tool integrations, co-marketing campaigns</li>
+                <li><strong>Insurance Providers:</strong> Risk reduction partnerships, premium discount programs</li>
+            </ul>
+        </section>
+
+        <!-- Implementation Roadmap -->
+        <section id="implementation-roadmap" class="section">
+            <h2>7. 🗓️ Implementation Roadmap</h2>
+
+            <h3>Phase 1: Foundation (Weeks 1-6)</h3>
+
+            <h4>Week 1-2: Planning & Design</h4>
+            <ul>
+                <li>Finalize sitemap and content architecture</li>
+                <li>Create wireframes for all pages</li>
+                <li>Design system development (colors, typography, components)</li>
+                <li>Stakeholder review and approval</li>
+            </ul>
+            <p><strong>Estimated Hours:</strong> 80 hours</p>
+
+            <h4>Week 3-4: Content Creation</h4>
+            <ul>
+                <li>Write all website copy (homepage, features, pricing, about)</li>
+                <li>Record demo videos and customer testimonials</li>
+                <li>Create graphics and animations</li>
+                <li>Legal review (terms, privacy policy)</li>
+            </ul>
+            <p><strong>Estimated Hours:</strong> 100 hours</p>
+
+            <h4>Week 5: Development</h4>
+            <ul>
+                <li>Build homepage with all sections</li>
+                <li>Implement interactive AI demo</li>
+                <li>Set up analytics tracking</li>
+                <li>Mobile optimization</li>
+            </ul>
+            <p><strong>Estimated Hours:</strong> 80 hours</p>
+
+            <h4>Week 6: Testing & QA</h4>
+            <ul>
+                <li>Cross-browser testing (Chrome, Safari, Firefox, Edge)</li>
+                <li>Mobile device testing (iOS, Android)</li>
+                <li>Screen reader testing (NVDA, JAWS, VoiceOver)</li>
+                <li>Performance testing (Lighthouse, PageSpeed Insights)</li>
+                <li>Bug fixes</li>
+            </ul>
+            <p><strong>Estimated Hours:</strong> 40 hours</p>
+
+            <h3>Phase 2: Core Pages (Week 7)</h3>
+            <ul>
+                <li>Features page (deep dive into each capability)</li>
+                <li>Pricing page (detailed comparison table, FAQ)</li>
+                <li>About page (company story, team, mission)</li>
+                <li>Contact page (form, office info, map)</li>
+            </ul>
+            <p><strong>Estimated Hours:</strong> 60 hours</p>
+
+            <h3>Phase 3: SEO & Performance (Week 8-9)</h3>
+            <ul>
+                <li>Implement metadata API for all pages</li>
+                <li>Add Schema.org markup (Organization, SoftwareApplication, LocalBusiness, Article)</li>
+                <li>Generate sitemap.xml and robots.txt</li>
+                <li>Optimize images with next/image and Cloudinary</li>
+                <li>Test Core Web Vitals (LCP < 2.5s, CLS < 0.1, INP < 200ms)</li>
+            </ul>
+            <p><strong>Estimated Hours:</strong> 80 hours</p>
+
+            <h3>Phase 4: Conversion Optimization (Week 10-11)</h3>
+            <ul>
+                <li>Implement multi-step signup flow</li>
+                <li>Create welcome/onboarding experience</li>
+                <li>Add multiple strategic CTAs throughout site</li>
+                <li>Implement live activity feed</li>
+                <li>Set up A/B testing framework (Vercel Edge Config)</li>
+                <li>Implement conversion tracking (GA4, LinkedIn, Facebook pixels)</li>
+            </ul>
+            <p><strong>Estimated Hours:</strong> 70 hours</p>
+
+            <h3>Phase 5: Content & Local SEO (Week 12-15)</h3>
+            <ul>
+                <li>Create location pages (Austin, Houston, Dallas, San Antonio, etc.)</li>
+                <li>Set up blog (homepage, post template, categories, search)</li>
+                <li>Create resource hub (templates, guides, case studies)</li>
+                <li>Write first 10 blog posts</li>
+                <li>Optimize for local SEO (Google Business Profile, local citations)</li>
+            </ul>
+            <p><strong>Estimated Hours:</strong> 120 hours</p>
+
+            <h3>Total Estimated Time</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Phase</th>
+                        <th>Duration</th>
+                        <th>Hours</th>
+                        <th>Cost Estimate (at $150/hr)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Phase 1: Foundation</td>
+                        <td>6 weeks</td>
+                        <td>300</td>
+                        <td>$45,000</td>
+                    </tr>
+                    <tr>
+                        <td>Phase 2: Core Pages</td>
+                        <td>1 week</td>
+                        <td>60</td>
+                        <td>$9,000</td>
+                    </tr>
+                    <tr>
+                        <td>Phase 3: SEO & Performance</td>
+                        <td>2 weeks</td>
+                        <td>80</td>
+                        <td>$12,000</td>
+                    </tr>
+                    <tr>
+                        <td>Phase 4: Conversion Optimization</td>
+                        <td>2 weeks</td>
+                        <td>70</td>
+                        <td>$10,500</td>
+                    </tr>
+                    <tr>
+                        <td>Phase 5: Content & Local SEO</td>
+                        <td>4 weeks</td>
+                        <td>120</td>
+                        <td>$18,000</td>
+                    </tr>
+                    <tr style="font-weight: bold; background: var(--bg-light);">
+                        <td>Total</td>
+                        <td>15 weeks</td>
+                        <td>630</td>
+                        <td>$94,500</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Launch Checklist</h3>
+            <div class="warning">
+                <p><strong>Pre-Launch Essentials:</strong></p>
+                <ul>
+                    <li>☐ SSL certificate installed and tested</li>
+                    <li>☐ DNS configured and propagated</li>
+                    <li>☐ Analytics tracking verified (GA4, Vercel, Clarity)</li>
+                    <li>☐ All links tested (no 404s)</li>
+                    <li>☐ Meta tags and Open Graph images set</li>
+                    <li>☐ XML sitemap submitted to Google Search Console</li>
+                    <li>☐ robots.txt configured</li>
+                    <li>☐ 301 redirects in place (if migrating from old site)</li>
+                    <li>☐ Contact forms tested and receiving emails</li>
+                    <li>☐ CRM integration working (HubSpot/Salesforce)</li>
+                    <li>☐ Security headers verified (HSTS, CSP, X-Frame-Options)</li>
+                    <li>☐ GDPR cookie consent banner implemented</li>
+                    <li>☐ Privacy policy and terms of service published</li>
+                    <li>☐ Accessibility audit passed (WCAG 2.1 AA)</li>
+                    <li>☐ Lighthouse scores: Performance 90+, SEO 100, A11y 100</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Competitive Analysis -->
+        <section id="competitive-analysis" class="section">
+            <h2>8. 🏆 Competitive Analysis</h2>
+
+            <h3>Primary Competitors</h3>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>SafetyCulture</th>
+                        <th>Procore</th>
+                        <th>Field1st</th>
+                        <th>HazardHawk</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Primary Focus</td>
+                        <td>Digital inspections</td>
+                        <td>Full project mgmt</td>
+                        <td>Field-first compliance</td>
+                        <td><strong>AI hazard detection</strong></td>
+                    </tr>
+                    <tr>
+                        <td>AI Capabilities</td>
+                        <td>Basic</td>
+                        <td>Predictive analytics</td>
+                        <td>Pattern recognition</td>
+                        <td><strong>Real-time photo analysis</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Interactive Demo</td>
+                        <td>Screenshots only</td>
+                        <td>Gated demo</td>
+                        <td>No</td>
+                        <td><strong>✓ Live AI simulator</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Pricing Transparency</td>
+                        <td>Some tiers public</td>
+                        <td>Hidden</td>
+                        <td>Hidden</td>
+                        <td><strong>✓ Fully transparent</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Mobile Experience</td>
+                        <td>Good</td>
+                        <td>Desktop-centric</td>
+                        <td>Excellent</td>
+                        <td><strong>Excellent + offline</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Ease of Use</td>
+                        <td>Moderate</td>
+                        <td>Complex</td>
+                        <td>Good</td>
+                        <td><strong>Extremely simple</strong></td>
+                    </tr>
+                    <tr>
+                        <td>OSHA-Specific</td>
+                        <td>Generic safety</td>
+                        <td>Generic safety</td>
+                        <td>Strong</td>
+                        <td><strong>✓ Construction-specific</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Implementation Time</td>
+                        <td>2-4 weeks</td>
+                        <td>2-3 months</td>
+                        <td>2-4 weeks</td>
+                        <td><strong>✓ 48 hours</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Personality/Brand</td>
+                        <td>Corporate</td>
+                        <td>Corporate</td>
+                        <td>Corporate</td>
+                        <td><strong>✓ Approachable, bold</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Competitive Advantages</h3>
+
+            <div class="grid grid-2">
+                <div class="card success">
+                    <h4>1. Lead with AI, Not Forms</h4>
+                    <p><strong>Competitors:</strong> Focus on digitizing paperwork</p>
+                    <p><strong>HazardHawk:</strong> Focus on preventing incidents with intelligent detection</p>
+                    <p><strong>Messaging:</strong> "AI that spots hazards before your crew does" vs. "Digital checklists and inspections"</p>
+                </div>
+
+                <div class="card success">
+                    <h4>2. Show, Don't Tell</h4>
+                    <p><strong>Competitors:</strong> Text-heavy descriptions, gated demos</p>
+                    <p><strong>HazardHawk:</strong> Interactive simulator, instant gratification</p>
+                    <p><strong>Impact:</strong> Lower friction = higher trial signups</p>
+                </div>
+
+                <div class="card success">
+                    <h4>3. Transparent Pricing</h4>
+                    <p><strong>Competitors:</strong> "Contact us for pricing"</p>
+                    <p><strong>HazardHawk:</strong> Clear tiers, ROI calculator, no hidden costs</p>
+                    <p><strong>Impact:</strong> Builds trust, respects user's time, eliminates sales friction</p>
+                </div>
+
+                <div class="card success">
+                    <h4>4. Mobile-First Storytelling</h4>
+                    <p><strong>Competitors:</strong> Desktop-optimized, stock photography</p>
+                    <p><strong>HazardHawk:</strong> Mobile-first, real job sites, authentic workers</p>
+                    <p><strong>Impact:</strong> Resonates with target audience who lives on job sites</p>
+                </div>
+            </div>
+
+            <h3>Market Positioning</h3>
+            <div class="highlight">
+                <p><strong>Positioning Statement:</strong></p>
+                <p>"HazardHawk is the only construction safety platform that uses AI-first technology to detect hazards in real-time, generate OSHA-compliant documentation instantly, and prevent incidents before they happen—all while being simple enough for field workers to use with gloves on."</p>
+            </div>
+
+            <h3>Pricing Strategy vs Competitors</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tier</th>
+                        <th>HazardHawk</th>
+                        <th>SafetyCulture</th>
+                        <th>Field1st</th>
+                        <th>Procore</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Entry-Level</td>
+                        <td>$15/user/month</td>
+                        <td>$24/user/month</td>
+                        <td>Contact sales</td>
+                        <td>Contact sales</td>
+                    </tr>
+                    <tr>
+                        <td>Mid-Tier</td>
+                        <td>$45/user/month</td>
+                        <td>$55/user/month</td>
+                        <td>Contact sales</td>
+                        <td>Contact sales</td>
+                    </tr>
+                    <tr>
+                        <td>Enterprise</td>
+                        <td>$95/user/month</td>
+                        <td>Custom pricing</td>
+                        <td>Contact sales</td>
+                        <td>Contact sales</td>
+                    </tr>
+                    <tr>
+                        <td>Free Trial</td>
+                        <td>✓ 30 days</td>
+                        <td>✓ 30 days</td>
+                        <td>✓ 14 days</td>
+                        <td>Demo only</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p><strong>Strategy:</strong> Competitive pricing with transparent tiers. Undercut SafetyCulture on entry/mid tiers, match on enterprise.</p>
+        </section>
+
+        <!-- Risk Assessment -->
+        <section id="risk-assessment" class="section">
+            <h2>9. ⚠️ Risk Assessment & Mitigation</h2>
+
+            <h3>Technical Risks</h3>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Risk</th>
+                        <th>Impact</th>
+                        <th>Probability</th>
+                        <th>Mitigation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>AI demo performance issues</td>
+                        <td>High</td>
+                        <td>Medium</td>
+                        <td>Cache common demo photos, optimize API calls, use edge functions</td>
+                    </tr>
+                    <tr>
+                        <td>Poor mobile performance</td>
+                        <td>High</td>
+                        <td>Medium</td>
+                        <td>Performance budget, image optimization, code splitting, 3G testing</td>
+                    </tr>
+                    <tr>
+                        <td>Security vulnerabilities</td>
+                        <td>Critical</td>
+                        <td>Medium</td>
+                        <td>Implement CSRF, rate limiting, CSP headers, dependency scanning</td>
+                    </tr>
+                    <tr>
+                        <td>Accessibility compliance failure</td>
+                        <td>High</td>
+                        <td>Low</td>
+                        <td>WCAG 2.1 AA checklist, automated testing, manual audit</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Business Risks</h3>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Risk</th>
+                        <th>Impact</th>
+                        <th>Probability</th>
+                        <th>Mitigation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Low conversion rate</td>
+                        <td>High</td>
+                        <td>Medium</td>
+                        <td>A/B testing framework, CRO best practices, user feedback loops</td>
+                    </tr>
+                    <tr>
+                        <td>Competitor price war</td>
+                        <td>Medium</td>
+                        <td>Low</td>
+                        <td>Focus on differentiation (AI-first), value over price, ROI calculators</td>
+                    </tr>
+                    <tr>
+                        <td>Slow organic traffic growth</td>
+                        <td>Medium</td>
+                        <td>Medium</td>
+                        <td>Comprehensive content strategy, link building, local SEO</td>
+                    </tr>
+                    <tr>
+                        <td>Poor brand perception</td>
+                        <td>High</td>
+                        <td>Low</td>
+                        <td>Authentic messaging, real customer stories, transparent operations</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Compliance Risks</h3>
+
+            <div class="danger">
+                <p><strong>Critical Compliance Gaps:</strong></p>
+                <ul>
+                    <li><strong>GDPR/CCPA Non-Compliance:</strong> No cookie consent, missing privacy policy → Risk: €20M fine or 4% revenue</li>
+                    <li><strong>Accessibility Non-Compliance:</strong> WCAG violations → Risk: ADA lawsuits, lost government contracts</li>
+                    <li><strong>Security Vulnerabilities:</strong> XSS, CSRF, no rate limiting → Risk: Data breach, reputation damage</li>
+                </ul>
+                <p><strong>Mitigation Timeline:</strong> All compliance issues must be resolved before production launch (Week 6)</p>
+            </div>
+
+            <h3>Market Risks</h3>
+            <ul>
+                <li><strong>Market Saturation:</strong> Many construction safety tools exist → Mitigation: AI-first differentiation, superior UX</li>
+                <li><strong>Buyer Skepticism:</strong> "Another safety app?" → Mitigation: Interactive demos, free trial, proven ROI</li>
+                <li><strong>Long Sales Cycles:</strong> Enterprise deals take 6-12 months → Mitigation: Self-service trial for small/mid-market</li>
+            </ul>
+        </section>
+
+        <!-- Success Metrics -->
+        <section id="success-metrics" class="section">
+            <h2>10. 📈 Success Metrics & KPIs</h2>
+
+            <h3>3-Month Goals (Soft Launch)</h3>
+            <div class="grid grid-3">
+                <div class="card stat">
+                    <div class="stat-value">10,000</div>
+                    <div class="stat-label">Monthly Visitors</div>
+                </div>
+                <div class="card stat">
+                    <div class="stat-value">5%</div>
+                    <div class="stat-label">Trial Signup Rate</div>
+                    <p style="font-size: 0.875rem; margin-top: 0.5rem;">500 trial signups</p>
+                </div>
+                <div class="card stat">
+                    <div class="stat-value">40%</div>
+                    <div class="stat-label">Trial Activation</div>
+                    <p style="font-size: 0.875rem; margin-top: 0.5rem;">200 activated users</p>
+                </div>
+            </div>
+
+            <h3>6-Month Goals (Growth Phase)</h3>
+            <div class="grid grid-3">
+                <div class="card stat">
+                    <div class="stat-value">20,000</div>
+                    <div class="stat-label">Monthly Visitors</div>
+                </div>
+                <div class="card stat">
+                    <div class="stat-value">60%</div>
+                    <div class="stat-label">Organic Traffic</div>
+                </div>
+                <div class="card stat">
+                    <div class="stat-value">8%</div>
+                    <div class="stat-label">Trial Signup Rate</div>
+                </div>
+            </div>
+
+            <h3>12-Month Goals (Market Leadership)</h3>
+            <div class="grid grid-3">
+                <div class="card stat">
+                    <div class="stat-value">50,000</div>
+                    <div class="stat-label">Monthly Visitors</div>
+                </div>
+                <div class="card stat">
+                    <div class="stat-value">Top 10</div>
+                    <div class="stat-label">Google Rankings</div>
+                    <p style="font-size: 0.875rem; margin-top: 0.5rem;">20 target keywords</p>
+                </div>
+                <div class="card stat">
+                    <div class="stat-value">10%</div>
+                    <div class="stat-label">Trial Signup Rate</div>
+                </div>
+            </div>
+
+            <h3>Key Performance Indicators</h3>
+
+            <h4>Traffic Metrics</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Target</th>
+                        <th>Measurement Tool</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Unique visitors per month</td>
+                        <td>10K → 50K (12 months)</td>
+                        <td>Google Analytics 4</td>
+                    </tr>
+                    <tr>
+                        <td>Organic search traffic %</td>
+                        <td>60%</td>
+                        <td>Google Analytics 4</td>
+                    </tr>
+                    <tr>
+                        <td>Returning visitor rate</td>
+                        <td>30%</td>
+                        <td>Google Analytics 4</td>
+                    </tr>
+                    <tr>
+                        <td>Average session duration</td>
+                        <td>3+ minutes</td>
+                        <td>Google Analytics 4</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Engagement Metrics</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Target</th>
+                        <th>Measurement Tool</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Bounce rate</td>
+                        <td>&lt;40%</td>
+                        <td>Google Analytics 4</td>
+                    </tr>
+                    <tr>
+                        <td>Pages per session</td>
+                        <td>3+</td>
+                        <td>Google Analytics 4</td>
+                    </tr>
+                    <tr>
+                        <td>Scroll depth (pricing section)</td>
+                        <td>70%</td>
+                        <td>Microsoft Clarity</td>
+                    </tr>
+                    <tr>
+                        <td>AI demo interaction rate</td>
+                        <td>20%</td>
+                        <td>Custom event tracking</td>
+                    </tr>
+                    <tr>
+                        <td>Video play rate</td>
+                        <td>40%</td>
+                        <td>YouTube Analytics</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Conversion Metrics</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Target</th>
+                        <th>Measurement Tool</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Trial signup rate</td>
+                        <td>5% → 10% (12 months)</td>
+                        <td>Google Analytics 4</td>
+                    </tr>
+                    <tr>
+                        <td>Demo booking rate</td>
+                        <td>2%</td>
+                        <td>Google Analytics 4</td>
+                    </tr>
+                    <tr>
+                        <td>Lead magnet download rate</td>
+                        <td>8%</td>
+                        <td>Google Analytics 4</td>
+                    </tr>
+                    <tr>
+                        <td>Trial-to-paid conversion</td>
+                        <td>25%</td>
+                        <td>Product analytics</td>
+                    </tr>
+                    <tr>
+                        <td>Trial activation rate</td>
+                        <td>80%</td>
+                        <td>Product analytics</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>SEO Metrics</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Target</th>
+                        <th>Measurement Tool</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Keyword rankings (top 10)</td>
+                        <td>20 target keywords</td>
+                        <td>Google Search Console</td>
+                    </tr>
+                    <tr>
+                        <td>Domain authority</td>
+                        <td>40+ (12 months)</td>
+                        <td>Ahrefs / Moz</td>
+                    </tr>
+                    <tr>
+                        <td>Quality backlinks</td>
+                        <td>100+ (6 months)</td>
+                        <td>Ahrefs / Moz</td>
+                    </tr>
+                    <tr>
+                        <td>Featured snippets owned</td>
+                        <td>5+</td>
+                        <td>Google Search Console</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Monthly Reporting Dashboard</h3>
+            <div class="highlight">
+                <p><strong>Executive Summary (Monthly):</strong></p>
+                <ul>
+                    <li>Total website visitors (MoM growth %)</li>
+                    <li>Trial signups (number + conversion rate)</li>
+                    <li>Demo bookings (number + conversion rate)</li>
+                    <li>Total leads (trials + demos + downloads)</li>
+                    <li>Cost per lead (if running paid ads)</li>
+                    <li>Top 3 performing pages (by conversions)</li>
+                    <li>Top 3 traffic sources</li>
+                    <li>SEO highlights (new rankings, backlinks acquired)</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Final Recommendations -->
+        <section id="recommendations" class="section">
+            <h2>11. 🎯 Final Recommendations</h2>
+
+            <h3>Immediate Priorities (Week 1)</h3>
+            <div class="success">
+                <ol>
+                    <li><strong>Secure Budget Approval:</strong> $94,500 for full implementation (15 weeks)</li>
+                    <li><strong>Hire/Assign Resources:</strong>
+                        <ul>
+                            <li>Web designer (20 hrs/week)</li>
+                            <li>Frontend developer (40 hrs/week)</li>
+                            <li>Content writer (15 hrs/week)</li>
+                            <li>SEO specialist (10 hrs/week)</li>
+                        </ul>
+                    </li>
+                    <li><strong>Set Up Tooling:</strong>
+                        <ul>
+                            <li>Project management: Asana/Linear</li>
+                            <li>Design: Figma</li>
+                            <li>Development: GitHub, Vercel</li>
+                            <li>Analytics: GA4, Clarity, Vercel Analytics</li>
+                        </ul>
+                    </li>
+                    <li><strong>Finalize Sitemap & Wireframes:</strong> Get stakeholder approval</li>
+                </ol>
+            </div>
+
+            <h3>Strategic Recommendations</h3>
+
+            <h4>1. Lead with AI, Not Features</h4>
+            <p>Position HazardHawk as the AI-first safety platform, not just another construction software tool.</p>
+            <ul>
+                <li><strong>Homepage headline:</strong> "Stop Incidents Before They Happen" (not "Construction Safety Software")</li>
+                <li><strong>First interaction:</strong> Interactive AI demo (not feature list)</li>
+                <li><strong>Value prop:</strong> Incident prevention (not compliance management)</li>
+            </ul>
+
+            <h4>2. Show, Don't Tell</h4>
+            <p>Invest in interactive experiences that let users experience the product immediately:</p>
+            <ul>
+                <li>Interactive AI hazard simulator (gamification)</li>
+                <li>Live hazard detection feed (social proof)</li>
+                <li>ROI calculator with visual impact (tangible value)</li>
+                <li>Before/after transformation timeline (storytelling)</li>
+            </ul>
+
+            <h4>3. Mobile-First Everything</h4>
+            <p>Construction lives on mobile. Optimize ruthlessly:</p>
+            <ul>
+                <li>Target < 3 seconds load time on 3G</li>
+                <li>Touch targets: 48x48px minimum, 60x60px for primary actions</li>
+                <li>High contrast design (outdoor visibility)</li>
+                <li>Offline-first PWA architecture</li>
+            </ul>
+
+            <h4>4. Transparent Pricing = Trust</h4>
+            <p>Break industry norms with fully transparent pricing:</p>
+            <ul>
+                <li>Display all tiers upfront (no "Contact Sales" barrier)</li>
+                <li>Provide ROI calculator to justify investment</li>
+                <li>Emphasize 30-day free trial, no credit card required</li>
+            </ul>
+
+            <h4>5. Content-First SEO Strategy</h4>
+            <p>Dominate search with high-quality, helpful content:</p>
+            <ul>
+                <li>Publish 2x per week (educational + thought leadership)</li>
+                <li>Target long-tail keywords (how-to queries, problem-aware searches)</li>
+                <li>Create comprehensive guides (e-books, webinars)</li>
+                <li>Build relationships with industry publications (guest posts, expert quotes)</li>
+            </ul>
+
+            <h3>What Success Looks Like</h3>
+
+            <div class="grid grid-2">
+                <div class="card success">
+                    <h4>6 Months Post-Launch</h4>
+                    <ul>
+                        <li>20,000 monthly website visitors</li>
+                        <li>60% organic search traffic</li>
+                        <li>8% trial signup rate (1,600 trials)</li>
+                        <li>25% trial-to-paid conversion (400 customers)</li>
+                        <li>Top 10 rankings for 10+ target keywords</li>
+                        <li>15+ published case studies</li>
+                        <li>50+ quality backlinks</li>
+                    </ul>
+                </div>
+
+                <div class="card success">
+                    <h4>12 Months Post-Launch</h4>
+                    <ul>
+                        <li>50,000 monthly website visitors</li>
+                        <li>Top 10 rankings for 20+ target keywords</li>
+                        <li>10% trial signup rate (5,000 trials/year)</li>
+                        <li>30% trial-to-paid conversion (1,500 customers/year)</li>
+                        <li>Recognized as top construction safety software by ENR, Constructor Mag</li>
+                        <li>100+ quality backlinks</li>
+                        <li>40+ domain authority (Ahrefs)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Critical Success Factors</h3>
+            <ol>
+                <li><strong>Speed to Market:</strong> Launch MVP in 6-8 weeks, iterate based on user feedback</li>
+                <li><strong>User-Centric Design:</strong> Test with real construction safety managers throughout development</li>
+                <li><strong>Performance Obsession:</strong> Hit Core Web Vitals targets (LCP < 2.5s, CLS < 0.1, INP < 200ms)</li>
+                <li><strong>Content Consistency:</strong> Maintain 2x/week blog publishing schedule for 12 months</li>
+                <li><strong>Data-Driven Iteration:</strong> Run A/B tests monthly, optimize based on conversion data</li>
+                <li><strong>Security & Compliance:</strong> Zero tolerance for GDPR/CCPA/accessibility violations</li>
+            </ol>
+
+            <div class="highlight">
+                <p><strong>Bottom Line:</strong> HazardHawk has a unique opportunity to dominate the construction safety AI market. Success depends on:</p>
+                <ul>
+                    <li>Differentiation through AI-first positioning</li>
+                    <li>Interactive experiences that demonstrate value instantly</li>
+                    <li>Mobile-first design optimized for construction sites</li>
+                    <li>Transparent pricing that builds trust</li>
+                    <li>Comprehensive SEO and content strategy</li>
+                </ul>
+                <p>Execute this plan with discipline, measure rigorously, and iterate based on data. The market is ready for an AI-powered safety platform that actually works the way construction companies need it to.</p>
+            </div>
+        </section>
+
+        <footer>
+            <p>&copy; 2025 HazardHawk. This document is confidential and proprietary.</p>
+            <p>Generated: October 9, 2025 | Project: HH-v0-fresh | Phase: Research & Planning</p>
+        </footer>
+    </div>
+</body>
+</html>

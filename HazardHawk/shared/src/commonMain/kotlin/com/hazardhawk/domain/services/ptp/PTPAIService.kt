@@ -88,7 +88,8 @@ class GeminiPTPAIService(
 
             // Log token usage if available
             geminiResponse.tokenUsage?.let { usage ->
-                println("PTPAIService: Token usage - Input: ${usage.promptTokenCount}, Output: ${usage.candidatesTokenCount}, Total: ${usage.totalTokenCount}, Cost: $${String.format("%.4f", usage.estimatedCost)}")
+                val formattedCost = (usage.estimatedCost * 10000).toInt() / 10000.0
+                println("PTPAIService: Token usage - Input: ${usage.promptTokenCount}, Output: ${usage.candidatesTokenCount}, Total: ${usage.totalTokenCount}, Cost: $$$formattedCost")
             }
 
             Result.success(

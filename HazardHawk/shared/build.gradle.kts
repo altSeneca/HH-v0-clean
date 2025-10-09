@@ -164,3 +164,136 @@ sqldelight {
         }
     }
 }
+// ============================================================================
+// Phase 2 Testing Configuration
+// ============================================================================
+
+// Configure test task with detailed logging
+tasks.withType<Test> {
+    useJUnitPlatform()
+    
+    testLogging {
+        events("passed", "skipped", "failed", "standardOut", "standardError")
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+    }
+    
+    // Increase max heap size for tests
+    maxHeapSize = "2g"
+    
+    // Enable parallel test execution
+    maxParallelForks = Runtime.getRuntime().availableProcessors().div(2).coerceAtLeast(1)
+    
+    reports {
+        html.required.set(true)
+        junitXml.required.set(true)
+    }
+}
+
+// Integration test task
+tasks.register<Test>("integrationTest") {
+    description = "Runs integration tests with external service dependencies"
+    group = "verification"
+    
+    useJUnitPlatform {
+        includeTags("integration")
+    }
+    
+    filter {
+        includeTestsMatching("*IntegrationTest")
+        includeTestsMatching("*IT")
+    }
+    
+    shouldRunAfter(tasks.named("test"))
+    
+    testLogging {
+        events("passed", "skipped", "failed")
+        showStandardStreams = true
+    }
+}
+
+// E2E test task
+tasks.register<Test>("e2eTest") {
+    description = "Runs end-to-end tests"
+    group = "verification"
+    
+    useJUnitPlatform {
+        includeTags("e2e")
+    }
+    
+    filter {
+        includeTestsMatching("*E2ETest")
+        includeTestsMatching("*EndToEndTest")
+    }
+    
+    shouldRunAfter(tasks.named("integrationTest"))
+    
+    testLogging {
+        events("passed", "skipped", "failed")
+        showStandardStreams = true
+    }
+}
+
+// JaCoCo coverage configuration
+apply(plugin = "jacoco")
+
+tasks.register<JacocoReport>("jacocoTestReport") {
+    dependsOn(tasks.named("test"))
+    
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+        csv.required.set(false)
+    }
+    
+    classDirectories.setFrom(
+        fileTree(project.buildDir) {
+            include("**/classes/kotlin/android/**")
+            exclude(
+                "**/BuildConfig.*",
+                "**/*Test*.*",
+                "**/*\$*.*",
+                "**/test/**",
+                "**/androidTest/**"
+            )
+        }
+    )
+    
+    sourceDirectories.setFrom(files("src/commonMain/kotlin", "src/androidMain/kotlin"))
+    executionData.setFrom(fileTree(project.buildDir) {
+        include("jacoco/*.exec", "outputs/unit_test_code_coverage/**/testDebugUnitTest.exec")
+    })
+}
+
+// Coverage verification
+tasks.register<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
+    dependsOn(tasks.named("jacocoTestReport"))
+    
+    violationRules {
+        rule {
+            limit {
+                minimum = "0.80".toBigDecimal()
+            }
+        }
+        
+        rule {
+            element = "CLASS"
+            limit {
+                minimum = "0.75".toBigDecimal()
+            }
+            
+            excludes = listOf(
+                "*.BuildConfig",
+                "*Test",
+                "*\$*"
+            )
+        }
+    }
+}
+
+// Make check task depend on coverage verification
+tasks.named("check") {
+    dependsOn(tasks.named("jacocoTestCoverageVerification"))
+}

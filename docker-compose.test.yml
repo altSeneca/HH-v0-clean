@@ -1,0 +1,125 @@
+version: '3.8'
+
+services:
+  # ============================================================================
+  # Localstack - AWS Services Emulation
+  # Used for S3, SES, SNS testing without AWS costs
+  # ============================================================================
+  localstack:
+    image: localstack/localstack:latest
+    container_name: hazardhawk-localstack-test
+    ports:
+      - "4566:4566"            # LocalStack Gateway
+      - "4510-4559:4510-4559"  # External services port range
+    environment:
+      # Services to run (comma-separated)
+      - SERVICES=s3,ses,sns,sqs
+      
+      # Debug mode (set to 0 for production)
+      - DEBUG=1
+      
+      # Data directory for persistence
+      - DATA_DIR=/tmp/localstack/data
+      
+      # AWS region
+      - DEFAULT_REGION=us-east-1
+      
+      # Host name for accessing services
+      - HOSTNAME_EXTERNAL=localhost
+      
+      # Enable S3 path-style URLs
+      - S3_SKIP_SIGNATURE_VALIDATION=1
+      
+      # Persistence
+      - PERSISTENCE=1
+      
+    volumes:
+      # Mount localstack data directory
+      - "./localstack:/tmp/localstack"
+      
+      # Mount init scripts
+      - "./scripts/localstack-init.sh:/etc/localstack/init/ready.d/init-aws.sh"
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    
+    networks:
+      - hazardhawk-test-network
+
+  # ============================================================================
+  # PostgreSQL - Test Database
+  # Used for integration tests that require real database
+  # ============================================================================
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: hazardhawk-postgres-test
+    ports:
+      - "5433:5432"  # Use 5433 to avoid conflicts with local postgres
+    environment:
+      - POSTGRES_USER=hazardhawk_test
+      - POSTGRES_PASSWORD=test_password_123
+      - POSTGRES_DB=hazardhawk_test
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres-test-data:/var/lib/postgresql/data
+      - "./scripts/init-test-db.sql:/docker-entrypoint-initdb.d/init.sql"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hazardhawk_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hazardhawk-test-network
+
+  # ============================================================================
+  # Mock Backend API (Optional - for E2E tests)
+  # Can be used to mock backend responses during development
+  # ============================================================================
+  mock-api:
+    image: mockserver/mockserver:latest
+    container_name: hazardhawk-mock-api
+    ports:
+      - "1080:1080"
+    environment:
+      - MOCKSERVER_PROPERTY_FILE=/config/mockserver.properties
+      - MOCKSERVER_INITIALIZATION_JSON_PATH=/config/initializerJson.json
+    volumes:
+      - "./test-config/mock-api:/config"
+    networks:
+      - hazardhawk-test-network
+
+networks:
+  hazardhawk-test-network:
+    driver: bridge
+
+volumes:
+  postgres-test-data:
+    driver: local
+
+# ============================================================================
+# Usage Instructions:
+# ============================================================================
+#
+# Start all services:
+#   docker-compose -f docker-compose.test.yml up -d
+#
+# Start specific service:
+#   docker-compose -f docker-compose.test.yml up -d localstack
+#
+# Stop all services:
+#   docker-compose -f docker-compose.test.yml down
+#
+# View logs:
+#   docker-compose -f docker-compose.test.yml logs -f localstack
+#
+# Restart services:
+#   docker-compose -f docker-compose.test.yml restart
+#
+# Clean up (remove volumes):
+#   docker-compose -f docker-compose.test.yml down -v
+#
+# ============================================================================
