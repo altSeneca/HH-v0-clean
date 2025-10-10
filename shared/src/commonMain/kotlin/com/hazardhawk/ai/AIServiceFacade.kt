@@ -2,8 +2,8 @@ package com.hazardhawk.ai
 
 import kotlinx.serialization.Serializable
 import kotlinx.datetime.Clock
-import com.hazardhawk.domain.entities.WorkType
-import com.hazardhawk.models.TagCategory
+import com.hazardhawk.core.models.WorkType
+import com.hazardhawk.core.models.TagCategory
 import com.hazardhawk.ai.yolo.ConstructionHazardDetection
 
 /**

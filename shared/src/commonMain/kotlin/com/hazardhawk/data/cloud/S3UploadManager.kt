@@ -5,8 +5,8 @@ import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
 import com.hazardhawk.security.PhotoEncryptionService
 import com.hazardhawk.security.SecureStorageService
-import com.hazardhawk.domain.entities.Photo
-import com.hazardhawk.domain.entities.SyncStatus
+import com.hazardhawk.core.models.Photo
+import com.hazardhawk.core.models.SyncStatus
 
 /**
  * S3 Upload Manager with encryption and retry logic for Phase 2 implementation

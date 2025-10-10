@@ -4,13 +4,14 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.Serializable
 import kotlinx.datetime.Clock
-import com.hazardhawk.domain.entities.WorkType
-import com.hazardhawk.models.SafetyAnalysis
-import com.hazardhawk.models.AnalysisType
-import com.hazardhawk.models.Severity
+import com.hazardhawk.core.models.WorkType
+import com.hazardhawk.core.models.SafetyAnalysis
+import com.hazardhawk.core.models.AnalysisType
+import com.hazardhawk.core.models.Severity
+import com.hazardhawk.core.models.RiskLevel
 import com.hazardhawk.ai.yolo.YOLO11SafetyAnalyzer
 import com.hazardhawk.ai.yolo.AnalysisQuality
-import com.hazardhawk.models.Hazard
+import com.hazardhawk.core.models.Hazard
 
 /**
  * HybridAIServiceFacade - Intelligent combination of YOLO11 and Gemini Vision
@@ -522,16 +523,20 @@ class HybridAIServiceFacade(
         workType: WorkType,
         analysisId: String
     ): SafetyAnalysis {
+        val processingTime = tagAnalysis.processingTimeMs
         return SafetyAnalysis(
             id = analysisId,
             photoId = tagAnalysis.photoId,
+            timestamp = Clock.System.now(),
+            analysisType = AnalysisType.CLOUD_GEMINI,
+            workType = workType,
             hazards = emptyList(), // Would map tags to hazards in full implementation
-            oshaCodes = emptyList(),
-            severity = Severity.LOW,
+            oshaViolations = emptyList(),
             recommendations = tagAnalysis.recommendedTags.map { "Consider safety measures for: $it" },
+            overallRiskLevel = RiskLevel.LOW,
+            severity = Severity.LOW,
             aiConfidence = 0.8f,
-            analyzedAt = Clock.System.now(),
-            analysisType = AnalysisType.CLOUD_GEMINI
+            processingTimeMs = processingTime
         )
     }
     
@@ -545,6 +550,7 @@ class HybridAIServiceFacade(
         val combinedRecommendations = mutableListOf<String>()
         var highestSeverity = Severity.LOW
         var combinedConfidence = 0f
+        val startTime = Clock.System.now()
         
         yoloAnalysis?.let { yolo ->
             combinedHazards.addAll(yolo.hazards)
@@ -565,17 +571,40 @@ class HybridAIServiceFacade(
             combinedConfidence += HYBRID_CONFIDENCE_BOOST
         }
         
+        // Calculate overall risk level from hazards
+        val overallRiskLevel = calculateRiskLevelFromHazards(combinedHazards)
+        
+        val processingTime = (Clock.System.now() - startTime).inWholeMilliseconds
+        
         return SafetyAnalysis(
             id = analysisId,
             photoId = "hybrid-photo-${Clock.System.now().toEpochMilliseconds()}",
+            timestamp = Clock.System.now(),
+            analysisType = AnalysisType.HYBRID_ANALYSIS,
+            workType = workType,
             hazards = combinedHazards.distinctBy { it.type },
-            oshaCodes = yoloAnalysis?.oshaCodes ?: emptyList(),
-            severity = highestSeverity,
+            oshaViolations = yoloAnalysis?.oshaViolations ?: emptyList(),
             recommendations = combinedRecommendations.distinct(),
+            overallRiskLevel = overallRiskLevel,
+            severity = highestSeverity,
             aiConfidence = combinedConfidence.coerceIn(0f, 1f),
-            analyzedAt = Clock.System.now(),
-            analysisType = AnalysisType.COMBINED
+            processingTimeMs = processingTime
         )
+    }
+    
+    /**
+     * Calculate risk level from list of hazards
+     */
+    private fun calculateRiskLevelFromHazards(hazards: List<Hazard>): RiskLevel {
+        if (hazards.isEmpty()) return RiskLevel.MINIMAL
+        
+        val maxSeverity = hazards.maxByOrNull { it.severity }?.severity ?: return RiskLevel.LOW
+        return when (maxSeverity) {
+            Severity.CRITICAL -> RiskLevel.SEVERE
+            Severity.HIGH -> RiskLevel.HIGH
+            Severity.MEDIUM -> RiskLevel.MODERATE
+            Severity.LOW -> RiskLevel.LOW
+        }
     }
     
     private fun getBasicSafetyTags(workType: WorkType): List<String> {
@@ -583,8 +612,8 @@ class HybridAIServiceFacade(
             WorkType.GENERAL_CONSTRUCTION -> listOf("general-safety", "ppe-required", "site-awareness")
             WorkType.ELECTRICAL -> listOf("electrical-safety", "lockout-tagout", "ppe-electrical")
             WorkType.FALL_PROTECTION -> listOf("fall-protection", "harness-required", "guardrails")
-            WorkType.CRANE_LIFTING -> listOf("crane-safety", "rigging-check", "exclusion-zone")
-            WorkType.CONFINED_SPACE -> listOf("atmospheric-testing", "rescue-plan", "entry-permit")
+            WorkType.CRANE_OPERATIONS -> listOf("crane-safety", "rigging-check", "exclusion-zone")
+            WorkType.EXCAVATION -> listOf("atmospheric-testing", "rescue-plan", "entry-permit")
             WorkType.WELDING -> listOf("hot-work-permit", "fire-watch", "ventilation")
             else -> listOf("general-safety", "hazard-assessment")
         }

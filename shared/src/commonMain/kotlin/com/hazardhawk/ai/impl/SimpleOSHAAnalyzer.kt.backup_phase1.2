@@ -1,0 +1,247 @@
+package com.hazardhawk.ai.impl
+
+import com.hazardhawk.ai.core.OSHAPhotoAnalyzer
+import com.hazardhawk.core.models.*
+import com.hazardhawk.core.models.WorkType
+import com.hazardhawk.platform.currentTimeMillis
+import kotlinx.coroutines.delay
+
+/**
+ * Simple implementation of OSHA analyzer for demonstration purposes.
+ * Returns mock analysis data to showcase the OSHA compliance interface.
+ */
+class SimpleOSHAAnalyzer : OSHAPhotoAnalyzer {
+
+    private var configured = false
+
+    override suspend fun analyzeForOSHACompliance(
+        imageData: ByteArray,
+        workType: WorkType
+    ): Result<OSHAAnalysisResult> {
+        return try {
+            // Simulate processing delay
+            delay(2000)
+
+            val analysisResult = generateMockOSHAAnalysis(workType)
+            Result.success(analysisResult)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun configure(apiKey: String?): Result<Unit> {
+        return try {
+            configured = true
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override val isAvailable: Boolean
+        get() = configured
+
+    private fun generateMockOSHAAnalysis(workType: WorkType): OSHAAnalysisResult {
+        val hazards = when (workType) {
+            WorkType.ELECTRICAL -> listOf(
+                OSHAHazard(
+                    id = "hazard_001",
+                    hazardType = OSHAHazardType.ELECTRICAL_SAFETY,
+                    title = "Inadequate Electrical Panel Protection",
+                    description = "Electrical panel lacks proper guards and warning labels required by OSHA standards.",
+                    severity = OSHASeverity.SERIOUS,
+                    oshaStandard = "29 CFR 1926.95",
+                    oshaCode = "1926.95(a)(1)",
+                    violationDetails = "Electrical panel is not properly enclosed and lacks required safety signage.",
+                    requiredAction = "Install proper panel guards and post required electrical safety warnings.",
+                    confidence = 0.85f,
+                    boundingBox = BoundingBox(0.2f, 0.3f, 0.4f, 0.3f)
+                ),
+                OSHAHazard(
+                    id = "hazard_002",
+                    hazardType = OSHAHazardType.PPE_VIOLATION,
+                    title = "Missing Personal Protective Equipment",
+                    description = "Worker near electrical equipment not wearing required insulated gloves.",
+                    severity = OSHASeverity.SERIOUS,
+                    oshaStandard = "29 CFR 1926.137",
+                    oshaCode = "1926.137(a)(2)",
+                    violationDetails = "Electrical work requires Class 0 insulated gloves rated for voltage levels present.",
+                    requiredAction = "Provide and ensure use of properly rated electrical protective equipment.",
+                    confidence = 0.92f
+                )
+            )
+
+            WorkType.STEEL_WORK -> listOf(
+                OSHAHazard(
+                    id = "hazard_003",
+                    hazardType = OSHAHazardType.FALL_PROTECTION,
+                    title = "Unprotected Leading Edge",
+                    description = "Workers exposed to fall hazard without proper fall protection systems.",
+                    severity = OSHASeverity.SERIOUS,
+                    oshaStandard = "29 CFR 1926.501",
+                    oshaCode = "1926.501(b)(2)",
+                    violationDetails = "Workers at height greater than 6 feet without guardrails, safety nets, or personal fall arrest systems.",
+                    requiredAction = "Install guardrail systems or provide personal fall arrest equipment.",
+                    confidence = 0.88f
+                ),
+                OSHAHazard(
+                    id = "hazard_004",
+                    hazardType = OSHAHazardType.SCAFFOLDING,
+                    title = "Scaffold Platform Issues",
+                    description = "Scaffold platform planking appears to have gaps exceeding OSHA requirements.",
+                    severity = OSHASeverity.OTHER_THAN_SERIOUS,
+                    oshaStandard = "29 CFR 1926.451",
+                    oshaCode = "1926.451(b)(1)",
+                    violationDetails = "Platform planks must be laid tight with no gaps exceeding 1 inch.",
+                    requiredAction = "Close platform gaps and secure all planking properly.",
+                    confidence = 0.75f
+                )
+            )
+
+            else -> listOf(
+                OSHAHazard(
+                    id = "hazard_005",
+                    hazardType = OSHAHazardType.GENERAL_SAFETY,
+                    title = "Housekeeping Violation",
+                    description = "Work area shows poor housekeeping with debris and materials creating tripping hazards.",
+                    severity = OSHASeverity.OTHER_THAN_SERIOUS,
+                    oshaStandard = "29 CFR 1926.25",
+                    oshaCode = "1926.25(a)",
+                    violationDetails = "Construction areas must be kept clean and orderly to prevent accidents.",
+                    requiredAction = "Implement daily cleanup procedures and proper material storage.",
+                    confidence = 0.70f
+                )
+            )
+        }
+
+        val violations = hazards.map { hazard ->
+            OSHAViolation(
+                violationId = "violation_${hazard.id}",
+                oshaStandard = hazard.oshaStandard,
+                standardTitle = getStandardTitle(hazard.oshaStandard),
+                violationType = when (hazard.severity) {
+                    OSHASeverity.SERIOUS -> OSHAViolationType.SERIOUS
+                    OSHASeverity.OTHER_THAN_SERIOUS -> OSHAViolationType.OTHER_THAN_SERIOUS
+                    else -> OSHAViolationType.OTHER_THAN_SERIOUS
+                },
+                description = hazard.violationDetails,
+                potentialPenalty = when (hazard.severity) {
+                    OSHASeverity.SERIOUS -> "Up to \$15,625 per violation"
+                    OSHASeverity.OTHER_THAN_SERIOUS -> "Up to \$15,625 per violation"
+                    else -> "Up to \$15,625 per violation"
+                },
+                correctiveAction = hazard.requiredAction,
+                timeframe = when (hazard.severity) {
+                    OSHASeverity.SERIOUS -> "Immediate correction required"
+                    else -> "Correction required within 30 days"
+                }
+            )
+        }
+
+        val recommendations = listOf(
+            OSHARecommendation(
+                id = "rec_001",
+                priority = OSHAPriority.HIGH,
+                category = OSHARecommendationCategory.TRAINING_AND_EDUCATION,
+                title = "Conduct Safety Training",
+                description = "Provide comprehensive safety training for all workers on identified hazards.",
+                actionSteps = listOf(
+                    "Schedule safety training sessions for all crew members",
+                    "Focus on hazard recognition and proper PPE use",
+                    "Document training completion for all personnel",
+                    "Implement regular safety refresher courses"
+                ),
+                oshaReference = "29 CFR 1926.95",
+                estimatedCost = "\$500-1,000",
+                timeToImplement = "1-2 weeks"
+            ),
+            OSHARecommendation(
+                id = "rec_002",
+                priority = OSHAPriority.IMMEDIATE,
+                category = OSHARecommendationCategory.SAFETY_PROCEDURES,
+                title = "Implement Daily Safety Inspections",
+                description = "Establish routine daily inspections to identify and address safety hazards promptly.",
+                actionSteps = listOf(
+                    "Assign competent person for daily safety inspections",
+                    "Create standardized inspection checklists",
+                    "Document all findings and corrective actions",
+                    "Review inspection reports with supervisory staff"
+                ),
+                oshaReference = "29 CFR 1926.20",
+                estimatedCost = "\$200-500 per month",
+                timeToImplement = "1 week"
+            )
+        )
+
+        val complianceScore = when {
+            hazards.any { it.severity == OSHASeverity.SERIOUS } -> 60.0f
+            hazards.any { it.severity == OSHASeverity.OTHER_THAN_SERIOUS } -> 75.0f
+            else -> 85.0f
+        }
+
+        val overallCompliance = when {
+            complianceScore < 70 -> ComplianceStatus.SERIOUS_VIOLATIONS
+            complianceScore < 80 -> ComplianceStatus.MINOR_VIOLATIONS
+            else -> ComplianceStatus.COMPLIANT
+        }
+
+        return OSHAAnalysisResult(
+            analysisId = "osha_analysis_${currentTimeMillis()}",
+            overallCompliance = overallCompliance,
+            safetyHazards = hazards,
+            oshaViolations = violations,
+            complianceScore = complianceScore,
+            confidenceLevel = 0.82f,
+            detailedAnalysis = generateDetailedAnalysis(hazards, workType),
+            recommendations = recommendations
+        )
+    }
+
+    private fun getStandardTitle(oshaStandard: String): String {
+        return when {
+            oshaStandard.contains("1926.95") -> "Personal Protective Equipment"
+            oshaStandard.contains("1926.137") -> "Electrical Protective Equipment"
+            oshaStandard.contains("1926.501") -> "Fall Protection"
+            oshaStandard.contains("1926.451") -> "Scaffolding"
+            oshaStandard.contains("1926.25") -> "Housekeeping"
+            oshaStandard.contains("1926.20") -> "General Safety and Health Provisions"
+            else -> "Construction Safety Standards"
+        }
+    }
+
+    private fun generateDetailedAnalysis(hazards: List<OSHAHazard>, workType: WorkType): String {
+        val seriousCount = hazards.count { it.severity == OSHASeverity.SERIOUS }
+        val otherCount = hazards.count { it.severity == OSHASeverity.OTHER_THAN_SERIOUS }
+
+        return buildString {
+            appendLine("## OSHA Compliance Analysis Summary")
+            appendLine()
+            appendLine("**Work Type:** ${workType.name}")
+            appendLine("**Total Hazards Identified:** ${hazards.size}")
+            appendLine("**Serious Violations:** $seriousCount")
+            appendLine("**Other-Than-Serious Violations:** $otherCount")
+            appendLine()
+
+            if (seriousCount > 0) {
+                appendLine("⚠️ **CRITICAL SAFETY ISSUES IDENTIFIED**")
+                appendLine("Serious violations require immediate attention and could result in significant penalties if not corrected promptly.")
+                appendLine()
+            }
+
+            appendLine("### Key Findings:")
+            hazards.forEach { hazard ->
+                appendLine("• **${hazard.title}** (${hazard.severity.name})")
+                appendLine("  - OSHA Standard: ${hazard.oshaCode}")
+                appendLine("  - Required Action: ${hazard.requiredAction}")
+                appendLine()
+            }
+
+            appendLine("### Recommended Next Steps:")
+            appendLine("1. Address all serious violations immediately")
+            appendLine("2. Develop corrective action plan with timelines")
+            appendLine("3. Conduct safety training for affected personnel")
+            appendLine("4. Implement regular safety inspections")
+            appendLine("5. Document all corrective measures taken")
+        }
+    }
+}

@@ -1,7 +1,7 @@
 package com.hazardhawk.tag.compliance
 
 import com.hazardhawk.data.repositories.TagRepositoryImpl
-import com.hazardhawk.models.Tag
+import com.hazardhawk.core.models.Tag
 import com.hazardhawk.compliance.OSHAValidator
 import com.hazardhawk.compliance.OSHAStandard
 import com.hazardhawk.compliance.ComplianceReport

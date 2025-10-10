@@ -4,9 +4,9 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.*
 import kotlinx.datetime.Clock
-import com.hazardhawk.domain.entities.WorkType
-import com.hazardhawk.models.TagCategory
-import com.hazardhawk.models.Severity
+import com.hazardhawk.core.models.WorkType
+import com.hazardhawk.core.models.TagCategory
+import com.hazardhawk.core.models.Severity
 import com.hazardhawk.security.PhotoEncryptionService
 import com.hazardhawk.security.SecureStorageService
 import com.hazardhawk.security.getString

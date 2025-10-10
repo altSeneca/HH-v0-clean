@@ -6,7 +6,7 @@ import com.hazardhawk.documents.generators.PTPGenerator
 import com.hazardhawk.documents.models.*
 import com.hazardhawk.documents.services.DocumentAIService
 import com.hazardhawk.documents.templates.PTPTemplateEngine
-import com.hazardhawk.ai.models.*
+import com.hazardhawk.core.models.*
 import kotlinx.coroutines.test.runTest
 import kotlin.test.*
 

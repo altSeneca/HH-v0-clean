@@ -184,6 +184,7 @@ data class CameraInfo(
 enum class AnalysisType {
     ON_DEVICE,
     LOCAL_GEMMA_MULTIMODAL,
+    LOCAL_LITERT_VISION,        // LiteRT with hardware acceleration
     CLOUD_GEMINI,
     LOCAL_YOLO_FALLBACK,
     HYBRID_ANALYSIS,
@@ -213,6 +214,7 @@ enum class HazardType {
     PPE_VIOLATION,
     ELECTRICAL,
     ELECTRICAL_HAZARD,
+    ELECTRICAL_SAFETY,      // Added: Phase 1.1
     MECHANICAL_HAZARD,
     CHEMICAL,
     CHEMICAL_HAZARD,
@@ -220,6 +222,7 @@ enum class HazardType {
     FIRE_HAZARD,
     EQUIPMENT_SAFETY,
     CRANE_LIFT,
+    CRANE_LIFTING,          // Added: Phase 1.1
     HOUSEKEEPING,
     STRUCK_BY_OBJECT,
     CAUGHT_IN_EQUIPMENT,
@@ -228,7 +231,10 @@ enum class HazardType {
     LOCKOUT_TAGOUT,
     CONFINED_SPACE,
     SCAFFOLDING_UNSAFE,
-    EQUIPMENT_DEFECT
+    EQUIPMENT_DEFECT,
+    STEEL_WORK,             // Added: Phase 1.1
+    OTHER,                  // Added: Phase 1.1
+    UNKNOWN                 // Added: Phase 1.1
 }
 
 @Serializable
@@ -277,8 +283,47 @@ enum class AnalysisCapability {
     OSHA_COMPLIANCE,
     OFFLINE_ANALYSIS,
     REAL_TIME_PROCESSING,
-    DOCUMENT_GENERATION
+    DOCUMENT_GENERATION,
+    HARDWARE_ACCELERATION
 }
+
+/**
+ * PPE (Personal Protective Equipment) types for LiteRT detection
+ */
+@Serializable
+enum class PPEType {
+    HARD_HAT,
+    SAFETY_VEST,
+    SAFETY_BOOTS,
+    SAFETY_GLASSES,
+    FALL_PROTECTION,
+    RESPIRATOR,
+    HEARING_PROTECTION,
+    HAND_PROTECTION
+}
+
+/**
+ * PPE detection result from AI analysis
+ */
+@Serializable
+data class PPEDetection(
+    val isPresent: Boolean,
+    val isRequired: Boolean,
+    val confidence: Float,
+    val boundingBox: BoundingBox? = null
+)
+
+/**
+ * Risk assessment result for construction safety analysis
+ */
+@Serializable
+data class RiskAssessment(
+    val overallLevel: RiskLevel,
+    val likelihood: Float = 0.5f,
+    val impact: Float = 0.5f,
+    val controlMeasuresPresent: Boolean = false,
+    val requiresImmediateAction: Boolean = false
+)
 
 /**
  * Migration utilities for model consolidation

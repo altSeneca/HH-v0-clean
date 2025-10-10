@@ -1,8 +1,8 @@
 package com.hazardhawk.models
 
 import kotlinx.serialization.Serializable
-import com.hazardhawk.domain.entities.WorkType
-import com.hazardhawk.models.Severity
+import com.hazardhawk.core.models.WorkType
+import com.hazardhawk.core.models.Severity
 
 @Serializable
 enum class TagCategory {

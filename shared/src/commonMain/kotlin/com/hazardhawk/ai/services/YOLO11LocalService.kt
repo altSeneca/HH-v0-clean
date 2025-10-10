@@ -2,15 +2,17 @@ package com.hazardhawk.ai.services
 import kotlinx.datetime.Clock
 
 import com.hazardhawk.ai.core.AIPhotoAnalyzer
-import com.hazardhawk.ai.models.*
+import com.hazardhawk.core.models.*
 import kotlinx.coroutines.delay
-import kotlinx.uuid.uuid4
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 /**
  * YOLO11-based local object detection service.
  * This serves as the final fallback when both Gemma and Vertex AI are unavailable.
  * Provides basic hazard detection but limited contextual understanding.
  */
+@OptIn(ExperimentalUuidApi::class)
 class YOLO11LocalService : AIPhotoAnalyzer {
     
     private var isModelLoaded = false
@@ -65,7 +67,7 @@ class YOLO11LocalService : AIPhotoAnalyzer {
 
         val startTime = Clock.System.now().toEpochMilliseconds()
 
-        try {
+        return try {
             // Simulate fast local inference
             delay(800)
 
@@ -125,15 +127,17 @@ class YOLO11LocalService : AIPhotoAnalyzer {
         }
 
         return SafetyAnalysis(
-            id = uuid4().toString(),
-            timestamp = Clock.System.now().toEpochMilliseconds(),
+            id = Uuid.random().toString(),
+            photoId = "photo-${Uuid.random()}",
+            timestamp = Clock.System.now(),
             analysisType = AnalysisType.LOCAL_YOLO_FALLBACK,
             workType = workType,
             hazards = hazards, // NOW WITH BOUNDING BOXES!
             ppeStatus = inferPPEStatus(detections),
             recommendations = generateYOLORecommendations(hazards, workType),
             overallRiskLevel = riskLevel,
-            confidence = calculateOverallConfidence(detections),
+            severity = hazards.maxOfOrNull { it.severity } ?: Severity.LOW,
+            aiConfidence = calculateOverallConfidence(detections),
             processingTimeMs = Clock.System.now().toEpochMilliseconds() - startTime,
             oshaViolations = generateOSHAViolations(hazards)
         )
@@ -145,7 +149,7 @@ class YOLO11LocalService : AIPhotoAnalyzer {
     private fun mapYOLODetectionToHazard(detection: YOLODetection, workType: WorkType): Hazard? {
         return when (detection.className) {
             "person-no-hardhat", "worker-no-helmet" -> Hazard(
-                id = uuid4().toString(),
+                id = Uuid.random().toString(),
                 type = HazardType.PPE_VIOLATION,
                 severity = Severity.HIGH,
                 description = "Worker detected without required hard hat",
@@ -159,7 +163,7 @@ class YOLO11LocalService : AIPhotoAnalyzer {
             )
 
             "person-no-vest", "worker-no-safety-vest" -> Hazard(
-                id = uuid4().toString(),
+                id = Uuid.random().toString(),
                 type = HazardType.PPE_VIOLATION,
                 severity = Severity.MEDIUM,
                 description = "Worker not wearing high-visibility safety vest",
@@ -173,7 +177,7 @@ class YOLO11LocalService : AIPhotoAnalyzer {
             )
 
             "unguarded-edge", "fall-hazard", "open-edge" -> Hazard(
-                id = uuid4().toString(),
+                id = Uuid.random().toString(),
                 type = HazardType.FALL_PROTECTION,
                 severity = Severity.CRITICAL,
                 description = "Unguarded edge or fall hazard detected",
@@ -189,7 +193,7 @@ class YOLO11LocalService : AIPhotoAnalyzer {
             )
 
             "electrical-panel-open", "exposed-wiring" -> Hazard(
-                id = uuid4().toString(),
+                id = Uuid.random().toString(),
                 type = HazardType.ELECTRICAL_HAZARD,
                 severity = Severity.HIGH,
                 description = "Electrical hazard - open panel or exposed wiring",
@@ -204,7 +208,7 @@ class YOLO11LocalService : AIPhotoAnalyzer {
             )
 
             "scaffold-unsafe", "scaffold-no-guardrail" -> Hazard(
-                id = uuid4().toString(),
+                id = Uuid.random().toString(),
                 type = HazardType.SCAFFOLDING_UNSAFE,
                 severity = Severity.HIGH,
                 description = "Unsafe scaffolding configuration detected",
@@ -219,7 +223,7 @@ class YOLO11LocalService : AIPhotoAnalyzer {
             )
 
             "ladder-unsafe", "ladder-improper-angle" -> Hazard(
-                id = uuid4().toString(),
+                id = Uuid.random().toString(),
                 type = HazardType.FALL_PROTECTION,
                 severity = Severity.MEDIUM,
                 description = "Ladder safety issue detected",
@@ -356,7 +360,7 @@ class YOLO11LocalService : AIPhotoAnalyzer {
         // YOLO can detect objects but has limited contextual understanding
         hazards.add(
             Hazard(
-                id = uuid4().toString(),
+                id = Uuid.random().toString(),
                 type = HazardType.PPE_VIOLATION,
                 severity = Severity.MEDIUM,
                 description = "Person detected without visible hard hat",
@@ -367,13 +371,13 @@ class YOLO11LocalService : AIPhotoAnalyzer {
                 )
             )
         )
-        
+
         // Limited detection for specific work types
         when (workType) {
             WorkType.FALL_PROTECTION, WorkType.ROOFING, WorkType.SCAFFOLDING -> {
                 hazards.add(
                     Hazard(
-                        id = uuid4().toString(),
+                        id = Uuid.random().toString(),
                         type = HazardType.FALL_PROTECTION,
                         severity = Severity.HIGH,
                         description = "Elevated work area detected - fall protection status unclear",
@@ -388,7 +392,7 @@ class YOLO11LocalService : AIPhotoAnalyzer {
             WorkType.ELECTRICAL -> {
                 hazards.add(
                     Hazard(
-                        id = uuid4().toString(),
+                        id = Uuid.random().toString(),
                         type = HazardType.ELECTRICAL_HAZARD,
                         severity = Severity.MEDIUM,
                         description = "Electrical equipment detected in work area",
@@ -406,8 +410,9 @@ class YOLO11LocalService : AIPhotoAnalyzer {
         }
         
         return SafetyAnalysis(
-            id = uuid4().toString(),
-            timestamp = Clock.System.now().toEpochMilliseconds(),
+            id = Uuid.random().toString(),
+            photoId = "photo-${Uuid.random()}",
+            timestamp = Clock.System.now(),
             analysisType = AnalysisType.LOCAL_YOLO_FALLBACK,
             workType = workType,
             hazards = hazards,
@@ -427,7 +432,8 @@ class YOLO11LocalService : AIPhotoAnalyzer {
                 "Consider improving network connectivity for comprehensive analysis"
             ),
             overallRiskLevel = RiskLevel.MODERATE, // Conservative assessment
-            confidence = 0.62f, // Lower confidence for basic detection
+            severity = hazards.maxOfOrNull { it.severity } ?: Severity.LOW,
+            aiConfidence = 0.62f, // Lower confidence for basic detection
             processingTimeMs = Clock.System.now().toEpochMilliseconds() - startTime,
             oshaViolations = emptyList() // YOLO cannot reliably determine OSHA violations
         )

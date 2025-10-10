@@ -1,8 +1,8 @@
 package com.hazardhawk.models
 
-import com.hazardhawk.models.ReportTemplate
-import com.hazardhawk.models.ReportType
-import com.hazardhawk.models.ReportSection
+import com.hazardhawk.core.models.ReportTemplate
+import com.hazardhawk.core.models.ReportType
+import com.hazardhawk.core.models.ReportSection
 
 /**
  * Simplified safety report templates factory

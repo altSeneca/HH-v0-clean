@@ -1,6 +1,6 @@
 package com.hazardhawk.documents.templates
 
-import com.hazardhawk.ai.models.WorkType
+import com.hazardhawk.core.models.WorkType
 import com.hazardhawk.documents.models.PTPDocument
 
 /**

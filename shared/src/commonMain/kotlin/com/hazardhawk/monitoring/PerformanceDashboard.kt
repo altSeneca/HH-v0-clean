@@ -11,9 +11,9 @@ import com.hazardhawk.security.audit.RealTimeMonitoringSystem
 import com.hazardhawk.security.audit.MonitoringDashboardData
 import com.hazardhawk.ai.AIPerformanceOptimizer
 import com.hazardhawk.ai.CurrentPerformanceAnalysis
-import com.hazardhawk.domain.entities.WorkType
-import com.hazardhawk.models.Severity
-import com.hazardhawk.models.AlertType
+import com.hazardhawk.core.models.WorkType
+import com.hazardhawk.core.models.Severity
+import com.hazardhawk.core.models.AlertType
 
 /**
  * Phase 3 Real-time Performance Dashboard

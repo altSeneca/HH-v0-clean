@@ -5,7 +5,6 @@ import com.hazardhawk.models.crew.Company
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.datetime.Clock
 
 /**
  * Implementation of CompanyRepository with in-memory storage.
@@ -16,6 +15,10 @@ class CompanyRepositoryImpl : CompanyRepository {
     // In-memory storage
     private val companies = mutableMapOf<String, Company>()
     private val companiesFlow = MutableStateFlow<List<Company>>(emptyList())
+    
+    // Separate storage for settings and metadata not in Company model
+    private val companySettings = mutableMapOf<String, MutableMap<String, String>>()
+    private val companyMaxWorkers = mutableMapOf<String, Int>()
 
     // ===== Core CRUD Operations =====
 
@@ -23,11 +26,11 @@ class CompanyRepositoryImpl : CompanyRepository {
         return companies[companyId]
     }
 
-    override suspend fun getCompanyBySubdomain(subdomain: String): Company? {
+    suspend fun getCompanyBySubdomain(subdomain: String): Company? {
         return companies.values.find { it.subdomain == subdomain }
     }
 
-    override suspend fun updateCompany(
+    suspend fun updateCompany(
         companyId: String,
         name: String?,
         address: String?,
@@ -47,10 +50,13 @@ class CompanyRepositoryImpl : CompanyRepository {
                 city = city ?: company.city,
                 state = state ?: company.state,
                 zip = zip ?: company.zip,
-                phone = phone ?: company.phone,
-                settings = settings ?: company.settings,
-                updatedAt = Clock.System.now().toString()
+                phone = phone ?: company.phone
             )
+
+            // Store settings separately
+            settings?.let {
+                companySettings[companyId] = it.toMutableMap()
+            }
 
             companies[companyId] = updated
             emitCompaniesUpdate()
@@ -61,7 +67,7 @@ class CompanyRepositoryImpl : CompanyRepository {
         }
     }
 
-    override suspend fun uploadCompanyLogo(
+    suspend fun uploadCompanyLogo(
         companyId: String,
         logoData: ByteArray,
         fileName: String
@@ -70,14 +76,13 @@ class CompanyRepositoryImpl : CompanyRepository {
         return Result.failure(NotImplementedError("Logo upload not yet implemented"))
     }
 
-    override suspend fun deleteCompanyLogo(companyId: String): Result<Unit> {
+    suspend fun deleteCompanyLogo(companyId: String): Result<Unit> {
         return try {
             val company = companies[companyId]
                 ?: return Result.failure(IllegalArgumentException("Company not found"))
 
             companies[companyId] = company.copy(
-                logoUrl = null,
-                updatedAt = Clock.System.now().toString()
+                logoUrl = null
             )
             emitCompaniesUpdate()
 
@@ -89,11 +94,11 @@ class CompanyRepositoryImpl : CompanyRepository {
 
     // ===== Settings Management =====
 
-    override suspend fun getCompanySettings(companyId: String): Map<String, String> {
-        return companies[companyId]?.settings ?: emptyMap()
+    suspend fun getCompanySettings(companyId: String): Map<String, String> {
+        return companySettings[companyId] ?: emptyMap()
     }
 
-    override suspend fun updateCompanySettings(
+    suspend fun updateCompanySettings(
         companyId: String,
         settings: Map<String, String>
     ): Result<Unit> {
@@ -101,11 +106,7 @@ class CompanyRepositoryImpl : CompanyRepository {
             val company = companies[companyId]
                 ?: return Result.failure(IllegalArgumentException("Company not found"))
 
-            companies[companyId] = company.copy(
-                settings = settings,
-                updatedAt = Clock.System.now().toString()
-            )
-            emitCompaniesUpdate()
+            companySettings[companyId] = settings.toMutableMap()
 
             Result.success(Unit)
         } catch (e: Exception) {
@@ -113,14 +114,14 @@ class CompanyRepositoryImpl : CompanyRepository {
         }
     }
 
-    override suspend fun getSettingValue(
+    suspend fun getSettingValue(
         companyId: String,
         key: String
     ): String? {
-        return companies[companyId]?.settings?.get(key)
+        return companySettings[companyId]?.get(key)
     }
 
-    override suspend fun updateSetting(
+    suspend fun updateSetting(
         companyId: String,
         key: String,
         value: String
@@ -129,14 +130,8 @@ class CompanyRepositoryImpl : CompanyRepository {
             val company = companies[companyId]
                 ?: return Result.failure(IllegalArgumentException("Company not found"))
 
-            val updatedSettings = company.settings.toMutableMap()
-            updatedSettings[key] = value
-
-            companies[companyId] = company.copy(
-                settings = updatedSettings,
-                updatedAt = Clock.System.now().toString()
-            )
-            emitCompaniesUpdate()
+            val settings = companySettings.getOrPut(companyId) { mutableMapOf() }
+            settings[key] = value
 
             Result.success(Unit)
         } catch (e: Exception) {
@@ -146,11 +141,11 @@ class CompanyRepositoryImpl : CompanyRepository {
 
     // ===== Tier Management =====
 
-    override suspend fun getCompanyTier(companyId: String): String? {
+    suspend fun getCompanyTier(companyId: String): String? {
         return companies[companyId]?.tier
     }
 
-    override suspend fun updateCompanyTier(
+    suspend fun updateCompanyTier(
         companyId: String,
         tier: String
     ): Result<Unit> {
@@ -159,8 +154,7 @@ class CompanyRepositoryImpl : CompanyRepository {
                 ?: return Result.failure(IllegalArgumentException("Company not found"))
 
             companies[companyId] = company.copy(
-                tier = tier,
-                updatedAt = Clock.System.now().toString()
+                tier = tier
             )
             emitCompaniesUpdate()
 
@@ -170,11 +164,11 @@ class CompanyRepositoryImpl : CompanyRepository {
         }
     }
 
-    override suspend fun getMaxWorkers(companyId: String): Int {
-        return companies[companyId]?.maxWorkers ?: 100
+    suspend fun getMaxWorkers(companyId: String): Int {
+        return companyMaxWorkers[companyId] ?: 100
     }
 
-    override suspend fun updateMaxWorkers(
+    suspend fun updateMaxWorkers(
         companyId: String,
         maxWorkers: Int
     ): Result<Unit> {
@@ -182,11 +176,7 @@ class CompanyRepositoryImpl : CompanyRepository {
             val company = companies[companyId]
                 ?: return Result.failure(IllegalArgumentException("Company not found"))
 
-            companies[companyId] = company.copy(
-                maxWorkers = maxWorkers,
-                updatedAt = Clock.System.now().toString()
-            )
-            emitCompaniesUpdate()
+            companyMaxWorkers[companyId] = maxWorkers
 
             Result.success(Unit)
         } catch (e: Exception) {
@@ -196,7 +186,7 @@ class CompanyRepositoryImpl : CompanyRepository {
 
     // ===== Reactive Queries =====
 
-    override fun observeCompany(companyId: String): Flow<Company?> {
+    fun observeCompany(companyId: String): Flow<Company?> {
         return companiesFlow.map { allCompanies ->
             allCompanies.find { it.id == companyId }
         }

@@ -3,8 +3,8 @@ package com.hazardhawk.ai.yolo
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.datetime.Clock
-import com.hazardhawk.domain.entities.WorkType
-import com.hazardhawk.models.SafetyAnalysis
+import com.hazardhawk.core.models.WorkType
+import com.hazardhawk.core.models.SafetyAnalysis
 
 /**
  * YOLO11 Safety Analyzer Usage Examples

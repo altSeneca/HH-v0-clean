@@ -1,8 +1,8 @@
 package com.hazardhawk.ai.core
 
-import com.hazardhawk.ai.models.SafetyAnalysis
-import com.hazardhawk.ai.models.WorkType
-import com.hazardhawk.ai.models.AnalysisCapability
+import com.hazardhawk.core.models.SafetyAnalysis
+import com.hazardhawk.core.models.WorkType
+import com.hazardhawk.core.models.AnalysisCapability
 
 /**
  * Enhanced interface for AI photo analysis services in HazardHawk.

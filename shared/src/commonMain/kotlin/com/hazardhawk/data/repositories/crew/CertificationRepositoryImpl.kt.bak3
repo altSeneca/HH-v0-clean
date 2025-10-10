@@ -1,0 +1,601 @@
+package com.hazardhawk.data.repositories.crew
+
+import com.hazardhawk.domain.repositories.*
+import com.hazardhawk.models.crew.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
+import com.hazardhawk.models.common.*
+
+/**
+ * Implementation of CertificationRepository with in-memory storage.
+ * TODO: Replace with actual API client, database, and OCR integration
+ */
+class CertificationRepositoryImpl : CertificationRepository {
+
+    // In-memory storage
+    private val certifications = mutableMapOf<String, WorkerCertification>()
+    private val certificationTypes = mutableMapOf<String, CertificationType>()
+    private val certificationsFlow = MutableStateFlow<List<WorkerCertification>>(emptyList())
+
+    init {
+        // Pre-seed common certification types
+        seedCertificationTypes()
+    }
+
+    // ===== Core CRUD Operations =====
+
+    override suspend fun createCertification(
+        workerProfileId: String,
+        companyId: String?,
+        request: CreateCertificationRequest
+    ): Result<WorkerCertification> {
+        return try {
+            val now = Clock.System.now().toString()
+            val certId = generateId()
+
+            val certification = WorkerCertification(
+                id = certId,
+                workerProfileId = workerProfileId,
+                companyId = companyId,
+                certificationTypeId = request.certificationTypeId,
+                certificationNumber = request.certificationNumber,
+                issueDate = request.issueDate,
+                expirationDate = request.expirationDate,
+                issuingAuthority = request.issuingAuthority,
+                documentUrl = request.documentUrl,
+                status = CertificationStatus.PENDING_VERIFICATION,
+                createdAt = now,
+                updatedAt = now,
+                certificationType = certificationTypes[request.certificationTypeId]
+            )
+
+            certifications[certId] = certification
+            emitCertificationsUpdate()
+
+            Result.success(certification)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getCertification(
+        certificationId: String,
+        includeType: Boolean
+    ): WorkerCertification? {
+        return certifications[certificationId]?.let { cert ->
+            if (includeType && cert.certificationType == null) {
+                cert.copy(certificationType = certificationTypes[cert.certificationTypeId])
+            } else {
+                cert
+            }
+        }
+    }
+
+    override suspend fun updateCertification(
+        certificationId: String,
+        issueDate: LocalDate?,
+        expirationDate: LocalDate?,
+        issuingAuthority: String?,
+        certificationNumber: String?
+    ): Result<WorkerCertification> {
+        return try {
+            val cert = certifications[certificationId]
+                ?: return Result.failure(IllegalArgumentException("Certification not found"))
+
+            val updated = cert.copy(
+                issueDate = issueDate ?: cert.issueDate,
+                expirationDate = expirationDate ?: cert.expirationDate,
+                issuingAuthority = issuingAuthority ?: cert.issuingAuthority,
+                certificationNumber = certificationNumber ?: cert.certificationNumber,
+                updatedAt = Clock.System.now().toString()
+            )
+
+            certifications[certificationId] = updated
+            emitCertificationsUpdate()
+
+            Result.success(updated)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun deleteCertification(certificationId: String): Result<Unit> {
+        return try {
+            certifications.remove(certificationId)
+            emitCertificationsUpdate()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // ===== Certification Queries =====
+
+    override suspend fun getWorkerCertifications(
+        workerProfileId: String,
+        status: CertificationStatus?,
+        includeExpired: Boolean
+    ): List<WorkerCertification> {
+        return certifications.values
+            .filter { it.workerProfileId == workerProfileId }
+            .filter { status == null || it.status == status }
+            .filter { includeExpired || !it.isExpired }
+    }
+
+    override suspend fun getCompanyCertifications(
+        companyId: String,
+        status: CertificationStatus?,
+        pagination: PaginationRequest
+    ): PaginatedResult<WorkerCertification> {
+        var filtered = certifications.values.filter { it.companyId == companyId }
+
+        status?.let { s ->
+            filtered = filtered.filter { it.status == s }
+        }
+
+        val sorted = filtered.sortedByDescending { it.createdAt }
+        val pageSize = pagination.pageSize.coerceIn(1, 100)
+        val startIndex = pagination.cursor?.toIntOrNull() ?: 0
+        val endIndex = (startIndex + pageSize).coerceAtMost(sorted.size)
+        val page = sorted.subList(startIndex, endIndex)
+
+        return PaginatedResult(
+            data = page,
+            pagination = PaginationInfo(
+                nextCursor = if (endIndex < sorted.size) endIndex.toString() else null,
+                hasMore = endIndex < sorted.size,
+                totalCount = filtered.size
+            )
+        )
+    }
+
+    override suspend fun getCertificationsByType(
+        companyId: String,
+        certificationTypeId: String,
+        status: CertificationStatus
+    ): List<WorkerCertification> {
+        return certifications.values.filter {
+            it.companyId == companyId &&
+            it.certificationTypeId == certificationTypeId &&
+            it.status == status
+        }
+    }
+
+    // ===== Verification =====
+
+    override suspend fun approveCertification(
+        certificationId: String,
+        verifiedBy: String,
+        notes: String?
+    ): Result<WorkerCertification> {
+        return try {
+            val cert = certifications[certificationId]
+                ?: return Result.failure(IllegalArgumentException("Certification not found"))
+
+            val updated = cert.copy(
+                status = CertificationStatus.VERIFIED,
+                verifiedBy = verifiedBy,
+                verifiedAt = Clock.System.now().toString(),
+                updatedAt = Clock.System.now().toString()
+            )
+
+            certifications[certificationId] = updated
+            emitCertificationsUpdate()
+
+            Result.success(updated)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun rejectCertification(
+        certificationId: String,
+        verifiedBy: String,
+        reason: String
+    ): Result<WorkerCertification> {
+        return try {
+            val cert = certifications[certificationId]
+                ?: return Result.failure(IllegalArgumentException("Certification not found"))
+
+            val updated = cert.copy(
+                status = CertificationStatus.REJECTED,
+                verifiedBy = verifiedBy,
+                verifiedAt = Clock.System.now().toString(),
+                rejectionReason = reason,
+                updatedAt = Clock.System.now().toString()
+            )
+
+            certifications[certificationId] = updated
+            emitCertificationsUpdate()
+
+            Result.success(updated)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getPendingCertifications(
+        companyId: String,
+        limit: Int
+    ): List<WorkerCertification> {
+        return certifications.values
+            .filter { it.companyId == companyId && it.status == CertificationStatus.PENDING_VERIFICATION }
+            .sortedBy { it.createdAt }
+            .take(limit)
+    }
+
+    // ===== Expiration Tracking =====
+
+    override suspend fun getExpiringCertifications(
+        companyId: String,
+        daysUntilExpiration: Int
+    ): List<WorkerCertification> {
+        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+        val cutoffDate = LocalDate(
+            today.year,
+            today.monthNumber,
+            today.dayOfMonth
+        )
+
+        return certifications.values
+            .filter { it.companyId == companyId && it.status == CertificationStatus.VERIFIED }
+            .filter { cert ->
+                cert.expirationDate?.let { expDate ->
+                    val daysRemaining = expDate.toEpochDays() - cutoffDate.toEpochDays()
+                    daysRemaining in 1..daysUntilExpiration
+                } ?: false
+            }
+            .sortedBy { it.expirationDate }
+    }
+
+    override suspend fun getExpiredCertifications(
+        companyId: String,
+        limit: Int
+    ): List<WorkerCertification> {
+        return certifications.values
+            .filter { it.companyId == companyId && it.isExpired }
+            .sortedByDescending { it.expirationDate }
+            .take(limit)
+    }
+
+    override suspend fun markCertificationsExpired(
+        certificationIds: List<String>
+    ): Result<Int> {
+        return try {
+            var count = 0
+            certificationIds.forEach { certId ->
+                certifications[certId]?.let { cert ->
+                    certifications[certId] = cert.copy(
+                        status = CertificationStatus.EXPIRED,
+                        updatedAt = Clock.System.now().toString()
+                    )
+                    count++
+                }
+            }
+            emitCertificationsUpdate()
+            Result.success(count)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getWorkersWithExpiringCerts(
+        companyId: String,
+        daysUntilExpiration: Int
+    ): Map<String, List<WorkerCertification>> {
+        val expiringCerts = getExpiringCertifications(companyId, daysUntilExpiration)
+        return expiringCerts.groupBy { it.workerProfileId }
+    }
+
+    // ===== OCR and Document Processing =====
+
+    override suspend fun uploadCertificationDocument(
+        workerProfileId: String,
+        companyId: String?,
+        documentData: ByteArray,
+        fileName: String,
+        mimeType: String
+    ): Result<CertificationUploadResult> {
+        // TODO: Implement S3 upload and OCR processing
+        return Result.failure(NotImplementedError("Document upload not yet implemented"))
+    }
+
+    override suspend fun processCertificationOCR(
+        workerProfileId: String,
+        companyId: String?,
+        documentUrl: String,
+        ocrData: OCRExtractedData
+    ): Result<WorkerCertification> {
+        // TODO: Process OCR data and create certification
+        return Result.failure(NotImplementedError("OCR processing not yet implemented"))
+    }
+
+    // ===== Certification Types =====
+
+    override suspend fun getCertificationTypes(
+        category: String?,
+        region: String
+    ): List<CertificationType> {
+        return certificationTypes.values
+            .filter { category == null || it.category == category }
+            .filter { it.region == region || it.region == "GLOBAL" }
+    }
+
+    override suspend fun getCertificationTypeByCode(code: String): CertificationType? {
+        return certificationTypes.values.find { it.code == code }
+    }
+
+    override suspend fun searchCertificationTypes(
+        query: String,
+        limit: Int
+    ): List<CertificationType> {
+        return certificationTypes.values
+            .filter {
+                it.code.contains(query, ignoreCase = true) ||
+                it.name.contains(query, ignoreCase = true)
+            }
+            .take(limit)
+    }
+
+    // ===== Statistics =====
+
+    override suspend fun getCertificationCountByStatus(companyId: String): Map<CertificationStatus, Int> {
+        return certifications.values
+            .filter { it.companyId == companyId }
+            .groupingBy { it.status }
+            .eachCount()
+    }
+
+    override suspend fun getCertificationCountByType(companyId: String): Map<String, Int> {
+        return certifications.values
+            .filter { it.companyId == companyId }
+            .groupingBy { it.certificationType?.code ?: "UNKNOWN" }
+            .eachCount()
+    }
+
+    override suspend fun getComplianceMetrics(companyId: String): CertificationComplianceMetrics {
+        val companyCerts = certifications.values.filter { it.companyId == companyId }
+        val verified = companyCerts.count { it.status == CertificationStatus.VERIFIED && !it.isExpired }
+        val pending = companyCerts.count { it.status == CertificationStatus.PENDING_VERIFICATION }
+        val expired = companyCerts.count { it.isExpired }
+        val expiring = getExpiringCertifications(companyId, 30).size
+        val uniqueWorkers = companyCerts.map { it.workerProfileId }.toSet().size
+        val workersWithExpired = companyCerts.filter { it.isExpired }
+            .map { it.workerProfileId }.toSet().size
+
+        return CertificationComplianceMetrics(
+            totalCertifications = companyCerts.size,
+            verifiedCertifications = verified,
+            pendingCertifications = pending,
+            expiredCertifications = expired,
+            expiringWithin30Days = expiring,
+            complianceRate = if (companyCerts.isNotEmpty()) {
+                (verified.toDouble() / companyCerts.size) * 100
+            } else 0.0,
+            workersCertified = uniqueWorkers,
+            workersWithExpiredCerts = workersWithExpired
+        )
+    }
+
+    // ===== Reactive Queries =====
+
+    override fun observeWorkerCertifications(
+        workerProfileId: String
+    ): Flow<List<WorkerCertification>> {
+        return certificationsFlow.map { allCerts ->
+            allCerts.filter { it.workerProfileId == workerProfileId }
+        }
+    }
+
+    override fun observePendingCertifications(companyId: String): Flow<List<WorkerCertification>> {
+        return certificationsFlow.map { allCerts ->
+            allCerts.filter {
+                it.companyId == companyId && it.status == CertificationStatus.PENDING_VERIFICATION
+            }
+        }
+    }
+
+    override fun observeExpiringCertifications(
+        companyId: String,
+        daysUntilExpiration: Int
+    ): Flow<List<WorkerCertification>> {
+        return certificationsFlow.map {
+            getExpiringCertifications(companyId, daysUntilExpiration)
+        }
+    }
+
+    // ===== Helper Methods =====
+
+    private fun emitCertificationsUpdate() {
+        certificationsFlow.value = certifications.values.toList()
+    }
+
+    private fun generateId(): String {
+        return "cert_${Clock.System.now().toEpochMilliseconds()}_${(0..999).random()}"
+    }
+
+    private fun seedCertificationTypes() {
+        val types = listOf(
+            CertificationType(
+                id = "type_osha_10",
+                code = "OSHA_10",
+                name = "OSHA 10-Hour Construction Safety",
+                category = "safety_training",
+                region = "US",
+                typicalDurationMonths = 60,
+                renewalRequired = true,
+            ),
+            CertificationType(
+                id = "type_osha_30",
+                code = "OSHA_30",
+                name = "OSHA 30-Hour Construction Safety",
+                category = "safety_training",
+                region = "US",
+                typicalDurationMonths = 60,
+                renewalRequired = true,
+            ),
+            CertificationType(
+                id = "type_forklift",
+                code = "FORKLIFT",
+                name = "Forklift Operator Certification",
+                category = "equipment_operation",
+                region = "US",
+                typicalDurationMonths = 36,
+                renewalRequired = true
+            ),
+            CertificationType(
+                id = "type_cpr",
+                code = "CPR",
+                name = "CPR/First Aid Certification",
+                category = "emergency_response",
+                region = "GLOBAL",
+                typicalDurationMonths = 24,
+                renewalRequired = true,
+            ),
+            CertificationType(
+                id = "type_scaffold",
+                code = "SCAFFOLD",
+                name = "Scaffold Competent Person",
+                category = "safety_training",
+                region = "US",
+                typicalDurationMonths = 60,
+                renewalRequired = true
+            )
+        )
+
+        types.forEach { certificationTypes[it.id] = it }
+    }
+
+    // ===== Expiration Reminders =====
+
+    override suspend fun sendExpirationReminder(
+        certificationId: String,
+        channels: List<NotificationChannel>
+    ): Result<ExpirationReminderResult> {
+        return try {
+            val cert = certifications[certificationId]
+                ?: return Result.failure(IllegalArgumentException("Certification not found"))
+
+            // TODO: Implement actual notification sending
+            val result = ExpirationReminderResult(
+                certificationId = certificationId,
+                workerName = null, // TODO: Fetch worker name
+                certificationType = cert.certificationType?.name ?: "Unknown",
+                expirationDate = cert.expirationDate,
+                sentChannels = channels,
+                failedChannels = emptyList(),
+                sentAt = Clock.System.now().toString()
+            )
+
+            Result.success(result)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun sendBulkExpirationReminders(
+        certificationIds: List<String>,
+        channels: List<NotificationChannel>
+    ): Result<BulkReminderResult> {
+        return try {
+            val results = mutableListOf<ExpirationReminderResult>()
+            var successCount = 0
+            var failureCount = 0
+
+            certificationIds.forEach { certId ->
+                when (val result = sendExpirationReminder(certId, channels)) {
+                    is Result.Success -> {
+                        results.add(result.getOrThrow())
+                        successCount++
+                    }
+                    is Result.Failure -> {
+                        failureCount++
+                    }
+                }
+            }
+
+            val bulkResult = BulkReminderResult(
+                totalRequested = certificationIds.size,
+                successCount = successCount,
+                failureCount = failureCount,
+                results = results
+            )
+
+            Result.success(bulkResult)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // ===== Bulk Operations =====
+
+    override suspend fun importCertificationsFromCSV(
+        companyId: String,
+        csvData: String,
+        validateOnly: Boolean
+    ): Result<CSVImportResult> {
+        // TODO: Implement CSV import
+        return Result.failure(NotImplementedError("CSV import not yet implemented"))
+    }
+
+    // ===== Advanced Search =====
+
+    override suspend fun searchCertifications(
+        companyId: String,
+        filters: CertificationSearchFilters
+    ): PaginatedResult<WorkerCertification> {
+        var filtered = certifications.values.filter { it.companyId == companyId }
+
+        filters.status?.let { status ->
+            filtered = filtered.filter { it.status == status }
+        }
+
+        filters.certificationTypeIds?.let { typeIds ->
+            filtered = filtered.filter { it.certificationTypeId in typeIds }
+        }
+
+        filters.workerIds?.let { workerIds ->
+            filtered = filtered.filter { it.workerProfileId in workerIds }
+        }
+
+        filters.query?.let { query ->
+            filtered = filtered.filter { cert ->
+                cert.certificationNumber?.contains(query, ignoreCase = true) == true ||
+                cert.certificationType?.name?.contains(query, ignoreCase = true) == true
+            }
+        }
+
+        val sorted = when (filters.sortBy) {
+            CertificationSortField.EXPIRATION_DATE -> filtered.sortedBy { it.expirationDate }
+            CertificationSortField.ISSUE_DATE -> filtered.sortedBy { it.issueDate }
+            CertificationSortField.CREATED_AT -> filtered.sortedBy { it.createdAt }
+            CertificationSortField.UPDATED_AT -> filtered.sortedBy { it.updatedAt }
+            else -> filtered
+        }
+
+        val finalSorted = if (filters.sortDirection == SortDirection.DESC) {
+            sorted.reversed()
+        } else {
+            sorted
+        }
+
+        val pageSize = filters.pagination.pageSize.coerceIn(1, 100)
+        val startIndex = filters.pagination.cursor?.toIntOrNull() ?: 0
+        val endIndex = (startIndex + pageSize).coerceAtMost(finalSorted.size)
+        val page = finalSorted.subList(startIndex, endIndex)
+
+        return PaginatedResult(
+            data = page,
+            pagination = PaginationInfo(
+                nextCursor = if (endIndex < finalSorted.size) endIndex.toString() else null,
+                hasMore = endIndex < finalSorted.size,
+                totalCount = filtered.size
+            )
+        )
+    }
+}

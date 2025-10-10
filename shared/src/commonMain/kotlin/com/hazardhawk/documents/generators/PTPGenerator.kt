@@ -1,7 +1,7 @@
 package com.hazardhawk.documents.generators
 import kotlinx.datetime.Clock
 
-import com.hazardhawk.ai.models.*
+import com.hazardhawk.core.models.*
 import com.hazardhawk.documents.models.*
 import com.hazardhawk.documents.templates.PTPTemplateEngine
 import kotlinx.coroutines.Dispatchers

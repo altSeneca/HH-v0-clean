@@ -1,6 +1,6 @@
 package com.hazardhawk.domain.services
 
-import com.hazardhawk.models.crew.CertificationStatus
+import com.hazardhawk.core.models.crew.CertificationStatus
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlin.test.*

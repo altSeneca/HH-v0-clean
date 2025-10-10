@@ -2,11 +2,11 @@ package com.hazardhawk.data.models
 
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
-import com.hazardhawk.models.ComplianceStatus
-import com.hazardhawk.models.TagSource
-import com.hazardhawk.models.PhotoTag
-import com.hazardhawk.models.GpsLocation
-import com.hazardhawk.models.DigitalSignature
+import com.hazardhawk.core.models.ComplianceStatus
+import com.hazardhawk.core.models.TagSource
+import com.hazardhawk.core.models.PhotoTag
+import com.hazardhawk.core.models.GpsLocation
+import com.hazardhawk.core.models.DigitalSignature
 
 /**
  * SQLDelight query result mapping class for photo-tag associations

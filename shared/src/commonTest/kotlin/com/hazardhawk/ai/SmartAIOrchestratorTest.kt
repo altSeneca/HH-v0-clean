@@ -9,7 +9,7 @@ import com.hazardhawk.ai.core.ConnectionQuality
 import com.hazardhawk.ai.services.Gemma3NE2BVisionService
 import com.hazardhawk.ai.services.VertexAIGeminiService
 import com.hazardhawk.ai.services.YOLO11LocalService
-import com.hazardhawk.ai.models.*
+import com.hazardhawk.core.models.*
 import kotlinx.coroutines.test.runTest
 import kotlin.test.*
 

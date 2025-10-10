@@ -1,7 +1,7 @@
 package com.hazardhawk.documents.models
 
-import com.hazardhawk.ai.models.Hazard
-import com.hazardhawk.ai.models.WorkType
+import com.hazardhawk.core.models.Hazard
+import com.hazardhawk.core.models.WorkType
 import kotlinx.serialization.Serializable
 
 /**

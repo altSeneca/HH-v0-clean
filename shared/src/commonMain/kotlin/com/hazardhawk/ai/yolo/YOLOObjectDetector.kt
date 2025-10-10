@@ -2,7 +2,7 @@ package com.hazardhawk.ai.yolo
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
-import com.hazardhawk.domain.entities.WorkType
+import com.hazardhawk.core.models.WorkType
 
 /**
  * Cross-platform YOLO object detection interface using expect/actual pattern.

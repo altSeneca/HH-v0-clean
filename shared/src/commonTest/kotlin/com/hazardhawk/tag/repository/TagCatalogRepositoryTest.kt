@@ -1,7 +1,7 @@
 package com.hazardhawk.tag.repository
 
 import com.hazardhawk.data.repositories.TagRepositoryImpl
-import com.hazardhawk.models.Tag
+import com.hazardhawk.core.models.Tag
 import com.hazardhawk.test.TestDataFactory
 import com.hazardhawk.test.MockInMemoryDatabase
 import io.mockk.*

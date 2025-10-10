@@ -3,6 +3,8 @@ import kotlinx.datetime.Clock
 
 import com.hazardhawk.performance.DeviceTierDetector
 import com.hazardhawk.performance.DeviceTier
+import com.hazardhawk.platform.IDeviceInfo
+import com.hazardhawk.platform.createPlatformDeviceInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -18,7 +20,8 @@ import kotlinx.coroutines.withContext
  */
 class LiteRTDeviceOptimizer(
     private val deviceTierDetector: DeviceTierDetector,
-    private val modelEngine: LiteRTModelEngine
+    private val modelEngine: LiteRTModelEngine,
+    private val platformDeviceInfo: IDeviceInfo = createPlatformDeviceInfo()
 ) {
     
     private var cachedOptimalBackend: LiteRTBackend? = null
@@ -61,19 +64,19 @@ class LiteRTDeviceOptimizer(
         val thermalState = deviceTierDetector.getCurrentThermalState()
         val memoryInfo = deviceTierDetector.getMemoryInfo()
         val supportedBackends = modelEngine.supportedBackends
-        
+
         return DeviceCapabilities(
             deviceTier = deviceTier,
             thermalState = thermalState,
             totalMemoryGB = memoryInfo.totalMemoryMB / 1024f,
             availableMemoryGB = memoryInfo.availableMemoryMB / 1024f,
             supportedBackends = supportedBackends,
-            batteryLevel = getBatteryLevel(),
-            powerSaveMode = isPowerSaveModeEnabled(),
-            cpuCoreCount = getCpuCoreCount(),
-            gpuVendor = detectGpuVendor(),
+            batteryLevel = platformDeviceInfo.getBatteryLevel(),
+            powerSaveMode = platformDeviceInfo.isPowerSaveModeEnabled(),
+            cpuCoreCount = platformDeviceInfo.getCpuCoreCount(),
+            gpuVendor = platformDeviceInfo.detectGpuVendor(),
             hasNPU = supportedBackends.any { it.isNPU() },
-            hasHighPerformanceGPU = hasHighPerformanceGpu()
+            hasHighPerformanceGPU = platformDeviceInfo.hasHighPerformanceGpu()
         )
     }
     
@@ -310,14 +313,13 @@ class LiteRTDeviceOptimizer(
             )
         }
     }
-    
-    // Platform-specific implementations (expect/actual pattern)
-    private expect fun getBatteryLevel(): Int
-    private expect fun isPowerSaveModeEnabled(): Boolean
-    private expect fun getCpuCoreCount(): Int
-    private expect fun detectGpuVendor(): GpuVendor
-    private expect fun hasHighPerformanceGpu(): Boolean
 }
+
+/**
+ * Platform-specific device information is now provided via IDeviceInfo interface.
+ * See: com.hazardhawk.platform.IDeviceInfo
+ * Implementations in androidMain and iosMain provide actual device capabilities.
+ */
 
 /**
  * Device capabilities analysis result.

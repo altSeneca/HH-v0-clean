@@ -1,31 +1,32 @@
 package com.hazardhawk.ai.services
-import kotlinx.datetime.Clock
 
+import kotlinx.datetime.Clock
 import com.hazardhawk.ai.core.AIPhotoAnalyzer
-import com.hazardhawk.ai.models.SafetyAnalysis
-import com.hazardhawk.ai.litert.*
 import com.hazardhawk.core.models.*
+import com.hazardhawk.ai.litert.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import kotlin.uuid.uuid4
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 /**
  * TensorFlow Lite powered vision service for construction safety analysis.
  * Provides on-device AI processing using converted TFLite models.
- * 
+ *
  * Key Features:
  * - Real hazard detection using TensorFlow Lite
  * - GPU/NNAPI acceleration support
  * - Compatible with existing SafetyAnalysis interfaces
  * - OSHA-compliant construction focus
  * - Zero breaking changes to UI integration
- * 
+ *
  * Performance Targets:
  * - GPU: <1.5s analysis time
- * - NNAPI: <2.0s analysis time  
+ * - NNAPI: <2.0s analysis time
  * - CPU: <3.0s analysis time
  */
+@OptIn(ExperimentalUuidApi::class)
 class TFLiteVisionService(
     private val modelEngine: Any, // Will be TFLiteModelEngine on Android
     private val deviceOptimizer: LiteRTDeviceOptimizer
@@ -68,10 +69,7 @@ class TFLiteVisionService(
     
     override suspend fun analyzePhoto(
         imageData: ByteArray,
-        workType: WorkType,
-        timestamp: Long,
-        location: String?,
-        weatherConditions: String?
+        workType: WorkType
     ): Result<SafetyAnalysis> = withContext(Dispatchers.Default) {
         
         if (!isAvailable) {
@@ -83,7 +81,7 @@ class TFLiteVisionService(
         try {
             // For now, provide a basic implementation that can be expanded
             // This ensures the service initializes and can be tested
-            val analysisId = uuid4().toString()
+            val analysisId = Uuid.random().toString()
             val startTime = Clock.System.now().toEpochMilliseconds()
             
             // Simulate processing time for now
@@ -95,128 +93,48 @@ class TFLiteVisionService(
             )
             
             val processingTime = Clock.System.now().toEpochMilliseconds() - startTime
-            
+
+            // Create basic PPE status - all items unknown for placeholder
+            val ppeStatus = PPEStatus(
+                hardHat = PPEItem(status = PPEItemStatus.UNKNOWN, confidence = 0f, required = false),
+                safetyVest = PPEItem(status = PPEItemStatus.UNKNOWN, confidence = 0f, required = false),
+                safetyBoots = PPEItem(status = PPEItemStatus.UNKNOWN, confidence = 0f, required = false),
+                safetyGlasses = PPEItem(status = PPEItemStatus.UNKNOWN, confidence = 0f, required = false),
+                fallProtection = PPEItem(status = PPEItemStatus.UNKNOWN, confidence = 0f, required = false),
+                respirator = PPEItem(status = PPEItemStatus.UNKNOWN, confidence = 0f, required = false),
+                overallCompliance = 0f
+            )
+
+            // Create empty hazards list for placeholder
+            val hazards = emptyList<Hazard>()
+
             // Create basic safety analysis result
             val safetyAnalysis = SafetyAnalysis(
-                analysisId = analysisId,
-                timestamp = timestamp,
+                id = Uuid.random().toString(),
+                photoId = "photo-${Uuid.random()}",
+                timestamp = Clock.System.now(),
+                analysisType = AnalysisType.LOCAL_YOLO_FALLBACK,
                 workType = workType,
-                location = location ?: "Unknown",
-                weatherConditions = weatherConditions,
+                hazards = hazards,
+                ppeStatus = ppeStatus,
+                recommendations = listOf("TensorFlow Lite analysis ready - awaiting model deployment"),
+                overallRiskLevel = RiskLevel.MINIMAL,
+                severity = hazards.maxOfOrNull { it.severity } ?: Severity.LOW,
+                aiConfidence = 1.0f,
                 processingTimeMs = processingTime,
-                
-                // Basic detections - will be replaced with actual TFLite results
-                hazardDetections = emptyList(),
-                ppeCompliance = PPEComplianceStatus(
-                    overallCompliant = true,
-                    detections = emptyList(),
-                    missingPPE = emptyList(),
-                    recommendations = listOf("TensorFlow Lite analysis ready - awaiting model deployment")
-                ),
-                
-                // Risk assessment
-                riskAssessment = RiskAssessment(
-                    overallRiskLevel = Severity.LOW,
-                    riskFactors = listOf("TFLite service initialized successfully"),
-                    mitigationStrategies = listOf("Deploy trained TFLite models for full analysis"),
-                    complianceStatus = "Service Ready"
-                ),
-                
-                // OSHA compliance
-                oshaCompliance = OSHAComplianceReport(
-                    violations = emptyList(),
-                    recommendations = listOf("Service configured - ready for model deployment"),
-                    complianceScore = 100.0f,
-                    applicableStandards = emptyList()
-                ),
-                
-                // Metadata
-                confidence = 1.0f,
-                processingBackend = currentBackend?.displayName ?: "TensorFlow Lite",
-                modelVersion = "1.0.0-tflite",
-                analysisVersion = "1.0.0"
+                oshaViolations = emptyList(),
+                metadata = AnalysisMetadata(
+                    imageWidth = 0,
+                    imageHeight = 0
+                )
             )
             
             Result.success(safetyAnalysis)
             
         } catch (e: Exception) {
             Result.failure(
-                LiteRTException.InferenceException("TFLite analysis failed: ${e.message}", e)
+                Exception("TFLite analysis failed: ${e.message}", e)
             )
-        }
-    }
-    
-    override suspend fun analyzeBatchPhotos(
-        imageDataList: List<ByteArray>,
-        workType: WorkType,
-        timestamp: Long,
-        location: String?,
-        weatherConditions: String?
-    ): Result<List<SafetyAnalysis>> = withContext(Dispatchers.Default) {
-        
-        val results = mutableListOf<SafetyAnalysis>()
-        val failures = mutableListOf<Exception>()
-        
-        for ((index, imageData) in imageDataList.withIndex()) {
-            try {
-                val result = analyzePhoto(
-                    imageData,
-                    workType,
-                    timestamp + index, // Slight time offset for each photo
-                    location,
-                    weatherConditions
-                )
-                
-                if (result.isSuccess) {
-                    results.add(result.getOrThrow())
-                } else {
-                    failures.add(result.exceptionOrNull() ?: Exception("Unknown error"))
-                }
-            } catch (e: Exception) {
-                failures.add(e)
-            }
-        }
-        
-        // Return results if we have at least some successes
-        if (results.isNotEmpty()) {
-            Result.success(results)
-        } else {
-            Result.failure(
-                Exception("Batch analysis failed: ${failures.firstOrNull()?.message}")
-            )
-        }
-    }
-    
-    override suspend fun generateReport(
-        analyses: List<SafetyAnalysis>,
-        reportType: String,
-        includeImages: Boolean
-    ): Result<ByteArray> = withContext(Dispatchers.Default) {
-        
-        try {
-            // Basic report generation - can be enhanced later
-            val reportContent = buildString {
-                appendLine("# HazardHawk Safety Analysis Report")
-                appendLine("Generated by: $analyzerName")
-                appendLine("Report Type: $reportType")
-                appendLine("Analysis Count: ${analyses.size}")
-                appendLine()
-                
-                analyses.forEachIndexed { index, analysis ->
-                    appendLine("## Analysis ${index + 1}")
-                    appendLine("ID: ${analysis.analysisId}")
-                    appendLine("Work Type: ${analysis.workType}")
-                    appendLine("Risk Level: ${analysis.riskAssessment.overallRiskLevel}")
-                    appendLine("Processing Time: ${analysis.processingTimeMs}ms")
-                    appendLine("Backend: ${analysis.processingBackend}")
-                    appendLine()
-                }
-            }
-            
-            Result.success(reportContent.toByteArray())
-            
-        } catch (e: Exception) {
-            Result.failure(e)
         }
     }
     
@@ -226,7 +144,7 @@ class TFLiteVisionService(
     fun getPerformanceMetrics(): Map<String, Any> {
         return mapOf(
             "service" to analyzerName,
-            "backend" to (currentBackend?.displayName ?: "Unknown"),
+            "backend" to (currentBackend?.name ?: "Unknown"),
             "initialized" to isInitialized,
             "available" to isAvailable,
             "error" to (initializationError?.message ?: "None")

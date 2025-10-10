@@ -1,6 +1,6 @@
 package com.hazardhawk.ar
 
-import com.hazardhawk.ai.models.*
+import com.hazardhawk.core.models.*
 import kotlinx.coroutines.test.runTest
 import kotlin.test.*
 

@@ -6,9 +6,9 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
-import com.hazardhawk.domain.entities.WorkType
-import com.hazardhawk.domain.entities.Photo
-import com.hazardhawk.models.Severity
+import com.hazardhawk.core.models.WorkType
+import com.hazardhawk.core.models.Photo
+import com.hazardhawk.core.models.Severity
 import com.hazardhawk.ai.AdvancedAIModelManager
 import com.hazardhawk.monitoring.PerformanceDashboard
 import com.hazardhawk.security.AuditLogger

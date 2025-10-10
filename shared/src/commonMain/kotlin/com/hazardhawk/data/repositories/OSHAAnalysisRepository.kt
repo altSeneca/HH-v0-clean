@@ -1,6 +1,6 @@
 package com.hazardhawk.data.repositories
 
-import com.hazardhawk.models.*
+import com.hazardhawk.core.models.*
 import com.hazardhawk.data.storage.OSHAAnalysisStorage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow

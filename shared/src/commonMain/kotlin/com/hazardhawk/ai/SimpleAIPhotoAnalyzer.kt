@@ -1,7 +1,8 @@
 package com.hazardhawk.ai
 
 import com.hazardhawk.ai.core.AIPhotoAnalyzer
-import com.hazardhawk.ai.models.*
+import com.hazardhawk.core.models.*
+import com.hazardhawk.core.models.HazardType as CoreHazardType
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
 import kotlin.random.Random
@@ -77,7 +78,8 @@ class SimpleAIPhotoAnalyzer : AIPhotoAnalyzer {
 
             val analysis = SafetyAnalysis(
                 id = Uuid.random().toString(),
-                timestamp = Clock.System.now().toEpochMilliseconds(),
+                photoId = "photo-${Uuid.random()}",
+                timestamp = Clock.System.now(),
                 analysisType = AnalysisType.LOCAL_GEMMA_MULTIMODAL,
                 workType = workType,
                 hazards = hazards,
@@ -85,13 +87,12 @@ class SimpleAIPhotoAnalyzer : AIPhotoAnalyzer {
                 oshaViolations = oshaViolations,
                 recommendations = generateMockRecommendations(workType, hazards),
                 overallRiskLevel = calculateRiskLevel(hazards),
-                confidence = 0.85f + Random.nextFloat() * 0.15f,
+                severity = calculateMaxSeverity(hazards),
+                aiConfidence = 0.85f + Random.nextFloat() * 0.15f,
                 processingTimeMs = processingTime,
                 metadata = AnalysisMetadata(
                     imageWidth = 1920,
-                    imageHeight = 1080,
-                    processingTimeMs = processingTime,
-                    modelVersion = "Mock-v1.0"
+                    imageHeight = 1080
                 )
             )
 
@@ -110,15 +111,15 @@ class SimpleAIPhotoAnalyzer : AIPhotoAnalyzer {
         repeat(hazardCount) { index ->
             val hazardType = when (workType) {
                 WorkType.ELECTRICAL ->
-                    listOf(HazardType.ELECTRICAL_HAZARD, HazardType.PPE_VIOLATION).random()
+                    listOf(CoreHazardType.ELECTRICAL_HAZARD, CoreHazardType.PPE_VIOLATION).random()
                 WorkType.ROOFING ->
-                    listOf(HazardType.FALL_PROTECTION, HazardType.PPE_VIOLATION).random()
+                    listOf(CoreHazardType.FALL_PROTECTION, CoreHazardType.PPE_VIOLATION).random()
                 WorkType.CRANE_OPERATIONS ->
-                    listOf(HazardType.MECHANICAL_HAZARD, HazardType.PPE_VIOLATION).random()
+                    listOf(CoreHazardType.MECHANICAL_HAZARD, CoreHazardType.PPE_VIOLATION).random()
                 WorkType.EXCAVATION ->
-                    listOf(HazardType.MECHANICAL_HAZARD, HazardType.CONFINED_SPACE).random()
+                    listOf(CoreHazardType.MECHANICAL_HAZARD, CoreHazardType.CONFINED_SPACE).random()
                 else ->
-                    listOf(HazardType.PPE_VIOLATION, HazardType.HOUSEKEEPING).random()
+                    listOf(CoreHazardType.PPE_VIOLATION, CoreHazardType.HOUSEKEEPING).random()
             }
 
             hazards.add(
@@ -181,42 +182,44 @@ class SimpleAIPhotoAnalyzer : AIPhotoAnalyzer {
         )
     }
 
-    private fun getHazardDescription(type: HazardType): String = when (type) {
-        HazardType.PPE_VIOLATION -> "Worker without required PPE"
-        HazardType.FALL_PROTECTION -> "Potential fall hazard - unprotected height"
-        HazardType.ELECTRICAL_HAZARD -> "Electrical hazard - exposed wiring or equipment"
-        HazardType.MECHANICAL_HAZARD -> "Mechanical equipment hazard"
-        HazardType.CHEMICAL_HAZARD -> "Chemical exposure hazard"
-        HazardType.FIRE_HAZARD -> "Fire hazard detected"
-        HazardType.STRUCK_BY_OBJECT -> "Struck-by hazard"
-        HazardType.CAUGHT_IN_EQUIPMENT -> "Caught-in/between hazard"
-        HazardType.ERGONOMIC_HAZARD -> "Ergonomic concern"
-        HazardType.ENVIRONMENTAL_HAZARD -> "Environmental hazard"
-        HazardType.HOUSEKEEPING -> "Housekeeping issue - trip/slip hazard"
-        HazardType.LOCKOUT_TAGOUT -> "LOTO procedure not followed"
-        HazardType.CONFINED_SPACE -> "Confined space entry hazard"
-        HazardType.SCAFFOLDING_UNSAFE -> "Unsafe scaffolding condition"
-        HazardType.EQUIPMENT_DEFECT -> "Equipment defect detected"
+    private fun getHazardDescription(type: CoreHazardType): String = when (type) {
+        CoreHazardType.PPE_VIOLATION -> "Worker without required PPE"
+        CoreHazardType.FALL_PROTECTION -> "Potential fall hazard - unprotected height"
+        CoreHazardType.ELECTRICAL_HAZARD, CoreHazardType.ELECTRICAL -> "Electrical hazard - exposed wiring or equipment"
+        CoreHazardType.MECHANICAL_HAZARD -> "Mechanical equipment hazard"
+        CoreHazardType.CHEMICAL_HAZARD, CoreHazardType.CHEMICAL -> "Chemical exposure hazard"
+        CoreHazardType.FIRE_HAZARD, CoreHazardType.FIRE -> "Fire hazard detected"
+        CoreHazardType.STRUCK_BY_OBJECT -> "Struck-by hazard"
+        CoreHazardType.CAUGHT_IN_EQUIPMENT -> "Caught-in/between hazard"
+        CoreHazardType.ERGONOMIC_HAZARD -> "Ergonomic concern"
+        CoreHazardType.ENVIRONMENTAL_HAZARD -> "Environmental hazard"
+        CoreHazardType.HOUSEKEEPING -> "Housekeeping issue - trip/slip hazard"
+        CoreHazardType.LOCKOUT_TAGOUT -> "LOTO procedure not followed"
+        CoreHazardType.CONFINED_SPACE -> "Confined space entry hazard"
+        CoreHazardType.SCAFFOLDING_UNSAFE -> "Unsafe scaffolding condition"
+        CoreHazardType.EQUIPMENT_DEFECT -> "Equipment defect detected"
+        CoreHazardType.EQUIPMENT_SAFETY -> "Equipment safety concern"
+        CoreHazardType.CRANE_LIFT -> "Crane lifting hazard"
     }
 
-    private fun getHazardSeverity(type: HazardType): Severity = when (type) {
-        HazardType.FALL_PROTECTION, HazardType.ELECTRICAL_HAZARD,
-        HazardType.CONFINED_SPACE -> Severity.CRITICAL
-        HazardType.MECHANICAL_HAZARD, HazardType.SCAFFOLDING_UNSAFE,
-        HazardType.LOCKOUT_TAGOUT -> Severity.HIGH
-        HazardType.PPE_VIOLATION, HazardType.CHEMICAL_HAZARD,
-        HazardType.EQUIPMENT_DEFECT -> Severity.MEDIUM
+    private fun getHazardSeverity(type: CoreHazardType): Severity = when (type) {
+        CoreHazardType.FALL_PROTECTION, CoreHazardType.ELECTRICAL_HAZARD,
+        CoreHazardType.ELECTRICAL, CoreHazardType.CONFINED_SPACE -> Severity.CRITICAL
+        CoreHazardType.MECHANICAL_HAZARD, CoreHazardType.SCAFFOLDING_UNSAFE,
+        CoreHazardType.LOCKOUT_TAGOUT, CoreHazardType.CRANE_LIFT -> Severity.HIGH
+        CoreHazardType.PPE_VIOLATION, CoreHazardType.CHEMICAL_HAZARD,
+        CoreHazardType.CHEMICAL, CoreHazardType.EQUIPMENT_DEFECT,
+        CoreHazardType.EQUIPMENT_SAFETY -> Severity.MEDIUM
         else -> Severity.LOW
     }
 
-    private fun getOSHACode(type: HazardType): String? = when (type) {
-        HazardType.PPE_VIOLATION -> "1926.95"
-        HazardType.FALL_PROTECTION -> "1926.501"
-        HazardType.ELECTRICAL_HAZARD -> "1926.416"
-        HazardType.SCAFFOLDING_UNSAFE -> "1926.451"
-        HazardType.EXCAVATION -> "1926.651"
-        HazardType.LOCKOUT_TAGOUT -> "1910.147"
-        HazardType.CONFINED_SPACE -> "1926.1200"
+    private fun getOSHACode(type: CoreHazardType): String? = when (type) {
+        CoreHazardType.PPE_VIOLATION -> "1926.95"
+        CoreHazardType.FALL_PROTECTION -> "1926.501"
+        CoreHazardType.ELECTRICAL_HAZARD, CoreHazardType.ELECTRICAL -> "1926.416"
+        CoreHazardType.SCAFFOLDING_UNSAFE -> "1926.451"
+        CoreHazardType.LOCKOUT_TAGOUT -> "1910.147"
+        CoreHazardType.CONFINED_SPACE -> "1926.1200"
         else -> null
     }
 
@@ -238,22 +241,22 @@ class SimpleAIPhotoAnalyzer : AIPhotoAnalyzer {
         Severity.LOW -> "$0 - $15,625"
     }
 
-    private fun getHazardRecommendations(type: HazardType): List<String> = when (type) {
-        HazardType.PPE_VIOLATION -> listOf(
+    private fun getHazardRecommendations(type: CoreHazardType): List<String> = when (type) {
+        CoreHazardType.PPE_VIOLATION -> listOf(
             "Ensure all workers wear required PPE",
             "Conduct toolbox talk on PPE requirements"
         )
-        HazardType.FALL_PROTECTION -> listOf(
+        CoreHazardType.FALL_PROTECTION -> listOf(
             "Install guardrail systems for heights over 6 feet",
             "Provide personal fall arrest systems",
             "Conduct fall protection training"
         )
-        HazardType.ELECTRICAL_HAZARD -> listOf(
+        CoreHazardType.ELECTRICAL_HAZARD, CoreHazardType.ELECTRICAL -> listOf(
             "Implement lockout/tagout procedures",
             "Use ground fault circuit interrupters (GFCI)",
             "Maintain safe clearances from electrical equipment"
         )
-        HazardType.SCAFFOLDING_UNSAFE -> listOf(
+        CoreHazardType.SCAFFOLDING_UNSAFE -> listOf(
             "Inspect scaffolding daily",
             "Ensure proper bracing and tie-offs",
             "Verify load capacity compliance"
@@ -271,6 +274,11 @@ class SimpleAIPhotoAnalyzer : AIPhotoAnalyzer {
             Severity.MEDIUM -> RiskLevel.MODERATE
             Severity.LOW -> RiskLevel.LOW
         }
+    }
+
+    private fun calculateMaxSeverity(hazards: List<Hazard>): Severity {
+        if (hazards.isEmpty()) return Severity.LOW
+        return hazards.maxOf { it.severity }
     }
 
     private fun generateMockRecommendations(workType: WorkType, hazards: List<Hazard>): List<String> {

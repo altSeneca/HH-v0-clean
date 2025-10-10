@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 
+import com.hazardhawk.models.common.*
 /**
  * Implementation of CrewRepository with in-memory storage.
  * TODO: Replace with actual API client and database integration
@@ -23,7 +24,7 @@ class CrewRepositoryImpl(
 
     // ===== Core CRUD Operations =====
 
-    override suspend fun createCrew(
+    suspend fun createCrew(
         companyId: String,
         request: CreateCrewRequest
     ): Result<Crew> {
@@ -82,7 +83,7 @@ class CrewRepositoryImpl(
         }
     }
 
-    override suspend fun updateCrew(
+    suspend fun updateCrew(
         crewId: String,
         request: UpdateCrewRequest
     ): Result<Crew> {
@@ -107,7 +108,7 @@ class CrewRepositoryImpl(
         }
     }
 
-    override suspend fun deleteCrew(crewId: String): Result<Unit> {
+    suspend fun deleteCrew(crewId: String): Result<Unit> {
         return try {
             val crew = crews[crewId]
                 ?: return Result.failure(IllegalArgumentException("Crew not found: $crewId"))
@@ -126,7 +127,7 @@ class CrewRepositoryImpl(
 
     // ===== Crew Queries =====
 
-    override suspend fun getCrews(
+    suspend fun getCrews(
         companyId: String,
         projectId: String?,
         status: CrewStatus,
@@ -169,7 +170,7 @@ class CrewRepositoryImpl(
         )
     }
 
-    override suspend fun getCrewsByProject(
+    suspend fun getCrewsByProject(
         projectId: String,
         status: CrewStatus
     ): List<Crew> {
@@ -178,7 +179,7 @@ class CrewRepositoryImpl(
         }
     }
 
-    override suspend fun getCrewsByType(
+    suspend fun getCrewsByType(
         companyId: String,
         crewType: CrewType,
         status: CrewStatus
@@ -188,7 +189,7 @@ class CrewRepositoryImpl(
         }
     }
 
-    override suspend fun searchCrews(
+    suspend fun searchCrews(
         companyId: String,
         query: String,
         limit: Int
@@ -205,7 +206,7 @@ class CrewRepositoryImpl(
 
     // ===== Member Management =====
 
-    override suspend fun addCrewMembers(
+    suspend fun addCrewMembers(
         crewId: String,
         workerIds: List<String>,
         role: CrewMemberRole,
@@ -245,7 +246,7 @@ class CrewRepositoryImpl(
         }
     }
 
-    override suspend fun removeCrewMembers(
+    suspend fun removeCrewMembers(
         crewId: String,
         workerIds: List<String>
     ): Result<Unit> {
@@ -264,7 +265,7 @@ class CrewRepositoryImpl(
         }
     }
 
-    override suspend fun updateCrewMemberRole(
+    suspend fun updateCrewMemberRole(
         crewId: String,
         workerId: String,
         newRole: CrewMemberRole
@@ -290,7 +291,7 @@ class CrewRepositoryImpl(
         }
     }
 
-    override suspend fun getCrewMembers(
+    suspend fun getCrewMembers(
         crewId: String,
         includeWorkerDetails: Boolean
     ): List<CrewMember> {
@@ -307,7 +308,7 @@ class CrewRepositoryImpl(
         } ?: emptyList()
     }
 
-    override suspend fun getWorkerCrews(workerId: String): List<CrewMembership> {
+    suspend fun getWorkerCrews(workerId: String): List<CrewMembership> {
         return crewMembers.flatMap { (crewId, members) ->
             members.filter { it.companyWorkerId == workerId && it.status == "active" }
                 .mapNotNull { member ->
@@ -326,7 +327,7 @@ class CrewRepositoryImpl(
 
     // ===== Roster Operations =====
 
-    override suspend fun getCrewRoster(
+    suspend fun getCrewRoster(
         crewId: String,
         date: LocalDate,
         includeCertifications: Boolean

@@ -1,7 +1,7 @@
 package com.hazardhawk.data.repositories
 
 import com.hazardhawk.database.HazardHawkDatabase
-import com.hazardhawk.domain.entities.Photo
+import com.hazardhawk.core.models.Photo
 import com.hazardhawk.domain.repositories.PhotoRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow

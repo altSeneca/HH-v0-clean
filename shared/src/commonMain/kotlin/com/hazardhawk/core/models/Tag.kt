@@ -375,13 +375,6 @@ enum class WorkType {
     LANDSCAPING
 }
 
-@Serializable
-enum class Severity {
-    LOW,
-    MEDIUM,
-    HIGH,
-    CRITICAL
-}
 
 /**
  * Migration utilities for Tag model consolidation

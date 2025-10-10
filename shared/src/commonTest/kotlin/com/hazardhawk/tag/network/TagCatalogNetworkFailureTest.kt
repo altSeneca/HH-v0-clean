@@ -1,7 +1,7 @@
 package com.hazardhawk.tag.network
 
 import com.hazardhawk.data.repositories.TagRepositoryImpl
-import com.hazardhawk.models.Tag
+import com.hazardhawk.core.models.Tag
 import com.hazardhawk.network.NetworkManager
 import com.hazardhawk.sync.SyncManager
 import com.hazardhawk.sync.SyncStatus

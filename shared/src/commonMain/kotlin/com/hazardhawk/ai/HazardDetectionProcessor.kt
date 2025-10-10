@@ -2,9 +2,10 @@ package com.hazardhawk.ai
 
 import kotlinx.serialization.Serializable
 import kotlinx.datetime.Clock
-import com.hazardhawk.domain.entities.WorkType
-import com.hazardhawk.models.Severity
-import com.hazardhawk.domain.entities.ComplianceStatus
+import com.hazardhawk.core.models.WorkType
+import com.hazardhawk.core.models.Severity
+import com.hazardhawk.core.models.ComplianceStatus
+import com.hazardhawk.core.models.OSHAViolation
 
 /**
  * Hazard Detection Result Processor with OSHA Compliance
@@ -111,32 +112,35 @@ class HazardDetectionProcessor {
                 HazardType.FALL_PROTECTION -> {
                     if (hazard.severity in listOf(Severity.HIGH, Severity.CRITICAL)) {
                         violations.add(OSHAViolation(
-                            standard = "1926.501(b)(1)",
+                            code = "1926.501(b)(1)",
+                            title = "Unprotected Sides and Edges",
                             description = "Unprotected sides and edges",
                             severity = hazard.severity,
                             fineRange = "$7,000 - $15,625",
-                            correctionDeadline = "Immediate"
+                            correctiveAction = "Install guardrail systems or personal fall arrest systems"
                         ))
                         requiredActions.add("Install guardrail systems or personal fall arrest systems")
                     }
                 }
                 HazardType.PPE_VIOLATION -> {
                     violations.add(OSHAViolation(
-                        standard = "1926.95(a)",
+                        code = "1926.95(a)",
+                        title = "Personal Protective Equipment",
                         description = "Personal protective equipment not provided or used",
                         severity = hazard.severity,
                         fineRange = "$1,000 - $7,000",
-                        correctionDeadline = "Within 24 hours"
+                        correctiveAction = "Provide and ensure use of required PPE"
                     ))
                     requiredActions.add("Provide and ensure use of required PPE")
                 }
                 HazardType.ELECTRICAL -> {
                     violations.add(OSHAViolation(
-                        standard = "1926.416(a)(1)",
+                        code = "1926.416(a)(1)",
+                        title = "Electrical Safety Requirements",
                         description = "Electrical safety requirements not met",
                         severity = hazard.severity,
                         fineRange = "$7,000 - $15,625",
-                        correctionDeadline = "Immediate"
+                        correctiveAction = "Implement electrical safety procedures and lockout/tagout"
                     ))
                     requiredActions.add("Implement electrical safety procedures and lockout/tagout")
                 }
@@ -298,18 +302,6 @@ data class OSHAComplianceAnalysis(
     val estimatedFineRange: String,
     val documentationRequired: Boolean,
     val retentionPeriodYears: Int
-)
-
-/**
- * OSHA violation details
- */
-@Serializable
-data class OSHAViolation(
-    val standard: String,
-    val description: String,
-    val severity: Severity,
-    val fineRange: String,
-    val correctionDeadline: String
 )
 
 /**

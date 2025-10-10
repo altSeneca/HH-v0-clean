@@ -1,34 +1,35 @@
 package com.hazardhawk.ai.services
-import kotlinx.datetime.Clock
 
+import kotlinx.datetime.Clock
 import com.hazardhawk.ai.core.AIPhotoAnalyzer
-import com.hazardhawk.ai.models.SafetyAnalysis
+import com.hazardhawk.core.models.*
 import com.hazardhawk.ai.litert.LiteRTModelEngine
 import com.hazardhawk.ai.litert.LiteRTDeviceOptimizer
 import com.hazardhawk.ai.litert.LiteRTBackend
 import com.hazardhawk.ai.litert.LiteRTException
-import com.hazardhawk.core.models.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import kotlin.uuid.uuid4
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 /**
  * Google LiteRT-LM powered vision service for real construction safety analysis.
  * Replaces mock Gemma3NE2BVisionService with genuine on-device AI processing.
- * 
+ *
  * Key Features:
  * - Real hazard detection vs mock JSON generation
  * - GPU/NPU acceleration (3-8x performance boost)
  * - Maintains existing SafetyAnalysis contracts
  * - OSHA-compliant construction focus
  * - Zero breaking changes to UI integration
- * 
+ *
  * Performance Targets:
  * - NPU: <0.8s analysis time (8x improvement)
- * - GPU: <1.5s analysis time (3x improvement) 
+ * - GPU: <1.5s analysis time (3x improvement)
  * - CPU: <3.0s analysis time (baseline)
  */
+@OptIn(ExperimentalUuidApi::class)
 class LiteRTVisionService(
     private val modelEngine: LiteRTModelEngine,
     private val deviceOptimizer: LiteRTDeviceOptimizer
@@ -70,7 +71,8 @@ class LiteRTVisionService(
                 
                 Result.success(Unit)
             } else {
-                val error = initResult.exceptionOrNull() ?: Exception("Unknown initialization error")
+                val error = initResult.exceptionOrNull() as? Exception 
+                    ?: Exception("Unknown initialization error")
                 initializationError = error
                 
                 // Attempt CPU fallback if optimal backend failed
@@ -94,8 +96,7 @@ class LiteRTVisionService(
     
     override suspend fun analyzePhoto(
         imageData: ByteArray,
-        workType: WorkType,
-        progressCallback: ((String, Float) -> Unit)? = null
+        workType: WorkType
     ): Result<SafetyAnalysis> = withContext(Dispatchers.Default) {
         
         if (!isAvailable) {
@@ -111,7 +112,7 @@ class LiteRTVisionService(
             val timeout = getTimeoutForBackend(currentBackend ?: LiteRTBackend.CPU)
             
             val analysisResult = withTimeoutOrNull(timeout) {
-                performLiteRTAnalysis(imageData, workType, startTime, progressCallback)
+                performLiteRTAnalysis(imageData, workType, startTime)
             }
             
             if (analysisResult == null) {
@@ -145,20 +146,15 @@ class LiteRTVisionService(
     private suspend fun performLiteRTAnalysis(
         imageData: ByteArray,
         workType: WorkType,
-        startTime: Long,
-        progressCallback: ((String, Float) -> Unit)? = null
+        startTime: Long
     ): Result<SafetyAnalysis> {
         
-        // Execute real AI inference with progress tracking
+        // Execute real AI inference
         val liteRTResult = modelEngine.generateSafetyAnalysis(
             imageData = imageData,
             workType = workType,
             includeOSHACodes = true,
-            confidenceThreshold = 0.6f,
-            progressCallback = { progress ->
-                // Convert LiteRT progress to simple callback format
-                progressCallback?.invoke(progress.message, progress.progress)
-            }
+            confidenceThreshold = 0.6f
         )
         
         return liteRTResult.fold(
@@ -193,19 +189,19 @@ class LiteRTVisionService(
         // Convert hazards from LiteRT format
         val hazards = liteRTResult.hazards.map { detectedHazard ->
             Hazard(
-                id = uuid4().toString(),
+                id = Uuid.random().toString(),
                 type = detectedHazard.type,
                 severity = detectedHazard.severity,
                 description = detectedHazard.description,
-                location = detectedHazard.boundingBox?.let { box ->
-                    HazardLocation(
-                        x = box.x,
-                        y = box.y,
+                boundingBox = detectedHazard.boundingBox?.let { box ->
+                    BoundingBox(
+                        left = box.x,
+                        top = box.y,
                         width = box.width,
                         height = box.height
                     )
                 },
-                oshaReference = detectedHazard.oshaCode,
+                oshaCode = detectedHazard.oshaCode,
                 recommendations = detectedHazard.recommendations,
                 confidence = detectedHazard.confidence
             )
@@ -215,9 +211,10 @@ class LiteRTVisionService(
         val oshaViolations = liteRTResult.oshaViolations.map { violation ->
             OSHAViolation(
                 code = violation.code,
+                title = violation.title ?: violation.code,
                 description = violation.description,
                 severity = violation.severity,
-                citation = violation.citation
+                correctiveAction = violation.description
             )
         }
         
@@ -230,34 +227,75 @@ class LiteRTVisionService(
         )
         
         // Create metadata with LiteRT processing information
-        val metadata = SafetyAnalysisMetadata(
-            analysisId = uuid4().toString(),
-            timestamp = Clock.System.now().toEpochMilliseconds(),
-            processingTimeMs = processingTime,
-            modelVersion = "LiteRT-Construction-Safety-v1.0",
-            confidenceScore = liteRTResult.confidence,
-            analysisType = AnalysisType.LOCAL_LITERT_VISION,
-            deviceInfo = mapOf(
-                "backend" to (liteRTResult.backendUsed.displayName),
-                "tokens_per_second" to liteRTResult.backendUsed.expectedTokensPerSecond.toString(),
-                "memory_usage_mb" to modelEngine.getPerformanceMetrics().averageMemoryUsageMB.toString()
-            )
+        val metadata = AnalysisMetadata(
+            imageWidth = 0,
+            imageHeight = 0
         )
-        
+
+        // Convert PPE status from LiteRT format
+        val ppeStatus = convertPPEStatus(liteRTResult.ppeStatus)
+
+
+        // Calculate severity from hazards
+        val severity = hazards.maxOfOrNull { it.severity } ?: Severity.LOW
+
         return SafetyAnalysis(
-            id = metadata.analysisId,
-            hazards = hazards,
-            overallRiskLevel = mapRiskAssessment(liteRTResult.overallRiskAssessment),
-            recommendations = recommendations,
-            ppeCompliance = calculatePPECompliance(liteRTResult.ppeStatus),
-            oshaViolations = oshaViolations,
-            confidence = liteRTResult.confidence,
+            id = Uuid.random().toString(),
+            photoId = "photo-${Uuid.random()}",
+            timestamp = Clock.System.now(),
             analysisType = AnalysisType.LOCAL_LITERT_VISION,
             workType = workType,
+            hazards = hazards,
+            ppeStatus = ppeStatus,
+            recommendations = recommendations,
+            overallRiskLevel = mapRiskAssessment(liteRTResult.overallRiskAssessment),
+            severity = severity,
+            aiConfidence = liteRTResult.confidence,
+            processingTimeMs = processingTime,
+            oshaViolations = oshaViolations,
             metadata = metadata
         )
     }
     
+    /**
+     * Convert LiteRT PPE status to HazardHawk PPEStatus format.
+     */
+    private fun convertPPEStatus(ppeDetections: Map<PPEType, PPEDetection>): PPEStatus {
+        fun convertItem(ppeType: PPEType): PPEItem {
+            val detection = ppeDetections[ppeType]
+            return PPEItem(
+                status = when {
+                    detection?.isPresent == true -> PPEItemStatus.PRESENT
+                    detection?.isRequired == true -> PPEItemStatus.MISSING
+                    else -> PPEItemStatus.UNKNOWN
+                },
+                confidence = detection?.confidence ?: 0f,
+                required = detection?.isRequired ?: false,
+                boundingBox = detection?.boundingBox?.let { box ->
+                    BoundingBox(
+                        left = box.x,
+                        top = box.y,
+                        width = box.width,
+                        height = box.height
+                    )
+                }
+            )
+        }
+
+        val items = ppeDetections.keys.toList()
+        val compliance = calculatePPECompliance(ppeDetections)
+
+        return PPEStatus(
+            hardHat = convertItem(PPEType.HARD_HAT),
+            safetyVest = convertItem(PPEType.SAFETY_VEST),
+            safetyBoots = convertItem(PPEType.SAFETY_BOOTS),
+            safetyGlasses = convertItem(PPEType.SAFETY_GLASSES),
+            fallProtection = convertItem(PPEType.FALL_PROTECTION),
+            respirator = convertItem(PPEType.RESPIRATOR),
+            overallCompliance = compliance.overallScore
+        )
+    }
+
     /**
      * Generate contextual safety recommendations based on real AI analysis.
      */
@@ -272,24 +310,24 @@ class LiteRTVisionService(
         // Real hazard-based recommendations (not mock data)
         hazards.groupBy { it.type }.forEach { (hazardType, typeHazards) ->
             when (hazardType) {
-                HazardType.FALL -> {
+                HazardType.FALL_PROTECTION -> {
                     recommendations.add("⚠️ Fall protection required: Install guardrails or safety nets")
                     recommendations.add("✓ Ensure all workers use safety harnesses when working above 6 feet")
                 }
-                HazardType.ELECTRICAL -> {
+                HazardType.ELECTRICAL_HAZARD -> {
                     recommendations.add("⚡ Electrical hazard identified: Implement lockout/tagout procedures")
                     recommendations.add("✓ Verify all electrical work meets OSHA 1926.405 requirements")
                 }
-                HazardType.STRUCK_BY -> {
+                HazardType.STRUCK_BY_OBJECT -> {
                     recommendations.add("🚧 Struck-by hazard: Establish safe work zones around heavy equipment")
                     recommendations.add("✓ Ensure all workers wear high-visibility safety vests")
                 }
-                HazardType.CAUGHT_IN -> {
+                HazardType.CAUGHT_IN_EQUIPMENT -> {
                     recommendations.add("⚙️ Caught-in hazard: Install machine guards and safety devices")
                     recommendations.add("✓ Provide confined space training if applicable")
                 }
                 else -> {
-                    recommendations.add("🔍 ${hazardType} identified: Follow work-specific safety protocols")
+                    recommendations.add("🔍 ${hazardType.name} identified: Follow work-specific safety protocols")
                 }
             }
         }
@@ -297,14 +335,14 @@ class LiteRTVisionService(
         // PPE-based recommendations
         ppeStatus.forEach { (ppeType, detection) ->
             if (detection.isRequired && !detection.isPresent) {
-                recommendations.add("🦺 Missing ${ppeType.displayName}: Required for this work type")
+                recommendations.add("🦺 Missing ${ppeType.name}: Required for this work type")
             }
         }
-        
+
         // Work type specific recommendations
         when (workType) {
-            WorkType.HIGH_RISE_CONSTRUCTION -> {
-                recommendations.add("🏗️ High-rise work: Implement comprehensive fall protection plan")
+            WorkType.GENERAL_CONSTRUCTION -> {
+                recommendations.add("🏗️ General construction: Follow standard safety protocols")
             }
             WorkType.EXCAVATION -> {
                 recommendations.add("⛏️ Excavation work: Ensure proper soil classification and shoring")
@@ -313,22 +351,22 @@ class LiteRTVisionService(
                 recommendations.add("🏠 Roofing work: Use warning lines and safety monitor systems")
             }
             else -> {
-                recommendations.add("📋 Follow standard safety protocols for ${workType.displayName}")
+                recommendations.add("📋 Follow standard safety protocols for ${workType.name}")
             }
         }
-        
+
         // Risk-based recommendations
         when (riskAssessment.overallLevel) {
-            RiskLevel.CRITICAL -> {
+            RiskLevel.SEVERE -> {
                 recommendations.add("🚨 CRITICAL RISK: Stop work immediately and address all hazards")
             }
             RiskLevel.HIGH -> {
                 recommendations.add("⚠️ HIGH RISK: Implement additional safety measures before proceeding")
             }
-            RiskLevel.MEDIUM -> {
-                recommendations.add("⚡ MEDIUM RISK: Monitor conditions and maintain safety protocols")
+            RiskLevel.MODERATE -> {
+                recommendations.add("⚡ MODERATE RISK: Monitor conditions and maintain safety protocols")
             }
-            RiskLevel.LOW -> {
+            RiskLevel.LOW, RiskLevel.MINIMAL -> {
                 recommendations.add("✅ LOW RISK: Continue with standard safety precautions")
             }
         }
@@ -372,9 +410,10 @@ class LiteRTVisionService(
      */
     private fun mapRiskAssessment(riskAssessment: RiskAssessment): RiskLevel {
         return when (riskAssessment.overallLevel) {
-            RiskLevel.CRITICAL -> RiskLevel.CRITICAL
+            RiskLevel.SEVERE -> RiskLevel.SEVERE
+            RiskLevel.MINIMAL -> RiskLevel.MINIMAL
             RiskLevel.HIGH -> RiskLevel.HIGH
-            RiskLevel.MEDIUM -> RiskLevel.MEDIUM
+            RiskLevel.MODERATE -> RiskLevel.MODERATE
             RiskLevel.LOW -> RiskLevel.LOW
         }
     }
@@ -396,7 +435,7 @@ class LiteRTVisionService(
             overallScore = compliancePercentage,
             requiredItems = requiredPPE.keys.toList(),
             compliantItems = compliantPPE.keys.toList(),
-            missingItems = requiredPPE.keys.filter { !ppeStatus[it]?.isPresent ?: false }
+            missingItems = requiredPPE.keys.filter { !(ppeStatus[it]?.isPresent ?: true) }
         )
     }
     

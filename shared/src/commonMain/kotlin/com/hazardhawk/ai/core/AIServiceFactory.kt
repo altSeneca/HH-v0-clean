@@ -7,6 +7,7 @@ import com.hazardhawk.ai.services.Gemma3NE2BVisionService
 import com.hazardhawk.ai.services.YOLO11LocalService
 import com.hazardhawk.ai.litert.LiteRTModelEngine
 import com.hazardhawk.ai.litert.LiteRTDeviceOptimizer
+import com.hazardhawk.core.models.AnalysisCapability
 import com.hazardhawk.performance.*
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -185,7 +186,7 @@ class AIServiceFactory : KoinComponent {
             else -> OrchestratorInfo(
                 type = orchestrator::class.simpleName ?: "Unknown",
                 version = "Unknown",
-                capabilities = emptyList(),
+                capabilities = emptySet(),
                 primaryService = "Unknown",
                 fallbackService = "Unknown",
                 isRealAI = false,

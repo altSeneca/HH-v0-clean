@@ -3,8 +3,8 @@ package com.hazardhawk.security
 import kotlinx.datetime.Instant
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.serialization.Serializable
-import com.hazardhawk.domain.entities.HazardType
-import com.hazardhawk.domain.entities.WorkType
+import com.hazardhawk.core.models.HazardType
+import com.hazardhawk.core.models.WorkType
 
 /**
  * Interface for audit logging and compliance monitoring.

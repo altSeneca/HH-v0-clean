@@ -2,7 +2,7 @@ package com.hazardhawk
 
 import com.hazardhawk.ai.core.NetworkConnectivityService
 import com.hazardhawk.ai.core.ConnectionQuality
-import com.hazardhawk.ai.models.*
+import com.hazardhawk.core.models.*
 import com.hazardhawk.ai.core.AIPhotoAnalyzer
 import kotlinx.coroutines.delay
 import kotlinx.uuid.uuid4

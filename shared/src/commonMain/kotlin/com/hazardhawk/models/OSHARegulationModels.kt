@@ -190,3 +190,28 @@ data class OSHASyncConfig(
     val lastSyncAttempt: Long = 0,
     val nextSyncDue: Long = 0
 )
+/**
+ * OSHA violation severity levels
+ */
+@Serializable
+enum class OSHASeverity {
+    IMMINENT_DANGER,    // Immediate threat to life or health
+    SERIOUS,            // Could cause death or serious harm
+    OTHER_THAN_SERIOUS, // Less severe violations
+    WILLFUL,            // Intentional disregard for safety
+    REPEATED,           // Previously cited violations
+    DE_MINIMIS          // No direct safety impact
+}
+
+/**
+ * Types of OSHA violations
+ */
+@Serializable
+enum class OSHAViolationType {
+    SERIOUS,            // Serious violation
+    WILLFUL,            // Willful violation
+    REPEATED,           // Repeated violation
+    OTHER,              // Other than serious
+    DE_MINIMIS,         // De minimis violation
+    FAILURE_TO_ABATE    // Failure to correct previous violation
+}

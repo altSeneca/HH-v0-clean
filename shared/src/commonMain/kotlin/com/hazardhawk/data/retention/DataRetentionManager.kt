@@ -5,8 +5,8 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
 import com.hazardhawk.security.AuditLogger
-import com.hazardhawk.domain.entities.Photo
-import com.hazardhawk.domain.entities.ComplianceStatus
+import com.hazardhawk.core.models.Photo
+import com.hazardhawk.core.models.ComplianceStatus
 
 /**
  * Data Retention Manager with 5-year OSHA compliance and automated archival

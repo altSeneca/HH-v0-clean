@@ -6,7 +6,7 @@ import com.hazardhawk.data.mocks.MockOCRClient
 import com.hazardhawk.data.repositories.crew.CertificationApiRepository
 import com.hazardhawk.data.network.ApiClient
 import com.hazardhawk.domain.services.*
-import com.hazardhawk.models.crew.*
+import com.hazardhawk.core.models.crew.*
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlin.test.*

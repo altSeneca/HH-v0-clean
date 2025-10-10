@@ -7,7 +7,7 @@ import com.google.firebase.vertexai.GenerativeModel
 import com.google.firebase.vertexai.type.content
 import com.google.firebase.vertexai.type.generationConfig
 import com.google.firebase.vertexai.vertexAI
-import com.hazardhawk.ai.models.*
+import com.hazardhawk.core.models.*
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject

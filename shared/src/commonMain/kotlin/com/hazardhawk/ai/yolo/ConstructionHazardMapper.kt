@@ -1,11 +1,14 @@
 package com.hazardhawk.ai.yolo
 
-import com.hazardhawk.domain.entities.HazardType
-import com.hazardhawk.domain.entities.WorkType
-import com.hazardhawk.models.Severity
-import com.hazardhawk.models.SafetyAnalysis
-import com.hazardhawk.models.Hazard
-import com.hazardhawk.models.OSHACode
+import com.hazardhawk.core.models.HazardType
+import com.hazardhawk.core.models.WorkType
+import com.hazardhawk.core.models.Severity
+import com.hazardhawk.core.models.SafetyAnalysis
+import com.hazardhawk.core.models.Hazard
+import com.hazardhawk.core.models.OSHACode
+import com.hazardhawk.core.models.OSHAViolation
+import com.hazardhawk.core.models.AnalysisType
+import com.hazardhawk.core.models.RiskLevel
 import kotlinx.datetime.Clock
 
 /**
@@ -114,23 +117,85 @@ class ConstructionHazardMapper {
         workType: WorkType,
         photoId: String
     ): SafetyAnalysis {
+        val startTime = Clock.System.now()
         val constructionHazards = identifyConstructionHazards(yoloResult, workType)
         val hazards = constructionHazards.map { it.toHazard() }
-        val oshaCodes = constructionHazards.mapNotNull { OSHA_REFERENCES[it.hazardType] }
+        
+        // Convert OSHACodes to OSHAViolations
+        val oshaViolations = constructionHazards.mapNotNull { hazardDetection ->
+            OSHA_REFERENCES[hazardDetection.hazardType]?.let { oshaCode ->
+                OSHAViolation(
+                    code = oshaCode.code,
+                    title = oshaCode.title,
+                    description = oshaCode.description,
+                    severity = hazardDetection.severity,
+                    fineRange = getFineRange(hazardDetection.severity),
+                    correctiveAction = getCorrectiveAction(hazardDetection.hazardType)
+                )
+            }
+        }
+        
         val overallSeverity = determineOverallSeverity(constructionHazards)
         val recommendations = generateRecommendations(constructionHazards, workType)
+        val overallRiskLevel = calculateRiskLevel(hazards)
+        val processingTime = (Clock.System.now() - startTime).inWholeMilliseconds
         
         return SafetyAnalysis(
             id = "yolo-analysis-${Clock.System.now().toEpochMilliseconds()}",
             photoId = photoId,
+            timestamp = Clock.System.now(),
+            analysisType = AnalysisType.LOCAL_YOLO_FALLBACK,
+            workType = workType,
             hazards = hazards,
-            oshaCodes = oshaCodes,
-            severity = overallSeverity,
+            oshaViolations = oshaViolations,
             recommendations = recommendations,
+            overallRiskLevel = overallRiskLevel,
+            severity = overallSeverity,
             aiConfidence = calculateOverallConfidence(yoloResult.detections),
-            analyzedAt = Clock.System.now(),
-            analysisType = com.hazardhawk.models.AnalysisType.ON_DEVICE
+            processingTimeMs = processingTime
         )
+    }
+    
+    /**
+     * Calculate risk level from hazards
+     */
+    private fun calculateRiskLevel(hazards: List<Hazard>): RiskLevel {
+        if (hazards.isEmpty()) return RiskLevel.MINIMAL
+        
+        val maxSeverity = hazards.maxByOrNull { it.severity }?.severity ?: return RiskLevel.LOW
+        return when (maxSeverity) {
+            Severity.CRITICAL -> RiskLevel.SEVERE
+            Severity.HIGH -> RiskLevel.HIGH
+            Severity.MEDIUM -> RiskLevel.MODERATE
+            Severity.LOW -> RiskLevel.LOW
+        }
+    }
+    
+    /**
+     * Get fine range for severity
+     */
+    private fun getFineRange(severity: Severity): String {
+        return when (severity) {
+            Severity.CRITICAL -> "\$10,000 - \$136,532"
+            Severity.HIGH -> "\$5,000 - \$15,625"
+            Severity.MEDIUM -> "\$1,000 - \$15,625"
+            Severity.LOW -> "\$0 - \$15,625"
+        }
+    }
+    
+    /**
+     * Get corrective action for hazard type
+     */
+    private fun getCorrectiveAction(hazardType: ConstructionHazardType): String {
+        return when (hazardType) {
+            ConstructionHazardType.MISSING_HARD_HAT -> "Provide and require use of appropriate head protection"
+            ConstructionHazardType.MISSING_SAFETY_VEST -> "Provide high-visibility safety apparel"
+            ConstructionHazardType.WORKING_AT_HEIGHT_WITHOUT_PROTECTION -> "Install fall protection systems"
+            ConstructionHazardType.ELECTRICAL_HAZARD -> "Implement lockout/tagout and proper electrical safety measures"
+            ConstructionHazardType.FIRE_HAZARD -> "Install fire suppression equipment and establish fire safety protocols"
+            ConstructionHazardType.UNGUARDED_EDGE -> "Install guardrail systems on unprotected edges"
+            else -> "Address safety hazard according to OSHA standards"
+        }
     }
     
     /**
@@ -202,7 +267,7 @@ class ConstructionHazardMapper {
         workType: WorkType
     ): List<YOLOBoundingBox> {
         return when (workType) {
-            WorkType.ELECTRICAL, WorkType.ELECTRICAL_SAFETY -> {
+            WorkType.ELECTRICAL -> {
                 // Prioritize electrical hazards
                 detections.filter { detection ->
                     val className = YOLO_CLASS_TO_HAZARD_MAP[detection.classId] ?: detection.className
@@ -210,7 +275,7 @@ class ConstructionHazardMapper {
                     className.contains("wiring", ignoreCase = true)
                 } + detections
             }
-            WorkType.ROOFING, WorkType.FALL_PROTECTION -> {
+            WorkType.ROOFING -> {
                 // Focus on fall protection
                 detections.filter { detection ->
                     val className = YOLO_CLASS_TO_HAZARD_MAP[detection.classId] ?: detection.className
@@ -305,7 +370,6 @@ class ConstructionHazardMapper {
         return when (workType) {
             WorkType.GENERAL_CONSTRUCTION,
             WorkType.CONCRETE,
-            WorkType.STEEL_WORK,
             WorkType.DEMOLITION -> true
             else -> false
         }
@@ -421,12 +485,12 @@ fun ConstructionHazardDetection.toHazard(): Hazard {
         description = description,
         severity = severity,
         confidence = boundingBox.confidence,
-        boundingBox = com.hazardhawk.models.BoundingBox(
-            x = boundingBox.x,
-            y = boundingBox.y,
+        boundingBox = com.hazardhawk.core.models.BoundingBox(
+            left = boundingBox.x,
+            top = boundingBox.y,
             width = boundingBox.width,
             height = boundingBox.height
         ),
-        oshaReference = oshaReference
+        oshaCode = oshaReference
     )
 }

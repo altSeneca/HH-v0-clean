@@ -1,8 +1,8 @@
 package com.hazardhawk.ai.impl
 
 import com.hazardhawk.ai.core.OSHAPhotoAnalyzer
-import com.hazardhawk.models.*
-import com.hazardhawk.domain.entities.WorkType
+import com.hazardhawk.core.models.*
+import com.hazardhawk.core.models.WorkType
 import com.hazardhawk.platform.currentTimeMillis
 import kotlinx.coroutines.delay
 
@@ -116,25 +116,20 @@ class SimpleOSHAAnalyzer : OSHAPhotoAnalyzer {
 
         val violations = hazards.map { hazard ->
             OSHAViolation(
-                violationId = "violation_${hazard.id}",
-                oshaStandard = hazard.oshaStandard,
-                standardTitle = getStandardTitle(hazard.oshaStandard),
-                violationType = when (hazard.severity) {
-                    OSHASeverity.SERIOUS -> OSHAViolationType.SERIOUS
-                    OSHASeverity.OTHER_THAN_SERIOUS -> OSHAViolationType.OTHER_THAN_SERIOUS
-                    else -> OSHAViolationType.OTHER_THAN_SERIOUS
-                },
+                code = hazard.oshaStandard,
+                title = getStandardTitle(hazard.oshaStandard),
                 description = hazard.violationDetails,
-                potentialPenalty = when (hazard.severity) {
-                    OSHASeverity.SERIOUS -> "Up to \$15,625 per violation"
-                    OSHASeverity.OTHER_THAN_SERIOUS -> "Up to \$15,625 per violation"
-                    else -> "Up to \$15,625 per violation"
+                severity = when (hazard.severity) {
+                    OSHASeverity.SERIOUS -> Severity.HIGH
+                    OSHASeverity.OTHER_THAN_SERIOUS -> Severity.MEDIUM
+                    else -> Severity.MEDIUM
                 },
-                correctiveAction = hazard.requiredAction,
-                timeframe = when (hazard.severity) {
-                    OSHASeverity.SERIOUS -> "Immediate correction required"
-                    else -> "Correction required within 30 days"
-                }
+                fineRange = when (hazard.severity) {
+                    OSHASeverity.SERIOUS -> "Up to $15,625 per violation"
+                    OSHASeverity.OTHER_THAN_SERIOUS -> "Up to $15,625 per violation"
+                    else -> "Up to $15,625 per violation"
+                },
+                correctiveAction = hazard.requiredAction
             )
         }
 

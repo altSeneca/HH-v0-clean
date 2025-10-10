@@ -1,9 +1,9 @@
 package com.hazardhawk.ai.yolo
 
 import kotlinx.serialization.Serializable
-import com.hazardhawk.domain.entities.HazardType
-import com.hazardhawk.models.Severity
-import com.hazardhawk.domain.entities.WorkType
+import com.hazardhawk.core.models.HazardType
+import com.hazardhawk.core.models.Severity
+import com.hazardhawk.core.models.WorkType
 
 /**
  * Core data models and type definitions for YOLO11 integration

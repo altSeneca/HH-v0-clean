@@ -1,7 +1,7 @@
 package com.hazardhawk.data.repositories
 
 import com.hazardhawk.database.HazardHawkDatabase
-import com.hazardhawk.domain.entities.Tag
+import com.hazardhawk.core.models.Tag
 import com.hazardhawk.domain.repositories.TagRepository
 
 class TagRepositoryImpl(

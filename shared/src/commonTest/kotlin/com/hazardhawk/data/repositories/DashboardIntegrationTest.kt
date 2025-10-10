@@ -3,7 +3,7 @@ package com.hazardhawk.data.repositories
 import com.hazardhawk.FeatureFlags
 import com.hazardhawk.data.mocks.MockApiClient
 import com.hazardhawk.data.network.ApiClient
-import com.hazardhawk.models.dashboard.*
+import com.hazardhawk.core.models.dashboard.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.take

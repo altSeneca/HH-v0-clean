@@ -3,7 +3,7 @@ package com.hazardhawk.integration.refactoring
 import com.hazardhawk.TestDataFactory
 import com.hazardhawk.TestUtils
 import com.hazardhawk.MockAIPhotoAnalyzer
-import com.hazardhawk.ai.models.*
+import com.hazardhawk.core.models.*
 import com.hazardhawk.documents.models.*
 import com.hazardhawk.documents.generators.PTPGenerator
 import kotlinx.coroutines.test.runTest

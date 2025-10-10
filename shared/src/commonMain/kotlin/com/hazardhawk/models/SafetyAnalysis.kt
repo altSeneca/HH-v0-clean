@@ -2,8 +2,11 @@ package com.hazardhawk.models
 
 import kotlinx.serialization.Serializable
 import kotlinx.datetime.Instant
-import com.hazardhawk.domain.entities.WorkType
-import com.hazardhawk.domain.entities.HazardType
+import com.hazardhawk.core.models.WorkType
+import com.hazardhawk.core.models.HazardType
+import com.hazardhawk.core.models.Severity
+import com.hazardhawk.core.models.AnalysisType
+import com.hazardhawk.core.models.BoundingBox
 
 @Serializable
 data class AnalysisOptions(
@@ -48,21 +51,6 @@ data class OSHACode(
 )
 
 @Serializable
-data class BoundingBox(
-    val x: Float,
-    val y: Float,
-    val width: Float,
-    val height: Float
-)
-
-@Serializable
-enum class Severity {
-    LOW, MEDIUM, HIGH, CRITICAL
-}
-
-// HazardType moved to HazardType.kt to avoid duplication
-
-@Serializable
 enum class HazardCategory {
     PPE,
     FALL_PROTECTION,
@@ -79,21 +67,13 @@ fun HazardType.toCategory(): HazardCategory {
     return when (this) {
         HazardType.PPE_VIOLATION -> HazardCategory.PPE
         HazardType.FALL_PROTECTION -> HazardCategory.FALL_PROTECTION
-        HazardType.ELECTRICAL -> HazardCategory.ELECTRICAL
-        HazardType.CHEMICAL -> HazardCategory.CHEMICAL
-        HazardType.FIRE -> HazardCategory.FIRE
-        HazardType.EQUIPMENT_SAFETY, HazardType.CRANE_LIFT -> HazardCategory.MACHINERY
+        HazardType.ELECTRICAL, HazardType.ELECTRICAL_HAZARD, HazardType.ELECTRICAL_SAFETY -> HazardCategory.ELECTRICAL
+        HazardType.CHEMICAL, HazardType.CHEMICAL_HAZARD -> HazardCategory.CHEMICAL
+        HazardType.FIRE, HazardType.FIRE_HAZARD -> HazardCategory.FIRE
+        HazardType.EQUIPMENT_SAFETY, HazardType.CRANE_LIFT, HazardType.CRANE_LIFTING -> HazardCategory.MACHINERY
         HazardType.HOUSEKEEPING -> HazardCategory.HOUSEKEEPING
         else -> HazardCategory.GENERAL
     }
-}
-
-@Serializable
-enum class AnalysisType {
-    ON_DEVICE,
-    CLOUD_GEMINI,
-    COMBINED,
-    BATCH_OPERATION
 }
 
 // Extension function for SafetyAnalysis

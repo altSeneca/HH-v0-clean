@@ -3,8 +3,8 @@ package com.hazardhawk.ai.impl
 import com.hazardhawk.ai.core.OSHAPhotoAnalyzer
 import com.hazardhawk.ai.GeminiVisionAnalyzer
 import com.hazardhawk.data.repositories.OSHAAnalysisRepository
-import com.hazardhawk.models.*
-import com.hazardhawk.domain.entities.WorkType
+import com.hazardhawk.core.models.*
+import com.hazardhawk.core.models.WorkType
 import com.hazardhawk.ai.PhotoAnalysisWithTags
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
@@ -149,7 +149,7 @@ class LiveOSHAAnalyzer(
     ): OSHAAnalysisResult {
         // Parse AI analysis and convert to OSHA format
         val hazards = mutableListOf<OSHAHazard>()
-        val violations = mutableListOf<OSHAViolation>()
+        val violations = mutableListOf<OSHADetailedViolation>()
         val recommendations = mutableListOf<OSHARecommendation>()
 
         // Convert AI detected hazards to OSHA hazards
@@ -170,7 +170,7 @@ class LiveOSHAAnalyzer(
             hazards.add(oshaHazard)
 
             // Create corresponding violation
-            val violation = OSHAViolation(
+            val violation = OSHADetailedViolation(
                 violationId = "live_violation_${index + 1}",
                 oshaStandard = oshaHazard.oshaStandard,
                 standardTitle = getStandardTitle(oshaHazard.oshaStandard),
@@ -229,14 +229,12 @@ class LiveOSHAAnalyzer(
 
         val fallbackViolations = listOf(
             OSHAViolation(
-                violationId = "fallback_violation",
-                oshaStandard = "29 CFR 1926.20",
-                standardTitle = "General Safety and Health Provisions",
-                violationType = OSHAViolationType.OTHER_THAN_SERIOUS,
+                code = "29 CFR 1926.20",
+                title = "General Safety and Health Provisions",
                 description = "Automated compliance analysis not available",
-                potentialPenalty = "Manual assessment required",
-                correctiveAction = "Perform manual OSHA compliance inspection",
-                timeframe = "Before work proceeds"
+                severity = Severity.MEDIUM,
+                fineRange = "Manual assessment required",
+                correctiveAction = "Perform manual OSHA compliance inspection"
             )
         )
 

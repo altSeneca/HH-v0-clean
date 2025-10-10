@@ -7,14 +7,14 @@ import kotlinx.coroutines.sync.withPermit
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Contextual
 import kotlinx.datetime.Clock
-import com.hazardhawk.domain.entities.WorkType
-import com.hazardhawk.domain.entities.HazardType
-import com.hazardhawk.models.SafetyAnalysis
-import com.hazardhawk.models.AnalysisType
-import com.hazardhawk.models.Severity
-import com.hazardhawk.models.AnalysisOptions
-import com.hazardhawk.models.Hazard
-import com.hazardhawk.models.OSHACode
+import com.hazardhawk.core.models.WorkType
+import com.hazardhawk.core.models.HazardType
+import com.hazardhawk.core.models.SafetyAnalysis
+import com.hazardhawk.core.models.AnalysisType
+import com.hazardhawk.core.models.Severity
+import com.hazardhawk.core.models.AnalysisOptions
+import com.hazardhawk.core.models.Hazard
+import com.hazardhawk.core.models.OSHACode
 
 /**
  * YOLO11 Safety Analyzer - Main orchestrator for HazardHawk construction safety analysis
@@ -460,12 +460,20 @@ class YOLO11SafetyAnalyzer {
         )
         
         return if (validationResult.isSuccess) {
-            Result.success(SafetyAnalysis(
-                id = "temp",
-                photoId = "temp",
-                analyzedAt = Clock.System.now(),
-                analysisType = AnalysisType.ON_DEVICE
-            ))
+            // Return a temporary success indicator (actual analysis will create real SafetyAnalysis)
+            Result.success(
+                SafetyAnalysis(
+                    id = "validation-success",
+                    photoId = "validation-temp",
+                    timestamp = Clock.System.now(),
+                    analysisType = AnalysisType.ON_DEVICE,
+                    workType = com.hazardhawk.core.models.WorkType.GENERAL_CONSTRUCTION,
+                    overallRiskLevel = com.hazardhawk.core.models.RiskLevel.MINIMAL,
+                    severity = com.hazardhawk.core.models.Severity.LOW,
+                    aiConfidence = 1.0f,
+                    processingTimeMs = 0L
+                )
+            )
         } else {
             Result.failure(
                 YOLO11AnalysisException.SecurityValidationFailed(

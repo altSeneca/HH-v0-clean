@@ -1,6 +1,6 @@
 package com.hazardhawk.tag.ui
 
-import com.hazardhawk.models.Tag
+import com.hazardhawk.core.models.Tag
 import com.hazardhawk.test.TestDataFactory
 import com.hazardhawk.ui.components.tag.TagEditState
 import com.hazardhawk.ui.components.tag.TagCatalogViewModel

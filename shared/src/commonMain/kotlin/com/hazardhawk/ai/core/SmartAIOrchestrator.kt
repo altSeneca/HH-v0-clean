@@ -1,10 +1,10 @@
 package com.hazardhawk.ai.core
 import kotlinx.datetime.Clock
 
-import com.hazardhawk.ai.models.SafetyAnalysis
-import com.hazardhawk.ai.models.AnalysisType
-import com.hazardhawk.ai.models.AnalysisCapability
-import com.hazardhawk.ai.models.WorkType
+import com.hazardhawk.core.models.SafetyAnalysis
+import com.hazardhawk.core.models.AnalysisType
+import com.hazardhawk.core.models.AnalysisCapability
+import com.hazardhawk.core.models.WorkType
 import com.hazardhawk.ai.services.Gemma3NE2BVisionService
 import com.hazardhawk.ai.services.VertexAIGeminiService
 import com.hazardhawk.ai.services.YOLO11LocalService
@@ -130,9 +130,7 @@ class SmartAIOrchestrator(
                     
                     return result.map { analysis ->
                         analysis.copy(
-                            metadata = analysis.metadata?.copy(
-                                processingTimeMs = analysisTime
-                            )
+                            processingTimeMs = analysisTime
                         )
                     }
                 } else {
@@ -193,7 +191,7 @@ class SmartAIOrchestrator(
                                 "⚠️ Limited analysis - advanced AI services unavailable",
                                 "Manual safety review recommended for comprehensive assessment"
                             ),
-                            confidence = analysis.confidence * 0.7f // Reduce confidence for basic fallback
+                            aiConfidence = analysis.aiConfidence * 0.7f // Reduce confidence for basic fallback
                         )
                     }
                 } else {

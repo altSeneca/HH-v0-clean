@@ -5,7 +5,7 @@ import com.hazardhawk.TestUtils
 import com.hazardhawk.MockAIPhotoAnalyzer
 import com.hazardhawk.PerformanceTestRunner
 import com.hazardhawk.ai.core.SmartAIOrchestrator
-import com.hazardhawk.ai.models.*
+import com.hazardhawk.core.models.*
 import kotlinx.coroutines.test.runTest
 import kotlin.test.*
 

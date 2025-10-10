@@ -1,7 +1,7 @@
 package com.hazardhawk.ai.core
 
-import com.hazardhawk.models.OSHAAnalysisResult
-import com.hazardhawk.domain.entities.WorkType
+import com.hazardhawk.core.models.OSHAAnalysisResult
+import com.hazardhawk.core.models.WorkType
 
 /**
  * Interface for OSHA-focused AI photo analysis services in HazardHawk.

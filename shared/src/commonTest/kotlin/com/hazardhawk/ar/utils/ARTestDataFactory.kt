@@ -1,6 +1,6 @@
 package com.hazardhawk.ar.utils
 
-import com.hazardhawk.ai.models.*
+import com.hazardhawk.core.models.*
 import com.hazardhawk.core.models.SafetyAnalysis
 import kotlin.random.Random
 

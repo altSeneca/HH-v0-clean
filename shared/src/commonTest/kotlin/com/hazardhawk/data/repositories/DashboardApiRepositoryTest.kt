@@ -5,7 +5,7 @@ import com.hazardhawk.data.mocks.MockApiClient
 import com.hazardhawk.data.mocks.MockApiResponses
 import com.hazardhawk.data.network.ApiClient
 import com.hazardhawk.data.network.ApiException
-import com.hazardhawk.models.dashboard.*
+import com.hazardhawk.core.models.dashboard.*
 import kotlinx.coroutines.test.runTest
 import kotlin.test.*
 

@@ -4,8 +4,8 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.Serializable
 import kotlinx.datetime.Clock
-import com.hazardhawk.domain.entities.WorkType
-import com.hazardhawk.models.Severity
+import com.hazardhawk.core.models.WorkType
+import com.hazardhawk.core.models.Severity
 
 /**
  * Cross-platform YOLO11 performance optimization system for HazardHawk

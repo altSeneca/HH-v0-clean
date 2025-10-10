@@ -1,6 +1,6 @@
 package com.hazardhawk.domain.repositories
 
-import com.hazardhawk.domain.entities.Tag
+import com.hazardhawk.core.models.Tag
 
 interface TagRepository {
     suspend fun saveTag(tag: Tag): Result<Tag>

@@ -1,6 +1,6 @@
 package com.hazardhawk.tag.accessibility
 
-import com.hazardhawk.models.Tag
+import com.hazardhawk.core.models.Tag
 import com.hazardhawk.accessibility.AccessibilityManager
 import com.hazardhawk.accessibility.ScreenReaderSupport
 import com.hazardhawk.accessibility.VoiceCommandProcessor

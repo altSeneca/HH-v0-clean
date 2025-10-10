@@ -11,9 +11,9 @@ import com.hazardhawk.security.audit.RealTimeMonitoringSystem
 import com.hazardhawk.security.audit.SystemHealthStatus
 import com.hazardhawk.ai.AdvancedAIModelManager
 import com.hazardhawk.processing.BatchPhotoProcessor
-import com.hazardhawk.domain.entities.WorkType
-import com.hazardhawk.models.Severity
-import com.hazardhawk.models.AlertType
+import com.hazardhawk.core.models.WorkType
+import com.hazardhawk.core.models.Severity
+import com.hazardhawk.core.models.AlertType
 import com.hazardhawk.security.AuditLogger
 
 /**

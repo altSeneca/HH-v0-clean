@@ -1,6 +1,6 @@
 package com.hazardhawk.domain.repositories
 
-import com.hazardhawk.domain.entities.Photo
+import com.hazardhawk.core.models.Photo
 import kotlinx.coroutines.flow.Flow
 
 interface PhotoRepository {

@@ -1,10 +1,10 @@
 package com.hazardhawk.ai.core
 import kotlinx.datetime.Clock
 
-import com.hazardhawk.ai.models.SafetyAnalysis
-import com.hazardhawk.ai.models.AnalysisType
-import com.hazardhawk.ai.models.AnalysisCapability
-import com.hazardhawk.ai.models.WorkType
+import com.hazardhawk.core.models.SafetyAnalysis
+import com.hazardhawk.core.models.AnalysisType
+import com.hazardhawk.core.models.AnalysisCapability
+import com.hazardhawk.core.models.WorkType
 import com.hazardhawk.ai.services.LiteRTVisionService
 import com.hazardhawk.ai.services.VertexAIGeminiService
 import com.hazardhawk.performance.*
@@ -199,10 +199,7 @@ class SimplifiedAIOrchestrator(
                 result.getOrNull()?.let { analysis ->
                     val enhancedAnalysis = analysis.copy(
                         analysisType = AnalysisType.LOCAL_LITERT_VISION,
-                        metadata = analysis.metadata?.copy(
-                            processingTimeMs = analysisTime,
-                            modelVersion = "LiteRT-Construction-Safety-v1.0"
-                        )
+                        processingTimeMs = analysisTime
                     )
                     memoryManager.cacheAnalysisResult(cacheKey, enhancedAnalysis)
                 }

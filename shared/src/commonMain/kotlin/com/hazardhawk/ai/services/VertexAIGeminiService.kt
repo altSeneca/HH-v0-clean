@@ -2,10 +2,11 @@ package com.hazardhawk.ai.services
 import kotlinx.datetime.Clock
 
 import com.hazardhawk.ai.core.AIPhotoAnalyzer
-import com.hazardhawk.ai.models.*
+import com.hazardhawk.core.models.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
-import kotlinx.uuid.uuid4
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -103,10 +104,10 @@ class VertexAIGeminiService : AIPhotoAnalyzer {
         
         val startTime = Clock.System.now().toEpochMilliseconds()
         
-        try {
+        return try {
             // Use real Vertex AI integration through platform-specific client
-            return client.analyzePhoto(imageData, workType)
-            
+            client.analyzePhoto(imageData, workType)
+
         } catch (e: Exception) {
             Result.failure(Exception("Vertex AI analysis failed: ${e.message}", e))
         }

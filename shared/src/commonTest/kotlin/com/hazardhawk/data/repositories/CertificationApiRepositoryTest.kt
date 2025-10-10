@@ -2,7 +2,7 @@ package com.hazardhawk.data.repositories
 
 import com.hazardhawk.data.mocks.MockApiClient
 import com.hazardhawk.data.repositories.crew.CertificationApiRepository
-import com.hazardhawk.models.crew.*
+import com.hazardhawk.core.models.crew.*
 import com.hazardhawk.FeatureFlags
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate

@@ -9,6 +9,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
+import com.hazardhawk.models.common.*
 
 /**
  * Implementation of CertificationRepository with in-memory storage.
@@ -428,7 +429,6 @@ class CertificationRepositoryImpl : CertificationRepository {
                 region = "US",
                 typicalDurationMonths = 60,
                 renewalRequired = true,
-                issuingBodies = listOf("OSHA")
             ),
             CertificationType(
                 id = "type_osha_30",
@@ -438,7 +438,6 @@ class CertificationRepositoryImpl : CertificationRepository {
                 region = "US",
                 typicalDurationMonths = 60,
                 renewalRequired = true,
-                issuingBodies = listOf("OSHA")
             ),
             CertificationType(
                 id = "type_forklift",
@@ -457,7 +456,6 @@ class CertificationRepositoryImpl : CertificationRepository {
                 region = "GLOBAL",
                 typicalDurationMonths = 24,
                 renewalRequired = true,
-                issuingBodies = listOf("Red Cross", "AHA")
             ),
             CertificationType(
                 id = "type_scaffold",
@@ -471,5 +469,122 @@ class CertificationRepositoryImpl : CertificationRepository {
         )
 
         types.forEach { certificationTypes[it.id] = it }
+    }
+    override suspend fun sendExpirationReminder(
+        certificationId: String,
+        channels: List<NotificationChannel>
+    ): Result<ExpirationReminderResult> {
+        return try {
+            val cert = certifications[certificationId]
+                ?: return Result.failure(IllegalArgumentException("Certification not found"))
+
+            val result = ExpirationReminderResult(
+                certificationId = certificationId,
+                workerName = null,
+                certificationType = cert.certificationType?.name ?: "Unknown",
+                expirationDate = cert.expirationDate,
+                sentChannels = channels,
+                failedChannels = emptyList(),
+                sentAt = Clock.System.now().toString()
+            )
+
+            Result.success(result)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun sendBulkExpirationReminders(
+        certificationIds: List<String>,
+        channels: List<NotificationChannel>
+    ): Result<BulkReminderResult> {
+        return try {
+            val results = mutableListOf<ExpirationReminderResult>()
+            var successCount = 0
+            var failureCount = 0
+
+            certificationIds.forEach { certId ->
+                sendExpirationReminder(certId, channels).fold(
+                    onSuccess = { result ->
+                        results.add(result)
+                        successCount++
+                    },
+                    onFailure = {
+                        failureCount++
+                    }
+                )
+            }
+
+            Result.success(BulkReminderResult(
+                totalRequested = certificationIds.size,
+                successCount = successCount,
+                failureCount = failureCount,
+                results = results
+            ))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun importCertificationsFromCSV(
+        companyId: String,
+        csvData: String,
+        validateOnly: Boolean
+    ): Result<CSVImportResult> {
+        return Result.failure(NotImplementedError("CSV import not yet implemented"))
+    }
+
+    override suspend fun searchCertifications(
+        companyId: String,
+        filters: CertificationSearchFilters
+    ): PaginatedResult<WorkerCertification> {
+        var filtered = certifications.values.filter { it.companyId == companyId }
+
+        filters.status?.let { status ->
+            filtered = filtered.filter { it.status == status }
+        }
+
+        filters.certificationTypeIds?.let { typeIds ->
+            filtered = filtered.filter { it.certificationTypeId in typeIds }
+        }
+
+        filters.workerIds?.let { workerIds ->
+            filtered = filtered.filter { it.workerProfileId in workerIds }
+        }
+
+        filters.query?.let { query ->
+            filtered = filtered.filter { cert ->
+                cert.certificationNumber?.contains(query, ignoreCase = true) == true ||
+                cert.certificationType?.name?.contains(query, ignoreCase = true) == true
+            }
+        }
+
+        val sorted = when (filters.sortBy) {
+            CertificationSortField.EXPIRATION_DATE -> filtered.sortedBy { it.expirationDate }
+            CertificationSortField.ISSUE_DATE -> filtered.sortedBy { it.issueDate }
+            CertificationSortField.CREATED_AT -> filtered.sortedBy { it.createdAt }
+            CertificationSortField.UPDATED_AT -> filtered.sortedBy { it.updatedAt }
+            else -> filtered
+        }
+
+        val finalSorted = if (filters.sortDirection == com.hazardhawk.models.common.SortDirection.DESC) {
+            sorted.reversed()
+        } else {
+            sorted
+        }
+
+        val pageSize = filters.pagination.pageSize.coerceIn(1, 100)
+        val startIndex = filters.pagination.cursor?.toIntOrNull() ?: 0
+        val endIndex = (startIndex + pageSize).coerceAtMost(finalSorted.size)
+        val page = finalSorted.subList(startIndex, endIndex)
+
+        return PaginatedResult(
+            data = page,
+            pagination = PaginationInfo(
+                nextCursor = if (endIndex < finalSorted.size) endIndex.toString() else null,
+                hasMore = endIndex < finalSorted.size,
+                totalCount = filtered.size
+            )
+        )
     }
 }

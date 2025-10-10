@@ -1,7 +1,7 @@
 package com.hazardhawk.tag.security
 
 import com.hazardhawk.data.repositories.TagRepositoryImpl
-import com.hazardhawk.models.Tag
+import com.hazardhawk.core.models.Tag
 import com.hazardhawk.security.AccessControlManager
 import com.hazardhawk.security.UserRole
 import com.hazardhawk.security.Permission

@@ -1,7 +1,7 @@
 package com.hazardhawk.domain.services
 
 import com.hazardhawk.domain.services.*
-import com.hazardhawk.models.crew.*
+import com.hazardhawk.core.models.crew.*
 import kotlinx.datetime.LocalDate
 import kotlin.random.Random
 

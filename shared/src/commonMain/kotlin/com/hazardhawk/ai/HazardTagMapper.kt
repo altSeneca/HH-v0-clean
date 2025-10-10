@@ -1,7 +1,7 @@
 package com.hazardhawk.ai
 
 import kotlinx.serialization.Serializable
-import com.hazardhawk.domain.entities.WorkType
+import com.hazardhawk.core.models.WorkType
 
 /**
  * Simplified hazard-to-tag mapper for build infrastructure

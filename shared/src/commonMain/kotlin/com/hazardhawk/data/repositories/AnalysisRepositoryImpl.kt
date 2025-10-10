@@ -1,7 +1,7 @@
 package com.hazardhawk.data.repositories
 
 import com.hazardhawk.database.HazardHawkDatabase
-import com.hazardhawk.domain.entities.SafetyAnalysis
+import com.hazardhawk.core.models.SafetyAnalysis
 import com.hazardhawk.domain.repositories.AnalysisRepository
 
 class AnalysisRepositoryImpl(

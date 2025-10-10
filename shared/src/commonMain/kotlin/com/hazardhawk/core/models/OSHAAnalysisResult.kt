@@ -1,7 +1,6 @@
-package com.hazardhawk.models
+package com.hazardhawk.core.models
 
 import kotlinx.serialization.Serializable
-import com.hazardhawk.models.BoundingBox
 
 /**
  * OSHA-focused safety analysis result with detailed compliance information
@@ -11,7 +10,7 @@ data class OSHAAnalysisResult(
     val analysisId: String,
     val overallCompliance: ComplianceStatus,
     val safetyHazards: List<OSHAHazard> = emptyList(),
-    val oshaViolations: List<OSHAViolation> = emptyList(),
+    val oshaViolations: List<OSHADetailedViolation> = emptyList(),
     val complianceScore: Float = 0.0f, // 0-100
     val confidenceLevel: Float = 0.0f, // 0-1
     val detailedAnalysis: String = "",
@@ -43,7 +42,7 @@ data class OSHAHazard(
  * Specific OSHA violation with citation information
  */
 @Serializable
-data class OSHAViolation(
+data class OSHADetailedViolation(
     val violationId: String,
     val oshaStandard: String, // Full citation like "29 CFR 1926.95(a)"
     val standardTitle: String, // e.g., "Personal Protective Equipment"

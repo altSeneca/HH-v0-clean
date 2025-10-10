@@ -2,11 +2,11 @@ package com.hazardhawk.security
 
 /**
  * Platform-specific security service factory
- * 
+ *
  * Uses expect/actual pattern to provide platform-specific implementations
  * of security services while maintaining a common interface.
  */
-expected class SecurityPlatform {
+expect class SecurityPlatform {
     
     /**
      * Create platform-specific secure storage service

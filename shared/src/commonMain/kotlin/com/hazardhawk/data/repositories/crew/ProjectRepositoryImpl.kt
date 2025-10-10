@@ -23,7 +23,7 @@ class ProjectRepositoryImpl(
 
     // ===== Core CRUD Operations =====
 
-    override suspend fun createProject(
+    suspend fun createProject(
         companyId: String,
         name: String,
         projectNumber: String?,
@@ -39,7 +39,6 @@ class ProjectRepositoryImpl(
         superintendentId: String?
     ): Result<Project> {
         return try {
-            val now = Clock.System.now().toString()
             val projectId = generateId()
 
             val project = Project(
@@ -49,7 +48,7 @@ class ProjectRepositoryImpl(
                 projectNumber = projectNumber,
                 startDate = startDate,
                 endDate = endDate,
-                status = ProjectStatus.ACTIVE,
+                status = ProjectStatus.ACTIVE.name,
                 projectManagerId = projectManagerId,
                 superintendentId = superintendentId,
                 clientName = clientName,
@@ -57,9 +56,7 @@ class ProjectRepositoryImpl(
                 city = city,
                 state = state,
                 zip = zip,
-                generalContractor = generalContractor,
-                createdAt = now,
-                updatedAt = now
+                generalContractor = generalContractor
             )
 
             projects[projectId] = project
@@ -96,7 +93,7 @@ class ProjectRepositoryImpl(
         }
     }
 
-    override suspend fun updateProject(
+    suspend fun updateProject(
         projectId: String,
         request: UpdateProjectRequest
     ): Result<Project> {
@@ -107,14 +104,13 @@ class ProjectRepositoryImpl(
             val updated = project.copy(
                 name = request.name ?: project.name,
                 projectNumber = request.projectNumber ?: project.projectNumber,
-                status = request.status ?: project.status,
+                status = request.status?.name ?: project.status,
                 clientName = request.clientName ?: project.clientName,
                 streetAddress = request.streetAddress ?: project.streetAddress,
                 city = request.city ?: project.city,
                 state = request.state ?: project.state,
                 zip = request.zip ?: project.zip,
-                generalContractor = request.generalContractor ?: project.generalContractor,
-                updatedAt = Clock.System.now().toString()
+                generalContractor = request.generalContractor ?: project.generalContractor
             )
 
             projects[projectId] = updated
@@ -126,14 +122,13 @@ class ProjectRepositoryImpl(
         }
     }
 
-    override suspend fun deleteProject(projectId: String): Result<Unit> {
+    suspend fun deleteProject(projectId: String): Result<Unit> {
         return try {
             val project = projects[projectId]
                 ?: return Result.failure(IllegalArgumentException("Project not found"))
 
             projects[projectId] = project.copy(
-                status = ProjectStatus.COMPLETED,
-                updatedAt = Clock.System.now().toString()
+                status = ProjectStatus.COMPLETED.name
             )
             emitProjectsUpdate()
 
@@ -145,7 +140,7 @@ class ProjectRepositoryImpl(
 
     // ===== Project Queries =====
 
-    override suspend fun getProjects(
+    suspend fun getProjects(
         companyId: String,
         status: ProjectStatus?,
         pagination: PaginationRequest
@@ -153,7 +148,7 @@ class ProjectRepositoryImpl(
         var filtered = projects.values.filter { it.companyId == companyId }
 
         status?.let { s ->
-            filtered = filtered.filter { it.status == s }
+            filtered = filtered.filter { it.status == s.name }
         }
 
         val sorted = when (pagination.sortBy) {
@@ -183,22 +178,22 @@ class ProjectRepositoryImpl(
         )
     }
 
-    override suspend fun getActiveProjects(companyId: String): List<Project> {
+    suspend fun getActiveProjects(companyId: String): List<Project> {
         return projects.values.filter {
-            it.companyId == companyId && it.status == ProjectStatus.ACTIVE
+            it.companyId == companyId && it.status == ProjectStatus.ACTIVE.name
         }
     }
 
-    override suspend fun getProjectsByStatus(
+    suspend fun getProjectsByStatus(
         companyId: String,
         status: ProjectStatus
     ): List<Project> {
         return projects.values.filter {
-            it.companyId == companyId && it.status == status
+            it.companyId == companyId && it.status == status.name
         }
     }
 
-    override suspend fun searchProjects(
+    suspend fun searchProjects(
         companyId: String,
         query: String,
         limit: Int
@@ -215,7 +210,7 @@ class ProjectRepositoryImpl(
 
     // ===== Project Team Management =====
 
-    override suspend fun assignProjectManager(
+    suspend fun assignProjectManager(
         projectId: String,
         projectManagerId: String
     ): Result<Unit> {
@@ -224,8 +219,7 @@ class ProjectRepositoryImpl(
                 ?: return Result.failure(IllegalArgumentException("Project not found"))
 
             projects[projectId] = project.copy(
-                projectManagerId = projectManagerId,
-                updatedAt = Clock.System.now().toString()
+                projectManagerId = projectManagerId
             )
             emitProjectsUpdate()
 
@@ -235,7 +229,7 @@ class ProjectRepositoryImpl(
         }
     }
 
-    override suspend fun assignSuperintendent(
+    suspend fun assignSuperintendent(
         projectId: String,
         superintendentId: String
     ): Result<Unit> {
@@ -244,8 +238,7 @@ class ProjectRepositoryImpl(
                 ?: return Result.failure(IllegalArgumentException("Project not found"))
 
             projects[projectId] = project.copy(
-                superintendentId = superintendentId,
-                updatedAt = Clock.System.now().toString()
+                superintendentId = superintendentId
             )
             emitProjectsUpdate()
 
@@ -255,18 +248,18 @@ class ProjectRepositoryImpl(
         }
     }
 
-    override suspend fun getProjectsByManager(
+    suspend fun getProjectsByManager(
         projectManagerId: String,
         status: ProjectStatus
     ): List<Project> {
         return projects.values.filter {
-            it.projectManagerId == projectManagerId && it.status == status
+            it.projectManagerId == projectManagerId && it.status == status.name
         }
     }
 
     // ===== Project Information =====
 
-    override suspend fun getProjectClientInfo(projectId: String): ProjectClientInfo? {
+    suspend fun getProjectClientInfo(projectId: String): ProjectClientInfo? {
         return projects[projectId]?.let { project ->
             ProjectClientInfo(
                 clientName = project.clientName,
@@ -277,7 +270,7 @@ class ProjectRepositoryImpl(
         }
     }
 
-    override suspend fun updateProjectClientInfo(
+    suspend fun updateProjectClientInfo(
         projectId: String,
         clientName: String?,
         clientContact: String?,
@@ -292,8 +285,7 @@ class ProjectRepositoryImpl(
                 clientName = clientName ?: project.clientName,
                 clientContact = clientContact ?: project.clientContact,
                 clientPhone = clientPhone ?: project.clientPhone,
-                clientEmail = clientEmail ?: project.clientEmail,
-                updatedAt = Clock.System.now().toString()
+                clientEmail = clientEmail ?: project.clientEmail
             )
             emitProjectsUpdate()
 
@@ -303,7 +295,7 @@ class ProjectRepositoryImpl(
         }
     }
 
-    override suspend fun getProjectLocationInfo(projectId: String): ProjectLocationInfo? {
+    suspend fun getProjectLocationInfo(projectId: String): ProjectLocationInfo? {
         return projects[projectId]?.let { project ->
             ProjectLocationInfo(
                 streetAddress = project.streetAddress,
@@ -329,7 +321,7 @@ class ProjectRepositoryImpl(
         }
     }
 
-    override suspend fun updateProjectLocationInfo(
+    suspend fun updateProjectLocationInfo(
         projectId: String,
         streetAddress: String?,
         city: String?,
@@ -344,8 +336,7 @@ class ProjectRepositoryImpl(
                 streetAddress = streetAddress ?: project.streetAddress,
                 city = city ?: project.city,
                 state = state ?: project.state,
-                zip = zip ?: project.zip,
-                updatedAt = Clock.System.now().toString()
+                zip = zip ?: project.zip
             )
             emitProjectsUpdate()
 
@@ -357,20 +348,20 @@ class ProjectRepositoryImpl(
 
     // ===== Statistics =====
 
-    override suspend fun getProjectCountByStatus(companyId: String): Map<ProjectStatus, Int> {
+    suspend fun getProjectCountByStatus(companyId: String): Map<ProjectStatus, Int> {
         return projects.values
             .filter { it.companyId == companyId }
-            .groupingBy { it.status }
+            .groupingBy { ProjectStatus.fromString(it.status) }
             .eachCount()
     }
 
-    override suspend fun getActiveProjectCount(companyId: String): Int {
+    suspend fun getActiveProjectCount(companyId: String): Int {
         return projects.values.count {
-            it.companyId == companyId && it.status == ProjectStatus.ACTIVE
+            it.companyId == companyId && it.status == ProjectStatus.ACTIVE.name
         }
     }
 
-    override suspend fun getProjectStats(projectId: String): ProjectStatistics {
+    suspend fun getProjectStats(projectId: String): ProjectStatistics {
         // TODO: Aggregate stats from crews, PTPs, incidents
         return ProjectStatistics(
             totalCrews = 0,
@@ -385,20 +376,20 @@ class ProjectRepositoryImpl(
 
     // ===== Reactive Queries =====
 
-    override fun observeProjects(
+    fun observeProjects(
         companyId: String,
         status: ProjectStatus?
     ): Flow<List<Project>> {
         return projectsFlow.map { allProjects ->
             var filtered = allProjects.filter { it.companyId == companyId }
             status?.let { s ->
-                filtered = filtered.filter { it.status == s }
+                filtered = filtered.filter { it.status == s.name }
             }
             filtered
         }
     }
 
-    override fun observeProject(projectId: String): Flow<Project?> {
+    fun observeProject(projectId: String): Flow<Project?> {
         return projectsFlow.map { allProjects ->
             allProjects.find { it.id == projectId }
         }

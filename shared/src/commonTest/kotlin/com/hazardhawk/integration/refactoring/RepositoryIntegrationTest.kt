@@ -2,7 +2,7 @@ package com.hazardhawk.integration.refactoring
 
 import com.hazardhawk.TestDataFactory
 import com.hazardhawk.TestUtils
-import com.hazardhawk.ai.models.*
+import com.hazardhawk.core.models.*
 import kotlinx.coroutines.test.runTest
 import kotlin.test.*
 

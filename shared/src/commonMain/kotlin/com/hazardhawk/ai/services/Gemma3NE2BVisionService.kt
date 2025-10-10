@@ -1,19 +1,21 @@
 package com.hazardhawk.ai.services
-import kotlinx.datetime.Clock
 
+import kotlinx.datetime.Clock
 import com.hazardhawk.ai.core.AIPhotoAnalyzer
 import com.hazardhawk.ai.loaders.GemmaModelLoader
-import com.hazardhawk.ai.models.*
+import com.hazardhawk.core.models.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
-import kotlinx.uuid.uuid4
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 /**
  * Gemma 3N E2B multimodal vision service for local, privacy-first AI analysis.
  * Uses existing ONNX models in /models/gemma3n_e2b_onnx/
  */
+@OptIn(ExperimentalUuidApi::class)
 class Gemma3NE2BVisionService(
     private val modelLoader: GemmaModelLoader
 ) : AIPhotoAnalyzer {
@@ -163,13 +165,14 @@ class Gemma3NE2BVisionService(
             val response = json.decodeFromString<GemmaAnalysisResponse>(jsonText)
             
             SafetyAnalysis(
-                id = uuid4().toString(),
-                timestamp = Clock.System.now().toEpochMilliseconds(),
+                id = Uuid.random().toString(),
+                photoId = "photo-${Uuid.random()}",
+                timestamp = Clock.System.now(),
                 analysisType = AnalysisType.LOCAL_GEMMA_MULTIMODAL,
                 workType = workType,
                 hazards = response.hazards.map { hazard ->
                     Hazard(
-                        id = uuid4().toString(),
+                        id = Uuid.random().toString(),
                         type = parseHazardType(hazard.type),
                         severity = parseSeverity(hazard.severity),
                         description = hazard.description,
@@ -190,7 +193,8 @@ class Gemma3NE2BVisionService(
                 ),
                 recommendations = response.recommendations,
                 overallRiskLevel = parseRiskLevel(response.overallRiskLevel),
-                confidence = response.confidence,
+                severity = response.hazards.maxOfOrNull { parseSeverity(it.severity) } ?: Severity.LOW,
+                aiConfidence = response.confidence,
                 processingTimeMs = processingTime,
                 oshaViolations = generateOSHAViolations(response.hazards)
             )
@@ -214,7 +218,7 @@ class Gemma3NE2BVisionService(
             analysisText.contains("height", ignoreCase = true)) {
             hazards.add(
                 Hazard(
-                    id = uuid4().toString(),
+                    id = Uuid.random().toString(),
                     type = HazardType.FALL_PROTECTION,
                     severity = Severity.HIGH,
                     description = "Potential fall hazard identified",
@@ -229,7 +233,7 @@ class Gemma3NE2BVisionService(
             analysisText.contains("hard hat", ignoreCase = true)) {
             hazards.add(
                 Hazard(
-                    id = uuid4().toString(),
+                    id = Uuid.random().toString(),
                     type = HazardType.PPE_VIOLATION,
                     severity = Severity.MEDIUM,
                     description = "PPE compliance issue detected",
@@ -240,15 +244,17 @@ class Gemma3NE2BVisionService(
         }
         
         return SafetyAnalysis(
-            id = uuid4().toString(),
-            timestamp = Clock.System.now().toEpochMilliseconds(),
+            id = Uuid.random().toString(),
+            photoId = "photo-${Uuid.random()}",
+            timestamp = Clock.System.now(),
             analysisType = AnalysisType.LOCAL_GEMMA_MULTIMODAL,
             workType = workType,
             hazards = hazards,
             ppeStatus = createDefaultPPEStatus(),
             recommendations = listOf("Manual review recommended - automated parsing incomplete"),
             overallRiskLevel = if (hazards.isNotEmpty()) RiskLevel.MODERATE else RiskLevel.LOW,
-            confidence = 0.5f,
+            severity = hazards.maxOfOrNull { it.severity } ?: Severity.LOW,
+            aiConfidence = 0.5f,
             processingTimeMs = processingTime
         )
     }
@@ -258,9 +264,10 @@ class Gemma3NE2BVisionService(
         return when (type.uppercase()) {
             "FALL_PROTECTION" -> HazardType.FALL_PROTECTION
             "PPE_VIOLATION" -> HazardType.PPE_VIOLATION
-            "ELECTRICAL_HAZARD" -> HazardType.ELECTRICAL_HAZARD
+            "ELECTRICAL_HAZARD", "ELECTRICAL" -> HazardType.ELECTRICAL_HAZARD
             "MECHANICAL_HAZARD" -> HazardType.MECHANICAL_HAZARD
-            else -> HazardType.GENERAL_CONSTRUCTION
+            "HOUSEKEEPING" -> HazardType.HOUSEKEEPING
+            else -> HazardType.PPE_VIOLATION // Default fallback
         }
     }
     

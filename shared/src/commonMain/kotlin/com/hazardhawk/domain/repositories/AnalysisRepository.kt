@@ -1,6 +1,6 @@
 package com.hazardhawk.domain.repositories
 
-import com.hazardhawk.domain.entities.SafetyAnalysis
+import com.hazardhawk.core.models.SafetyAnalysis
 
 interface AnalysisRepository {
     suspend fun saveAnalysis(analysis: SafetyAnalysis): Result<SafetyAnalysis>
