@@ -185,7 +185,7 @@ class SimpleAIPhotoAnalyzer : AIPhotoAnalyzer {
     private fun getHazardDescription(type: CoreHazardType): String = when (type) {
         CoreHazardType.PPE_VIOLATION -> "Worker without required PPE"
         CoreHazardType.FALL_PROTECTION -> "Potential fall hazard - unprotected height"
-        CoreHazardType.ELECTRICAL_HAZARD, CoreHazardType.ELECTRICAL, CoreHazardType.ELECTRICAL_SAFETY -> "Electrical hazard - exposed wiring or equipment"
+        CoreHazardType.ELECTRICAL_HAZARD, CoreHazardType.ELECTRICAL -> "Electrical hazard - exposed wiring or equipment"
         CoreHazardType.MECHANICAL_HAZARD -> "Mechanical equipment hazard"
         CoreHazardType.CHEMICAL_HAZARD, CoreHazardType.CHEMICAL -> "Chemical exposure hazard"
         CoreHazardType.FIRE_HAZARD, CoreHazardType.FIRE -> "Fire hazard detected"
@@ -200,34 +200,26 @@ class SimpleAIPhotoAnalyzer : AIPhotoAnalyzer {
         CoreHazardType.EQUIPMENT_DEFECT -> "Equipment defect detected"
         CoreHazardType.EQUIPMENT_SAFETY -> "Equipment safety concern"
         CoreHazardType.CRANE_LIFT -> "Crane lifting hazard"
-        CoreHazardType.CRANE_LIFTING -> "Crane lifting hazard"
-        CoreHazardType.STEEL_WORK -> "Steel work hazard"
-        CoreHazardType.OTHER -> "Other safety concern"
-        CoreHazardType.UNKNOWN -> "Unknown hazard type"
     }
 
     private fun getHazardSeverity(type: CoreHazardType): Severity = when (type) {
         CoreHazardType.FALL_PROTECTION, CoreHazardType.ELECTRICAL_HAZARD,
-        CoreHazardType.ELECTRICAL, CoreHazardType.ELECTRICAL_SAFETY, CoreHazardType.CONFINED_SPACE -> Severity.CRITICAL
+        CoreHazardType.ELECTRICAL, CoreHazardType.CONFINED_SPACE -> Severity.CRITICAL
         CoreHazardType.MECHANICAL_HAZARD, CoreHazardType.SCAFFOLDING_UNSAFE,
-        CoreHazardType.LOCKOUT_TAGOUT, CoreHazardType.CRANE_LIFT, CoreHazardType.CRANE_LIFTING, CoreHazardType.STEEL_WORK -> Severity.HIGH
+        CoreHazardType.LOCKOUT_TAGOUT, CoreHazardType.CRANE_LIFT -> Severity.HIGH
         CoreHazardType.PPE_VIOLATION, CoreHazardType.CHEMICAL_HAZARD,
         CoreHazardType.CHEMICAL, CoreHazardType.EQUIPMENT_DEFECT,
         CoreHazardType.EQUIPMENT_SAFETY -> Severity.MEDIUM
-        CoreHazardType.OTHER, CoreHazardType.UNKNOWN -> Severity.LOW
         else -> Severity.LOW
     }
 
     private fun getOSHACode(type: CoreHazardType): String? = when (type) {
         CoreHazardType.PPE_VIOLATION -> "1926.95"
         CoreHazardType.FALL_PROTECTION -> "1926.501"
-        CoreHazardType.ELECTRICAL_HAZARD, CoreHazardType.ELECTRICAL, CoreHazardType.ELECTRICAL_SAFETY -> "1926.416"
+        CoreHazardType.ELECTRICAL_HAZARD, CoreHazardType.ELECTRICAL -> "1926.416"
         CoreHazardType.SCAFFOLDING_UNSAFE -> "1926.451"
         CoreHazardType.LOCKOUT_TAGOUT -> "1910.147"
         CoreHazardType.CONFINED_SPACE -> "1926.1200"
-        CoreHazardType.CRANE_LIFTING -> "1926.1400"
-        CoreHazardType.STEEL_WORK -> "1926.750"
-        CoreHazardType.OTHER, CoreHazardType.UNKNOWN -> null
         else -> null
     }
 
@@ -259,7 +251,7 @@ class SimpleAIPhotoAnalyzer : AIPhotoAnalyzer {
             "Provide personal fall arrest systems",
             "Conduct fall protection training"
         )
-        CoreHazardType.ELECTRICAL_HAZARD, CoreHazardType.ELECTRICAL, CoreHazardType.ELECTRICAL_SAFETY -> listOf(
+        CoreHazardType.ELECTRICAL_HAZARD, CoreHazardType.ELECTRICAL -> listOf(
             "Implement lockout/tagout procedures",
             "Use ground fault circuit interrupters (GFCI)",
             "Maintain safe clearances from electrical equipment"

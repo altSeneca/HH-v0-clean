@@ -151,11 +151,11 @@ class HazardDetectionProcessor {
         }
 
         val overallComplianceStatus = if (violations.any { it.severity == Severity.CRITICAL }) {
-            ComplianceStatus.NonCompliant
+            ComplianceStatus.NON_COMPLIANT
         } else if (violations.isNotEmpty()) {
-            ComplianceStatus.ReviewRequired
+            ComplianceStatus.REQUIRES_REVIEW
         } else {
-            ComplianceStatus.Compliant
+            ComplianceStatus.COMPLIANT
         }
 
         return OSHAComplianceAnalysis(

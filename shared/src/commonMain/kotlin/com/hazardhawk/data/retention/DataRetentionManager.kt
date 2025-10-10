@@ -115,7 +115,7 @@ class DataRetentionManager(
         
         val eligibleForPurge = mockPhotos.filter { 
             it.timestamp < purgeThreshold && 
-            it.complianceStatus != ComplianceStatus.NonCompliant &&
+            it.complianceStatus != ComplianceStatus.NON_COMPLIANT &&
             !it.hasLegalHold
         }
         
@@ -133,7 +133,7 @@ class DataRetentionManager(
             eligibleForPurge = eligibleForPurge,
             eligibleForTierChange = eligibleForHotToWarm + eligibleForWarmToCold,
             storageUsageByClass = calculateStorageUsage(mockPhotos),
-            complianceRiskItems = mockPhotos.filter { it.complianceStatus == ComplianceStatus.NonCompliant }
+            complianceRiskItems = mockPhotos.filter { it.complianceStatus == ComplianceStatus.NON_COMPLIANT }
         )
     }
 
@@ -317,8 +317,8 @@ class DataRetentionManager(
     private fun generateMockPhotos(): List<RetentionPhoto> {
         // Mock data for demonstration
         return listOf(
-            RetentionPhoto("photo1", Clock.System.now().toEpochMilliseconds(), StorageClass.HOT, ComplianceStatus.Compliant),
-            RetentionPhoto("photo2", Clock.System.now().toEpochMilliseconds() - (2 * MILLISECONDS_PER_YEAR), StorageClass.WARM, ComplianceStatus.ReviewRequired)
+            RetentionPhoto("photo1", Clock.System.now().toEpochMilliseconds(), StorageClass.HOT, ComplianceStatus.COMPLIANT),
+            RetentionPhoto("photo2", Clock.System.now().toEpochMilliseconds() - (2 * MILLISECONDS_PER_YEAR), StorageClass.WARM, ComplianceStatus.REQUIRES_REVIEW)
         )
     }
 
@@ -328,7 +328,7 @@ class DataRetentionManager(
 
     private fun canPurgePhoto(photo: RetentionPhoto): Boolean {
         return !photo.hasLegalHold && 
-               photo.complianceStatus != ComplianceStatus.NonCompliant
+               photo.complianceStatus != ComplianceStatus.NON_COMPLIANT
     }
 
     private suspend fun createRetentionCertificate(photo: RetentionPhoto) {

@@ -71,7 +71,7 @@ class SimpleOSHAAnalyzer : OSHAPhotoAnalyzer {
                 )
             )
 
-            WorkType.STEEL_WORK -> listOf(
+            WorkType.GENERAL_CONSTRUCTION -> listOf(
                 OSHAHazard(
                     id = "hazard_003",
                     hazardType = OSHAHazardType.FALL_PROTECTION,

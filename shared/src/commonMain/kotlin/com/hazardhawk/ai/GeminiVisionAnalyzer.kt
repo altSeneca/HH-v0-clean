@@ -550,8 +550,8 @@ class GeminiVisionAnalyzer(
             WorkType.GENERAL_CONSTRUCTION -> listOf("general-safety", "ppe-required", "hazard-assessment")
             WorkType.ELECTRICAL -> listOf("electrical-safety", "ppe-electrical", "lockout-tagout")
             WorkType.FALL_PROTECTION -> listOf("fall-protection", "guardrails", "safety-harness")
-            WorkType.CRANE_LIFTING -> listOf("crane-safety", "rigging", "load-capacity")
-            WorkType.CONFINED_SPACE -> listOf("confined-space", "atmospheric-testing", "rescue-plan")
+            WorkType.CRANE_OPERATIONS -> listOf("crane-safety", "rigging", "load-capacity")
+            WorkType.EXCAVATION -> listOf("excavation-safety", "shoring", "atmospheric-testing")
             WorkType.WELDING -> listOf("hot-work-permit", "fire-watch", "welding-safety")
             else -> listOf("general-safety", "ppe-required")
         }

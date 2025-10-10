@@ -300,12 +300,20 @@ enum class TagCategory {
 @Serializable
 enum class ComplianceStatus {
     COMPLIANT,
+    NON_COMPLIANT,
+    MINOR_VIOLATIONS,
+    SERIOUS_VIOLATIONS,
+    REQUIRES_REVIEW,
     NEEDS_IMPROVEMENT,
     CRITICAL;
     
     val displayName: String
         get() = when (this) {
             COMPLIANT -> "Compliant"
+            NON_COMPLIANT -> "Non-Compliant"
+            MINOR_VIOLATIONS -> "Minor Violations"
+            SERIOUS_VIOLATIONS -> "Serious Violations"
+            REQUIRES_REVIEW -> "Requires Review"
             NEEDS_IMPROVEMENT -> "Needs Improvement"
             CRITICAL -> "Critical"
         }
@@ -313,6 +321,10 @@ enum class ComplianceStatus {
     val statusColor: String
         get() = when (this) {
             COMPLIANT -> "#4CAF50"
+            NON_COMPLIANT -> "#F44336"
+            MINOR_VIOLATIONS -> "#FF9800"
+            SERIOUS_VIOLATIONS -> "#F44336"
+            REQUIRES_REVIEW -> "#FFC107"
             NEEDS_IMPROVEMENT -> "#FF9800"
             CRITICAL -> "#F44336"
         }

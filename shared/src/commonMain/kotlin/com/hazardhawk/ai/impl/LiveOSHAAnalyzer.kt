@@ -103,7 +103,7 @@ class LiveOSHAAnalyzer(
             WorkType.EXCAVATION -> "excavation and earthwork including trenching and grading"
             WorkType.GENERAL_CONSTRUCTION -> "general construction work"
             WorkType.FALL_PROTECTION -> "fall protection and working at heights"
-            WorkType.CRANE_LIFTING -> "crane operations and heavy lifting"
+            WorkType.CRANE_OPERATIONS -> "crane operations and heavy lifting"
             else -> "construction work"
         }
 
