@@ -90,7 +90,7 @@ data class PDFMetadata(
     fun getFormattedDate(): String {
         // This would use platform-specific date formatting
         // For now, return ISO format
-        return java.util.Date(generatedDate).toString()
+        return kotlinx.datetime.Instant.fromEpochMilliseconds(generatedDate).toString()
     }
     
     /**
@@ -145,7 +145,7 @@ data class SignatureData(
      * Get formatted signature date for display
      */
     fun getFormattedSignedDate(): String {
-        return java.util.Date(signedDate).toString()
+        return kotlinx.datetime.Instant.fromEpochMilliseconds(signedDate).toString()
     }
 }
 
@@ -207,6 +207,7 @@ sealed class PDFExportState {
                 PDFExportErrorCode.SIGNATURE_REQUIRED -> "A signature is required for this document type."
                 PDFExportErrorCode.PHOTOS_REQUIRED -> "Photos are required for this document type."
                 PDFExportErrorCode.UNKNOWN -> message
+                PDFExportErrorCode.TEMPLATE_ERROR -> "Template error. Please try again."
             }
         }
     }

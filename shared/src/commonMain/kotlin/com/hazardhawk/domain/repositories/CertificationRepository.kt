@@ -3,6 +3,7 @@ package com.hazardhawk.domain.repositories
 import com.hazardhawk.models.crew.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
+import com.hazardhawk.models.common.*
 
 /**
  * Repository for certification management with support for upload, verification,

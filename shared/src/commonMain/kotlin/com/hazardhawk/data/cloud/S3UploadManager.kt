@@ -5,8 +5,8 @@ import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
 import com.hazardhawk.security.PhotoEncryptionService
 import com.hazardhawk.security.SecureStorageService
-import com.hazardhawk.core.models.Photo
-import com.hazardhawk.core.models.SyncStatus
+import com.hazardhawk.domain.entities.Photo
+import com.hazardhawk.domain.entities.SyncStatus
 
 /**
  * S3 Upload Manager with encryption and retry logic for Phase 2 implementation
@@ -37,12 +37,12 @@ class S3UploadManager(
      */
     suspend fun initialize(): Result<Unit> {
         return try {
-            val accessKeyId = secureStorage.getString(AWS_ACCESS_KEY_ID_KEY)
-            val secretAccessKey = secureStorage.getString(AWS_SECRET_ACCESS_KEY_KEY)
-            val bucketName = secureStorage.getString(S3_BUCKET_NAME_KEY)
-            val region = secureStorage.getString(S3_REGION_KEY) ?: "us-east-1"
+            val accessKeyId = secureStorage.getApiKey(AWS_ACCESS_KEY_ID_KEY).getOrNull() ?: ""
+            val secretAccessKey = secureStorage.getApiKey(AWS_SECRET_ACCESS_KEY_KEY).getOrNull() ?: ""
+            val bucketName = secureStorage.getApiKey(S3_BUCKET_NAME_KEY).getOrNull() ?: ""
+            val region = secureStorage.getApiKey(S3_REGION_KEY).getOrNull() ?: "us-east-1"
 
-            if (accessKeyId.isNullOrBlank() || secretAccessKey.isNullOrBlank() || bucketName.isNullOrBlank()) {
+            if (accessKeyId.isBlank() || secretAccessKey.isBlank() || bucketName.isBlank()) {
                 Result.failure(Exception("S3 credentials not found in secure storage"))
             } else {
                 s3Config = S3Configuration(
@@ -96,7 +96,10 @@ class S3UploadManager(
         
         return try {
             // Encrypt photo data
-            val encryptedData = encryptionService.encryptData(photoData)
+            val encryptedPhotoResult = encryptionService.encryptPhoto(photoData, photo.id)
+            val encryptedPhoto = encryptedPhotoResult.getOrElse { 
+                return Result.failure(it)
+            }
             
             // Generate S3 key with timestamp and compliance metadata
             val s3Key = generateS3Key(photo)
@@ -105,10 +108,10 @@ class S3UploadManager(
             val metadata = createUploadMetadata(photo, attempt)
             
             // Perform the upload (multipart if large)
-            val uploadResult = if (encryptedData.size > CHUNK_SIZE) {
-                performMultipartUpload(config, s3Key, encryptedData, metadata)
+            val uploadResult = if (encryptedPhoto.encryptedData.size > CHUNK_SIZE) {
+                performMultipartUpload(config, s3Key, encryptedPhoto.encryptedData, metadata)
             } else {
-                performSimpleUpload(config, s3Key, encryptedData, metadata)
+                performSimpleUpload(config, s3Key, encryptedPhoto.encryptedData, metadata)
             }
             
             Result.success(uploadResult)

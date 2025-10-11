@@ -2,6 +2,7 @@ package com.hazardhawk.ai
 
 import com.hazardhawk.ai.yolo.ConstructionHazardDetection
 import com.hazardhawk.ai.yolo.ConstructionHazardType
+import com.hazardhawk.core.models.Severity
 import kotlinx.datetime.Clock
 
 /**
@@ -33,10 +34,10 @@ class GeminiSafetyAnalysisAdapter {
      */
     fun generateHazardSummary(hazardDetections: List<ConstructionHazardDetection>): Map<String, Any> {
         val criticalHazards = hazardDetections.count { 
-            it.severity == com.hazardhawk.models.Severity.CRITICAL 
+            it.severity == Severity.CRITICAL 
         }
         val highHazards = hazardDetections.count { 
-            it.severity == com.hazardhawk.models.Severity.HIGH 
+            it.severity == Severity.HIGH 
         }
         
         return mapOf(

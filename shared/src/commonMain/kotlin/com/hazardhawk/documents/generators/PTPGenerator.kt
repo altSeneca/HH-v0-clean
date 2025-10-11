@@ -4,14 +4,22 @@ import kotlinx.datetime.Clock
 import com.hazardhawk.core.models.*
 import com.hazardhawk.documents.models.*
 import com.hazardhawk.documents.templates.PTPTemplateEngine
+import com.hazardhawk.documents.services.DocumentAIService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.uuid.uuid4
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
+
+// Type aliases to resolve conflicts
+import com.hazardhawk.documents.models.RiskAssessment as DocumentRiskAssessment
+import com.hazardhawk.core.models.RiskLevel as CoreRiskLevel
+import com.hazardhawk.documents.models.RiskLevel as DocumentRiskLevel
 
 /**
  * AI-powered Pre-Task Plan (PTP) generator that creates comprehensive safety documentation
  * from photo analysis results and project requirements.
  */
+@OptIn(ExperimentalUuidApi::class)
 class PTPGenerator(
     private val aiService: DocumentAIService,
     private val templateEngine: PTPTemplateEngine
@@ -60,7 +68,7 @@ class PTPGenerator(
             
             // Phase 7: Assemble complete PTP document
             val ptpDocument = PTPDocument(
-                id = uuid4().toString(),
+                id = Uuid.random().toString(),
                 title = generateTitle(request.jobDescription, request.projectInfo),
                 createdAt = Clock.System.now().toEpochMilliseconds(),
                 projectInfo = request.projectInfo,
@@ -140,7 +148,7 @@ class PTPGenerator(
             )
         }
         
-        val riskAssessment = RiskAssessment(
+        val riskAssessment = DocumentRiskAssessment(
             overallRiskLevel = determineOverallRisk(hazards),
             highRiskTasks = identifyHighRiskTasks(hazards, workType),
             criticalControlPoints = identifyCriticalControlPoints(hazards),
@@ -196,40 +204,40 @@ class PTPGenerator(
         workType: WorkType
     ): List<PPERequirement> {
         
-        val ppeMap = mutableMapOf<PPEType, MutableSet<String>>()
+        val ppeMap = mutableMapOf<com.hazardhawk.documents.models.PPEType, MutableSet<String>>()
         
         // Map hazards to PPE requirements
         hazards.forEach { hazard ->
             when (hazard.type) {
                 HazardType.FALL_PROTECTION -> {
-                    ppeMap.getOrPut(PPEType.FALL_PROTECTION) { mutableSetOf() }
+                    ppeMap.getOrPut(com.hazardhawk.documents.models.PPEType.FALL_PROTECTION) { mutableSetOf() }
                         .add(hazard.id)
-                    ppeMap.getOrPut(PPEType.HEAD_PROTECTION) { mutableSetOf() }
-                        .add(hazard.id)
-                }
-                HazardType.ELECTRICAL_HAZARD -> {
-                    ppeMap.getOrPut(PPEType.EYE_PROTECTION) { mutableSetOf() }
-                        .add(hazard.id)
-                    ppeMap.getOrPut(PPEType.HAND_PROTECTION) { mutableSetOf() }
-                        .add(hazard.id)
-                    ppeMap.getOrPut(PPEType.HEAD_PROTECTION) { mutableSetOf() }
+                    ppeMap.getOrPut(com.hazardhawk.documents.models.PPEType.HEAD_PROTECTION) { mutableSetOf() }
                         .add(hazard.id)
                 }
-                HazardType.CHEMICAL_HAZARD -> {
-                    ppeMap.getOrPut(PPEType.RESPIRATORY_PROTECTION) { mutableSetOf() }
+                HazardType.ELECTRICAL_HAZARD, HazardType.ELECTRICAL, HazardType.ELECTRICAL_SAFETY -> {
+                    ppeMap.getOrPut(com.hazardhawk.documents.models.PPEType.EYE_PROTECTION) { mutableSetOf() }
                         .add(hazard.id)
-                    ppeMap.getOrPut(PPEType.EYE_PROTECTION) { mutableSetOf() }
+                    ppeMap.getOrPut(com.hazardhawk.documents.models.PPEType.HAND_PROTECTION) { mutableSetOf() }
                         .add(hazard.id)
-                    ppeMap.getOrPut(PPEType.HAND_PROTECTION) { mutableSetOf() }
+                    ppeMap.getOrPut(com.hazardhawk.documents.models.PPEType.HEAD_PROTECTION) { mutableSetOf() }
+                        .add(hazard.id)
+                }
+                HazardType.CHEMICAL_HAZARD, HazardType.CHEMICAL -> {
+                    ppeMap.getOrPut(com.hazardhawk.documents.models.PPEType.RESPIRATORY_PROTECTION) { mutableSetOf() }
+                        .add(hazard.id)
+                    ppeMap.getOrPut(com.hazardhawk.documents.models.PPEType.EYE_PROTECTION) { mutableSetOf() }
+                        .add(hazard.id)
+                    ppeMap.getOrPut(com.hazardhawk.documents.models.PPEType.HAND_PROTECTION) { mutableSetOf() }
                         .add(hazard.id)
                 }
                 else -> {
                     // Standard construction PPE
-                    ppeMap.getOrPut(PPEType.HEAD_PROTECTION) { mutableSetOf() }
+                    ppeMap.getOrPut(com.hazardhawk.documents.models.PPEType.HEAD_PROTECTION) { mutableSetOf() }
                         .add(hazard.id)
-                    ppeMap.getOrPut(PPEType.EYE_PROTECTION) { mutableSetOf() }
+                    ppeMap.getOrPut(com.hazardhawk.documents.models.PPEType.EYE_PROTECTION) { mutableSetOf() }
                         .add(hazard.id)
-                    ppeMap.getOrPut(PPEType.FOOT_PROTECTION) { mutableSetOf() }
+                    ppeMap.getOrPut(com.hazardhawk.documents.models.PPEType.FOOT_PROTECTION) { mutableSetOf() }
                         .add(hazard.id)
                 }
             }
@@ -242,8 +250,8 @@ class PTPGenerator(
                 specification = getPPESpecification(ppeType, workType),
                 oshaStandard = getOSHAStandardForPPE(ppeType),
                 applicableHazards = applicableHazards.toList(),
-                inspectionRequired = ppeType == PPEType.FALL_PROTECTION || 
-                                   ppeType == PPEType.RESPIRATORY_PROTECTION
+                inspectionRequired = ppeType == com.hazardhawk.documents.models.PPEType.FALL_PROTECTION || 
+                                   ppeType == com.hazardhawk.documents.models.PPEType.RESPIRATORY_PROTECTION
             )
         }.sortedBy { it.ppeType.name }
     }
@@ -314,13 +322,13 @@ class PTPGenerator(
         }
     }
     
-    private fun determineOverallRisk(hazards: List<Hazard>): RiskLevel {
+    private fun determineOverallRisk(hazards: List<Hazard>): DocumentRiskLevel {
         return when {
-            hazards.any { it.severity == Severity.CRITICAL } -> RiskLevel.EXTREME
-            hazards.any { it.severity == Severity.HIGH } -> RiskLevel.HIGH
-            hazards.any { it.severity == Severity.MEDIUM } -> RiskLevel.MODERATE
-            hazards.any { it.severity == Severity.LOW } -> RiskLevel.LOW
-            else -> RiskLevel.VERY_LOW
+            hazards.any { it.severity == Severity.CRITICAL } -> DocumentRiskLevel.EXTREME
+            hazards.any { it.severity == Severity.HIGH } -> DocumentRiskLevel.HIGH
+            hazards.any { it.severity == Severity.MEDIUM } -> DocumentRiskLevel.MODERATE
+            hazards.any { it.severity == Severity.LOW } -> DocumentRiskLevel.LOW
+            else -> DocumentRiskLevel.VERY_LOW
         }
     }
     
@@ -331,8 +339,10 @@ class PTPGenerator(
             .forEach { hazard ->
                 when (hazard.type) {
                     HazardType.FALL_PROTECTION -> highRiskTasks.add("Work at heights above 6 feet")
-                    HazardType.ELECTRICAL_HAZARD -> highRiskTasks.add("Electrical installation and maintenance")
-                    HazardType.CHEMICAL_HAZARD -> highRiskTasks.add("Chemical handling and application")
+                    HazardType.ELECTRICAL_HAZARD, HazardType.ELECTRICAL, HazardType.ELECTRICAL_SAFETY -> 
+                        highRiskTasks.add("Electrical installation and maintenance")
+                    HazardType.CHEMICAL_HAZARD, HazardType.CHEMICAL -> 
+                        highRiskTasks.add("Chemical handling and application")
                     HazardType.MECHANICAL_HAZARD -> highRiskTasks.add("Operation of heavy machinery")
                     else -> highRiskTasks.add("Tasks involving ${formatHazardType(hazard.type)}")
                 }
@@ -358,9 +368,9 @@ class PTPGenerator(
             when (hazard.type) {
                 HazardType.FALL_PROTECTION -> 
                     conditions.add("Fall protection systems not in place or functioning")
-                HazardType.ELECTRICAL_HAZARD -> 
+                HazardType.ELECTRICAL_HAZARD, HazardType.ELECTRICAL, HazardType.ELECTRICAL_SAFETY -> 
                     conditions.add("Energized electrical systems without proper lockout/tagout")
-                HazardType.CHEMICAL_HAZARD -> 
+                HazardType.CHEMICAL_HAZARD, HazardType.CHEMICAL -> 
                     conditions.add("Chemical spill or exposure without proper containment")
                 else -> 
                     conditions.add("${formatHazardType(hazard.type)} safety measures not implemented")
@@ -372,7 +382,7 @@ class PTPGenerator(
     
     private fun generateControlMeasures(hazards: List<Hazard>): List<ControlMeasure> {
         return hazards.flatMap { hazard ->
-            hazard.recommendations.mapIndexed { index, recommendation ->
+            hazard.recommendations.mapIndexed { _, recommendation ->
                 ControlMeasure(
                     hazardId = hazard.id,
                     controlType = determineControlType(recommendation),
@@ -386,15 +396,15 @@ class PTPGenerator(
         }
     }
     
-    private fun assessResidualRisk(hazards: List<Hazard>, controlMeasures: List<ControlMeasure>): RiskLevel {
+    private fun assessResidualRisk(hazards: List<Hazard>, controlMeasures: List<ControlMeasure>): DocumentRiskLevel {
         // Assume control measures reduce risk by one level
         val maxSeverity = hazards.maxByOrNull { it.severity.ordinal }?.severity ?: Severity.LOW
         
         return when (maxSeverity) {
-            Severity.CRITICAL -> RiskLevel.HIGH
-            Severity.HIGH -> RiskLevel.MODERATE  
-            Severity.MEDIUM -> RiskLevel.LOW
-            Severity.LOW -> RiskLevel.VERY_LOW
+            Severity.CRITICAL -> DocumentRiskLevel.HIGH
+            Severity.HIGH -> DocumentRiskLevel.MODERATE  
+            Severity.MEDIUM -> DocumentRiskLevel.LOW
+            Severity.LOW -> DocumentRiskLevel.VERY_LOW
         }
     }
     
@@ -432,7 +442,7 @@ class PTPGenerator(
         }
         
         return SafetyProcedure(
-            id = uuid4().toString(),
+            id = Uuid.random().toString(),
             title = "General ${formatWorkType(workType)} Safety Procedure",
             steps = steps,
             applicableHazards = emptyList(),
@@ -465,9 +475,9 @@ class PTPGenerator(
     // Stub implementations for remaining methods
     private fun generateHazardSpecificProcedure(hazardType: HazardType, hazards: List<Hazard>, workType: WorkType): SafetyProcedure? = null
     private fun generateEmergencyProcedure(hazards: List<Hazard>, workType: WorkType): SafetyProcedure = 
-        SafetyProcedure(uuid4().toString(), "Emergency Response", emptyList(), emptyList())
-    private fun getPPESpecification(ppeType: PPEType, workType: WorkType): String = "ANSI/OSHA compliant ${ppeType.name}"
-    private fun getOSHAStandardForPPE(ppeType: PPEType): String = "1926.95"
+        SafetyProcedure(Uuid.random().toString(), "Emergency Response", emptyList(), emptyList())
+    private fun getPPESpecification(ppeType: com.hazardhawk.documents.models.PPEType, workType: WorkType): String = "ANSI/OSHA compliant ${ppeType.name}"
+    private fun getOSHAStandardForPPE(ppeType: com.hazardhawk.documents.models.PPEType): String = "1926.95"
     private fun generateEvacuationProcedure(location: String, hazards: List<Hazard>): String = 
         "Follow designated evacuation routes to assembly point"
     private fun generateEmergencyEquipmentList(hazards: List<Hazard>): List<String> = 

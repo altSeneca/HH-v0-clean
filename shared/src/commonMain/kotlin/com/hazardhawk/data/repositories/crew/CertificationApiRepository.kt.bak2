@@ -1,0 +1,1073 @@
+package com.hazardhawk.data.repositories.crew
+
+import com.hazardhawk.data.network.ApiClient
+import com.hazardhawk.domain.repositories.*
+import com.hazardhawk.models.crew.*
+import com.hazardhawk.FeatureFlags
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
+import kotlinx.serialization.Serializable
+import com.hazardhawk.models.common.*
+
+/**
+ * API-backed implementation of CertificationRepository
+ *
+ * Integrates with HazardHawk backend for certification management, OCR processing,
+ * and verification workflows.
+ *
+ * API Endpoints:
+ * - POST /api/certifications - Create certification
+ * - GET /api/certifications/:id - Get certification by ID
+ * - PATCH /api/certifications/:id - Update certification
+ * - DELETE /api/certifications/:id - Delete certification
+ * - GET /api/workers/:id/certifications - Get worker certifications
+ * - GET /api/companies/:id/certifications - Get company certifications
+ * - POST /api/certifications/:id/approve - Approve certification
+ * - POST /api/certifications/:id/reject - Reject certification
+ * - POST /api/certifications/upload - Upload and process document
+ * - GET /api/certification-types - Get certification types
+ */
+class CertificationApiRepository(
+    private val apiClient: ApiClient,
+    private val fallbackRepo: CertificationRepository? = null
+) : CertificationRepository {
+
+    // Local cache for reactive queries
+    private val certificationsCache = MutableStateFlow<Map<String, WorkerCertification>>(emptyMap())
+
+    // ===== Core CRUD Operations =====
+
+    override suspend fun createCertification(
+        workerProfileId: String,
+        companyId: String?,
+        request: CreateCertificationRequest
+    ): Result<WorkerCertification> {
+        if (!FeatureFlags.API_CERTIFICATION_ENABLED) {
+            return fallbackRepo?.createCertification(workerProfileId, companyId, request)
+                ?: Result.failure(IllegalStateException("Certification API is disabled"))
+        }
+
+        return try {
+            val response = apiClient.post<ApiCertificationResponse>(
+                path = "/api/certifications",
+                body = ApiCreateCertificationRequest(
+                    workerProfileId = workerProfileId,
+                    companyId = companyId,
+                    certificationTypeId = request.certificationTypeId,
+                    issueDate = request.issueDate.toString(),
+                    expirationDate = request.expirationDate?.toString(),
+                    issuingAuthority = request.issuingAuthority,
+                    certificationNumber = request.certificationNumber,
+                    documentUrl = request.documentUrl
+                )
+            )
+
+            response.mapCatching { apiResponse ->
+                val certification = apiResponse.toDomain()
+                updateCache(certification)
+                certification
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getCertification(
+        certificationId: String,
+        includeType: Boolean
+    ): WorkerCertification? {
+        if (!FeatureFlags.API_CERTIFICATION_ENABLED) {
+            return fallbackRepo?.getCertification(certificationId, includeType)
+        }
+
+        return try {
+            val response = apiClient.get<ApiCertificationResponse>(
+                path = "/api/certifications/$certificationId",
+                parameters = mapOf("includeType" to includeType.toString())
+            )
+
+            response.getOrNull()?.toDomain()?.also { updateCache(it) }
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    override suspend fun updateCertification(
+        certificationId: String,
+        issueDate: LocalDate?,
+        expirationDate: LocalDate?,
+        issuingAuthority: String?,
+        certificationNumber: String?
+    ): Result<WorkerCertification> {
+        if (!FeatureFlags.API_CERTIFICATION_ENABLED) {
+            return fallbackRepo?.updateCertification(
+                certificationId, issueDate, expirationDate, issuingAuthority, certificationNumber
+            ) ?: Result.failure(IllegalStateException("Certification API is disabled"))
+        }
+
+        return try {
+            val response = apiClient.patch<ApiCertificationResponse>(
+                path = "/api/certifications/$certificationId",
+                body = ApiUpdateCertificationRequest(
+                    issueDate = issueDate?.toString(),
+                    expirationDate = expirationDate?.toString(),
+                    issuingAuthority = issuingAuthority,
+                    certificationNumber = certificationNumber
+                )
+            )
+
+            response.mapCatching { apiResponse ->
+                val certification = apiResponse.toDomain()
+                updateCache(certification)
+                certification
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun deleteCertification(certificationId: String): Result<Unit> {
+        if (!FeatureFlags.API_CERTIFICATION_ENABLED) {
+            return fallbackRepo?.deleteCertification(certificationId)
+                ?: Result.failure(IllegalStateException("Certification API is disabled"))
+        }
+
+        return try {
+            val response = apiClient.delete<Unit>(
+                path = "/api/certifications/$certificationId"
+            )
+
+            response.onSuccess {
+                removeFromCache(certificationId)
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // ===== Certification Queries =====
+
+    override suspend fun getWorkerCertifications(
+        workerProfileId: String,
+        status: CertificationStatus?,
+        includeExpired: Boolean
+    ): List<WorkerCertification> {
+        if (!FeatureFlags.API_CERTIFICATION_ENABLED) {
+            return fallbackRepo?.getWorkerCertifications(workerProfileId, status, includeExpired) ?: emptyList()
+        }
+
+        return try {
+            val params = mutableMapOf<String, String>()
+            status?.let { params["status"] = it.name }
+            params["includeExpired"] = includeExpired.toString()
+
+            val response = apiClient.get<ApiCertificationListResponse>(
+                path = "/api/workers/$workerProfileId/certifications",
+                parameters = params
+            )
+
+            response.getOrNull()?.certifications?.map { it.toDomain() }?.also { certs ->
+                certs.forEach { updateCache(it) }
+            } ?: emptyList()
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    override suspend fun getCompanyCertifications(
+        companyId: String,
+        status: CertificationStatus?,
+        pagination: PaginationRequest
+    ): PaginatedResult<WorkerCertification> {
+        if (!FeatureFlags.API_CERTIFICATION_ENABLED) {
+            return fallbackRepo?.getCompanyCertifications(companyId, status, pagination)
+                ?: PaginatedResult(emptyList(), PaginationInfo(hasMore = false))
+        }
+
+        return try {
+            val params = mutableMapOf(
+                "pageSize" to pagination.pageSize.toString()
+            )
+            status?.let { params["status"] = it.name }
+            pagination.cursor?.let { params["cursor"] = it }
+
+            val response = apiClient.get<ApiPaginatedCertificationResponse>(
+                path = "/api/companies/$companyId/certifications",
+                parameters = params
+            )
+
+            response.getOrNull()?.let { apiResponse ->
+                val certifications = apiResponse.data.map { it.toDomain() }
+                certifications.forEach { updateCache(it) }
+
+                PaginatedResult(
+                    data = certifications,
+                    pagination = PaginationInfo(
+                        nextCursor = apiResponse.pagination.nextCursor,
+                        hasMore = apiResponse.pagination.hasMore,
+                        totalCount = apiResponse.pagination.totalCount ?: 0
+                    )
+                )
+            } ?: PaginatedResult(emptyList(), PaginationInfo(hasMore = false))
+        } catch (e: Exception) {
+            PaginatedResult(emptyList(), PaginationInfo(hasMore = false))
+        }
+    }
+
+    override suspend fun getCertificationsByType(
+        companyId: String,
+        certificationTypeId: String,
+        status: CertificationStatus
+    ): List<WorkerCertification> {
+        if (!FeatureFlags.API_CERTIFICATION_ENABLED) {
+            return fallbackRepo?.getCertificationsByType(companyId, certificationTypeId, status) ?: emptyList()
+        }
+
+        return try {
+            val response = apiClient.get<ApiCertificationListResponse>(
+                path = "/api/companies/$companyId/certifications",
+                parameters = mapOf(
+                    "certificationTypeId" to certificationTypeId,
+                    "status" to status.name
+                )
+            )
+
+            response.getOrNull()?.certifications?.map { it.toDomain() } ?: emptyList()
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    // ===== Verification =====
+
+    override suspend fun approveCertification(
+        certificationId: String,
+        verifiedBy: String,
+        notes: String?
+    ): Result<WorkerCertification> {
+        if (!FeatureFlags.API_CERTIFICATION_ENABLED) {
+            return fallbackRepo?.approveCertification(certificationId, verifiedBy, notes)
+                ?: Result.failure(IllegalStateException("Certification API is disabled"))
+        }
+
+        return try {
+            val response = apiClient.post<ApiCertificationResponse>(
+                path = "/api/certifications/$certificationId/approve",
+                body = ApiVerificationRequest(
+                    verifiedBy = verifiedBy,
+                    notes = notes
+                )
+            )
+
+            response.mapCatching { apiResponse ->
+                val certification = apiResponse.toDomain()
+                updateCache(certification)
+                certification
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun rejectCertification(
+        certificationId: String,
+        verifiedBy: String,
+        reason: String
+    ): Result<WorkerCertification> {
+        if (!FeatureFlags.API_CERTIFICATION_ENABLED) {
+            return fallbackRepo?.rejectCertification(certificationId, verifiedBy, reason)
+                ?: Result.failure(IllegalStateException("Certification API is disabled"))
+        }
+
+        return try {
+            val response = apiClient.post<ApiCertificationResponse>(
+                path = "/api/certifications/$certificationId/reject",
+                body = ApiRejectionRequest(
+                    verifiedBy = verifiedBy,
+                    reason = reason
+                )
+            )
+
+            response.mapCatching { apiResponse ->
+                val certification = apiResponse.toDomain()
+                updateCache(certification)
+                certification
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getPendingCertifications(
+        companyId: String,
+        limit: Int
+    ): List<WorkerCertification> {
+        if (!FeatureFlags.API_CERTIFICATION_ENABLED) {
+            return fallbackRepo?.getPendingCertifications(companyId, limit) ?: emptyList()
+        }
+
+        return try {
+            val response = apiClient.get<ApiCertificationListResponse>(
+                path = "/api/companies/$companyId/certifications/pending",
+                parameters = mapOf("limit" to limit.toString())
+            )
+
+            response.getOrNull()?.certifications?.map { it.toDomain() } ?: emptyList()
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    // ===== Expiration Tracking =====
+
+    override suspend fun getExpiringCertifications(
+        companyId: String,
+        daysUntilExpiration: Int
+    ): List<WorkerCertification> {
+        if (!FeatureFlags.API_CERTIFICATION_ENABLED) {
+            return fallbackRepo?.getExpiringCertifications(companyId, daysUntilExpiration) ?: emptyList()
+        }
+
+        return try {
+            val response = apiClient.get<ApiCertificationListResponse>(
+                path = "/api/companies/$companyId/certifications/expiring",
+                parameters = mapOf("days" to daysUntilExpiration.toString())
+            )
+
+            response.getOrNull()?.certifications?.map { it.toDomain() } ?: emptyList()
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    override suspend fun getExpiredCertifications(
+        companyId: String,
+        limit: Int
+    ): List<WorkerCertification> {
+        if (!FeatureFlags.API_CERTIFICATION_ENABLED) {
+            return fallbackRepo?.getExpiredCertifications(companyId, limit) ?: emptyList()
+        }
+
+        return try {
+            val response = apiClient.get<ApiCertificationListResponse>(
+                path = "/api/companies/$companyId/certifications/expired",
+                parameters = mapOf("limit" to limit.toString())
+            )
+
+            response.getOrNull()?.certifications?.map { it.toDomain() } ?: emptyList()
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    override suspend fun markCertificationsExpired(
+        certificationIds: List<String>
+    ): Result<Int> {
+        if (!FeatureFlags.API_CERTIFICATION_ENABLED) {
+            return fallbackRepo?.markCertificationsExpired(certificationIds)
+                ?: Result.failure(IllegalStateException("Certification API is disabled"))
+        }
+
+        return try {
+            val response = apiClient.post<ApiMarkExpiredResponse>(
+                path = "/api/certifications/mark-expired",
+                body = mapOf("certificationIds" to certificationIds)
+            )
+
+            response.map { it.count }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getWorkersWithExpiringCerts(
+        companyId: String,
+        daysUntilExpiration: Int
+    ): Map<String, List<WorkerCertification>> {
+        val expiringCerts = getExpiringCertifications(companyId, daysUntilExpiration)
+        return expiringCerts.groupBy { it.workerProfileId }
+    }
+
+    override suspend fun sendExpirationReminder(
+        certificationId: String,
+        channels: List<NotificationChannel>
+    ): Result<ExpirationReminderResult> {
+        if (!FeatureFlags.API_CERTIFICATION_ENABLED) {
+            return fallbackRepo?.sendExpirationReminder(certificationId, channels)
+                ?: Result.failure(IllegalStateException("Certification API is disabled"))
+        }
+
+        return try {
+            val response = apiClient.post<ApiExpirationReminderResponse>(
+                path = "/api/certifications/$certificationId/send-expiration-reminder",
+                body = ApiSendReminderRequest(
+                    channels = channels.map { it.name }
+                )
+            )
+
+            response.map { it.toDomain() }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun sendBulkExpirationReminders(
+        certificationIds: List<String>,
+        channels: List<NotificationChannel>
+    ): Result<BulkReminderResult> {
+        if (!FeatureFlags.API_CERTIFICATION_ENABLED) {
+            return fallbackRepo?.sendBulkExpirationReminders(certificationIds, channels)
+                ?: Result.failure(IllegalStateException("Certification API is disabled"))
+        }
+
+        return try {
+            val response = apiClient.post<ApiBulkReminderResponse>(
+                path = "/api/certifications/send-bulk-expiration-reminders",
+                body = ApiBulkSendReminderRequest(
+                    certificationIds = certificationIds,
+                    channels = channels.map { it.name }
+                )
+            )
+
+            response.map { it.toDomain() }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // ===== OCR and Document Processing =====
+
+    override suspend fun uploadCertificationDocument(
+        workerProfileId: String,
+        companyId: String?,
+        documentData: ByteArray,
+        fileName: String,
+        mimeType: String
+    ): Result<CertificationUploadResult> {
+        if (!FeatureFlags.API_CERTIFICATION_ENABLED) {
+            return fallbackRepo?.uploadCertificationDocument(
+                workerProfileId, companyId, documentData, fileName, mimeType
+            ) ?: Result.failure(IllegalStateException("Certification API is disabled"))
+        }
+
+        return try {
+            // Step 1: Get presigned upload URL
+            val presignedResponse = apiClient.post<ApiPresignedUrlResponse>(
+                path = "/api/storage/presigned-url",
+                body = mapOf(
+                    "fileName" to fileName,
+                    "contentType" to mimeType,
+                    "category" to "certifications"
+                )
+            )
+
+            if (presignedResponse.isFailure) {
+                return Result.failure(presignedResponse.exceptionOrNull()!!)
+            }
+
+            val presignedData = presignedResponse.getOrThrow()
+
+            // Step 2: Upload file to S3 using presigned URL
+            val uploadResult = apiClient.uploadFile(
+                url = presignedData.uploadUrl,
+                data = documentData,
+                contentType = mimeType
+            )
+
+            if (uploadResult.isFailure) {
+                return Result.failure(uploadResult.exceptionOrNull()!!)
+            }
+
+            // Step 3: Trigger OCR processing
+            val ocrResponse = apiClient.post<ApiOCRProcessingResponse>(
+                path = "/api/ocr/extract-certification",
+                body = mapOf(
+                    "documentUrl" to presignedData.cdnUrl,
+                    "workerProfileId" to workerProfileId,
+                    "companyId" to (companyId ?: "")
+                )
+            )
+
+            ocrResponse.mapCatching { ocrResult ->
+                CertificationUploadResult(
+                    documentUrl = presignedData.cdnUrl,
+                    thumbnailUrl = presignedData.thumbnailUrl,
+                    extractedData = ocrResult.extractedData?.let { data ->
+                        OCRExtractedData(
+                            rawText = data.rawText ?: "",
+                            holderName = data.holderName,
+                            certificationType = data.certificationType,
+                            certificationNumber = data.certificationNumber,
+                            issueDate = data.issueDate?.let { LocalDate.parse(it) },
+                            expirationDate = data.expirationDate?.let { LocalDate.parse(it) },
+                            issuingAuthority = data.issuingAuthority,
+                            confidence = data.confidence,
+                            fieldConfidences = data.fieldConfidences ?: emptyMap()
+                        )
+                    },
+                    needsReview = ocrResult.needsReview
+                )
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun processCertificationOCR(
+        workerProfileId: String,
+        companyId: String?,
+        documentUrl: String,
+        ocrData: OCRExtractedData
+    ): Result<WorkerCertification> {
+        if (!FeatureFlags.API_CERTIFICATION_ENABLED) {
+            return fallbackRepo?.processCertificationOCR(workerProfileId, companyId, documentUrl, ocrData)
+                ?: Result.failure(IllegalStateException("Certification API is disabled"))
+        }
+
+        // Map OCR data to certification type
+        val certTypeCode = ocrData.certificationType ?: return Result.failure(
+            IllegalArgumentException("Certification type not found in OCR data")
+        )
+
+        val certType = getCertificationTypeByCode(certTypeCode)
+            ?: return Result.failure(IllegalArgumentException("Unknown certification type: $certTypeCode"))
+
+        // Create certification with OCR data
+        return createCertification(
+            workerProfileId = workerProfileId,
+            companyId = companyId,
+            request = CreateCertificationRequest(
+                certificationTypeId = certType.id,
+                issueDate = ocrData.issueDate ?: Clock.System.todayIn(TimeZone.currentSystemDefault()),
+                expirationDate = ocrData.expirationDate,
+                issuingAuthority = ocrData.issuingAuthority,
+                certificationNumber = ocrData.certificationNumber,
+                documentUrl = documentUrl
+            )
+        )
+    }
+
+    // ===== Certification Types =====
+
+    override suspend fun getCertificationTypes(
+        category: String?,
+        region: String
+    ): List<CertificationType> {
+        if (!FeatureFlags.API_CERTIFICATION_ENABLED) {
+            return fallbackRepo?.getCertificationTypes(category, region) ?: emptyList()
+        }
+
+        return try {
+            val params = mutableMapOf("region" to region)
+            category?.let { params["category"] = it }
+
+            val response = apiClient.get<ApiCertificationTypesResponse>(
+                path = "/api/certification-types",
+                parameters = params
+            )
+
+            response.getOrNull()?.types?.map { it.toDomain() } ?: emptyList()
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    override suspend fun getCertificationTypeByCode(code: String): CertificationType? {
+        if (!FeatureFlags.API_CERTIFICATION_ENABLED) {
+            return fallbackRepo?.getCertificationTypeByCode(code)
+        }
+
+        return try {
+            val response = apiClient.get<ApiCertificationTypeResponse>(
+                path = "/api/certification-types/by-code/$code"
+            )
+
+            response.getOrNull()?.type?.toDomain()
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    override suspend fun searchCertificationTypes(
+        query: String,
+        limit: Int
+    ): List<CertificationType> {
+        if (!FeatureFlags.API_CERTIFICATION_ENABLED) {
+            return fallbackRepo?.searchCertificationTypes(query, limit) ?: emptyList()
+        }
+
+        return try {
+            val response = apiClient.get<ApiCertificationTypesResponse>(
+                path = "/api/certification-types/search",
+                parameters = mapOf(
+                    "q" to query,
+                    "limit" to limit.toString()
+                )
+            )
+
+            response.getOrNull()?.types?.map { it.toDomain() } ?: emptyList()
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    // ===== Bulk Operations =====
+
+    override suspend fun importCertificationsFromCSV(
+        companyId: String,
+        csvData: String,
+        validateOnly: Boolean
+    ): Result<CSVImportResult> {
+        if (!FeatureFlags.API_CERTIFICATION_ENABLED) {
+            return fallbackRepo?.importCertificationsFromCSV(companyId, csvData, validateOnly)
+                ?: Result.failure(IllegalStateException("Certification API is disabled"))
+        }
+
+        return try {
+            val response = apiClient.post<ApiCSVImportResponse>(
+                path = "/api/certifications/bulk-import",
+                body = ApiCSVImportRequest(
+                    companyId = companyId,
+                    csvData = csvData,
+                    validateOnly = validateOnly
+                )
+            )
+
+            response.map { it.toDomain() }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // ===== Advanced Search =====
+
+    override suspend fun searchCertifications(
+        companyId: String,
+        filters: CertificationSearchFilters
+    ): PaginatedResult<WorkerCertification> {
+        if (!FeatureFlags.API_CERTIFICATION_ENABLED) {
+            return fallbackRepo?.searchCertifications(companyId, filters)
+                ?: PaginatedResult(emptyList(), PaginationInfo(hasMore = false))
+        }
+
+        return try {
+            val params = mutableMapOf<String, String>(
+                "pageSize" to filters.pagination.pageSize.toString(),
+                "sortBy" to filters.sortBy.name,
+                "sortDirection" to filters.sortDirection.name
+            )
+
+            filters.pagination.cursor?.let { params["cursor"] = it }
+            filters.query?.let { params["query"] = it }
+            filters.status?.let { params["status"] = it.name }
+            filters.certificationTypeIds?.let { params["certificationTypeIds"] = it.joinToString(",") }
+            filters.workerIds?.let { params["workerIds"] = it.joinToString(",") }
+            filters.expirationDateFrom?.let { params["expirationDateFrom"] = it.toString() }
+            filters.expirationDateTo?.let { params["expirationDateTo"] = it.toString() }
+            filters.issueDateFrom?.let { params["issueDateFrom"] = it.toString() }
+            filters.issueDateTo?.let { params["issueDateTo"] = it.toString() }
+
+            val response = apiClient.get<ApiPaginatedCertificationResponse>(
+                path = "/api/companies/$companyId/certifications/search",
+                parameters = params
+            )
+
+            response.getOrNull()?.let { apiResponse ->
+                val certifications = apiResponse.data.map { it.toDomain() }
+                certifications.forEach { updateCache(it) }
+
+                PaginatedResult(
+                    data = certifications,
+                    pagination = PaginationInfo(
+                        nextCursor = apiResponse.pagination.nextCursor,
+                        hasMore = apiResponse.pagination.hasMore,
+                        totalCount = apiResponse.pagination.totalCount
+                    )
+                )
+            } ?: PaginatedResult(emptyList(), PaginationInfo(hasMore = false))
+        } catch (e: Exception) {
+            PaginatedResult(emptyList(), PaginationInfo(hasMore = false))
+        }
+    }
+
+    // ===== Statistics =====
+
+    override suspend fun getCertificationCountByStatus(companyId: String): Map<CertificationStatus, Int> {
+        if (!FeatureFlags.API_CERTIFICATION_ENABLED) {
+            return fallbackRepo?.getCertificationCountByStatus(companyId) ?: emptyMap()
+        }
+
+        return try {
+            val response = apiClient.get<ApiCertificationStatsResponse>(
+                path = "/api/companies/$companyId/certifications/stats/by-status"
+            )
+
+            response.getOrNull()?.counts?.mapKeys { (key, _) ->
+                CertificationStatus.valueOf(key)
+            } ?: emptyMap()
+        } catch (e: Exception) {
+            emptyMap()
+        }
+    }
+
+    override suspend fun getCertificationCountByType(companyId: String): Map<String, Int> {
+        if (!FeatureFlags.API_CERTIFICATION_ENABLED) {
+            return fallbackRepo?.getCertificationCountByType(companyId) ?: emptyMap()
+        }
+
+        return try {
+            val response = apiClient.get<ApiCertificationStatsResponse>(
+                path = "/api/companies/$companyId/certifications/stats/by-type"
+            )
+
+            response.getOrNull()?.counts ?: emptyMap()
+        } catch (e: Exception) {
+            emptyMap()
+        }
+    }
+
+    override suspend fun getComplianceMetrics(companyId: String): CertificationComplianceMetrics {
+        if (!FeatureFlags.API_CERTIFICATION_ENABLED) {
+            return fallbackRepo?.getComplianceMetrics(companyId)
+                ?: CertificationComplianceMetrics(0, 0, 0, 0, 0, 0.0, 0, 0)
+        }
+
+        return try {
+            val response = apiClient.get<ApiComplianceMetricsResponse>(
+                path = "/api/companies/$companyId/certifications/compliance-metrics"
+            )
+
+            response.getOrNull()?.toDomain()
+                ?: CertificationComplianceMetrics(0, 0, 0, 0, 0, 0.0, 0, 0)
+        } catch (e: Exception) {
+            CertificationComplianceMetrics(0, 0, 0, 0, 0, 0.0, 0, 0)
+        }
+    }
+
+    // ===== Reactive Queries =====
+
+    override fun observeWorkerCertifications(
+        workerProfileId: String
+    ): Flow<List<WorkerCertification>> {
+        return certificationsCache.map { cache ->
+            cache.values.filter { it.workerProfileId == workerProfileId }
+        }
+    }
+
+    override fun observePendingCertifications(companyId: String): Flow<List<WorkerCertification>> {
+        return certificationsCache.map { cache ->
+            cache.values.filter {
+                it.companyId == companyId && it.status == CertificationStatus.PENDING_VERIFICATION
+            }
+        }
+    }
+
+    override fun observeExpiringCertifications(
+        companyId: String,
+        daysUntilExpiration: Int
+    ): Flow<List<WorkerCertification>> {
+        return certificationsCache.map { cache ->
+            val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+            cache.values.filter { cert ->
+                cert.companyId == companyId &&
+                cert.expirationDate?.let { expDate ->
+                    val daysRemaining = expDate.toEpochDays() - today.toEpochDays()
+                    daysRemaining in 1..daysUntilExpiration
+                } ?: false
+            }
+        }
+    }
+
+    // ===== Helper Methods =====
+
+    private fun updateCache(certification: WorkerCertification) {
+        val current = certificationsCache.value.toMutableMap()
+        current[certification.id] = certification
+        certificationsCache.value = current
+    }
+
+    private fun removeFromCache(certificationId: String) {
+        val current = certificationsCache.value.toMutableMap()
+        current.remove(certificationId)
+        certificationsCache.value = current
+    }
+}
+
+// ===== API DTOs =====
+
+@Serializable
+private data class ApiCreateCertificationRequest(
+    val workerProfileId: String,
+    val companyId: String?,
+    val certificationTypeId: String,
+    val issueDate: String,
+    val expirationDate: String?,
+    val issuingAuthority: String?,
+    val certificationNumber: String?,
+    val documentUrl: String
+)
+
+@Serializable
+private data class ApiUpdateCertificationRequest(
+    val issueDate: String?,
+    val expirationDate: String?,
+    val issuingAuthority: String?,
+    val certificationNumber: String?
+)
+
+@Serializable
+private data class ApiVerificationRequest(
+    val verifiedBy: String,
+    val notes: String?
+)
+
+@Serializable
+private data class ApiRejectionRequest(
+    val verifiedBy: String,
+    val reason: String
+)
+
+@Serializable
+private data class ApiCertificationResponse(
+    val id: String,
+    val workerProfileId: String,
+    val companyId: String?,
+    val certificationTypeId: String,
+    val certificationNumber: String?,
+    val issueDate: String,
+    val expirationDate: String?,
+    val issuingAuthority: String?,
+    val documentUrl: String,
+    val thumbnailUrl: String?,
+    val status: String,
+    val verifiedBy: String?,
+    val verifiedAt: String?,
+    val rejectionReason: String?,
+    val ocrConfidence: Double?,
+    val createdAt: String,
+    val updatedAt: String,
+    val certificationType: ApiCertificationTypeDto?
+) {
+    fun toDomain() = WorkerCertification(
+        id = id,
+        workerProfileId = workerProfileId,
+        companyId = companyId,
+        certificationTypeId = certificationTypeId,
+        certificationNumber = certificationNumber,
+        issueDate = LocalDate.parse(issueDate),
+        expirationDate = expirationDate?.let { LocalDate.parse(it) },
+        issuingAuthority = issuingAuthority,
+        documentUrl = documentUrl,
+        thumbnailUrl = thumbnailUrl,
+        status = CertificationStatus.valueOf(status),
+        verifiedBy = verifiedBy,
+        verifiedAt = verifiedAt,
+        rejectionReason = rejectionReason,
+        ocrConfidence = ocrConfidence,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+        certificationType = certificationType?.toDomain()
+    )
+}
+
+@Serializable
+private data class ApiCertificationTypeDto(
+    val id: String,
+    val code: String,
+    val name: String,
+    val category: String,
+    val region: String,
+    val typicalDurationMonths: Int?,
+    val renewalRequired: Boolean,
+    val description: String?,
+    val issuingBodies: List<String>?
+) {
+    fun toDomain() = CertificationType(
+        id = id,
+        code = code,
+        name = name,
+        category = category,
+        region = region,
+        typicalDurationMonths = typicalDurationMonths,
+        renewalRequired = renewalRequired,
+        description = description
+    )
+}
+
+@Serializable
+private data class ApiCertificationListResponse(
+    val certifications: List<ApiCertificationResponse>
+)
+
+@Serializable
+private data class ApiPaginatedCertificationResponse(
+    val data: List<ApiCertificationResponse>,
+    val pagination: ApiPaginationInfo
+)
+
+@Serializable
+private data class ApiPaginationInfo(
+    val nextCursor: String?,
+    val hasMore: Boolean,
+    val totalCount: Int?
+)
+
+@Serializable
+private data class ApiPresignedUrlResponse(
+    val uploadUrl: String,
+    val cdnUrl: String,
+    val thumbnailUrl: String?
+)
+
+@Serializable
+private data class ApiOCRProcessingResponse(
+    val extractedData: ApiOCRExtractedData?,
+    val needsReview: Boolean
+)
+
+@Serializable
+private data class ApiOCRExtractedData(
+    val rawText: String?,
+    val holderName: String?,
+    val certificationType: String?,
+    val certificationNumber: String?,
+    val issueDate: String?,
+    val expirationDate: String?,
+    val issuingAuthority: String?,
+    val confidence: Double,
+    val fieldConfidences: Map<String, Double>?
+)
+
+@Serializable
+private data class ApiMarkExpiredResponse(
+    val count: Int
+)
+
+@Serializable
+private data class ApiCertificationTypesResponse(
+    val types: List<ApiCertificationTypeDto>
+)
+
+@Serializable
+private data class ApiCertificationTypeResponse(
+    val type: ApiCertificationTypeDto
+)
+
+@Serializable
+private data class ApiCertificationStatsResponse(
+    val counts: Map<String, Int>
+)
+
+@Serializable
+private data class ApiComplianceMetricsResponse(
+    val totalCertifications: Int,
+    val verifiedCertifications: Int,
+    val pendingCertifications: Int,
+    val expiredCertifications: Int,
+    val expiringWithin30Days: Int,
+    val complianceRate: Double,
+    val workersCertified: Int,
+    val workersWithExpiredCerts: Int
+) {
+    fun toDomain() = CertificationComplianceMetrics(
+        totalCertifications = totalCertifications,
+        verifiedCertifications = verifiedCertifications,
+        pendingCertifications = pendingCertifications,
+        expiredCertifications = expiredCertifications,
+        expiringWithin30Days = expiringWithin30Days,
+        complianceRate = complianceRate,
+        workersCertified = workersCertified,
+        workersWithExpiredCerts = workersWithExpiredCerts
+    )
+}
+
+@Serializable
+private data class ApiSendReminderRequest(
+    val channels: List<String>
+)
+
+@Serializable
+private data class ApiExpirationReminderResponse(
+    val certificationId: String,
+    val workerName: String?,
+    val certificationType: String,
+    val expirationDate: String?,
+    val sentChannels: List<String>,
+    val failedChannels: List<String>,
+    val sentAt: String
+) {
+    fun toDomain() = ExpirationReminderResult(
+        certificationId = certificationId,
+        workerName = workerName,
+        certificationType = certificationType,
+        expirationDate = expirationDate?.let { LocalDate.parse(it) },
+        sentChannels = sentChannels.map { NotificationChannel.valueOf(it) },
+        failedChannels = failedChannels.map { NotificationChannel.valueOf(it) },
+        sentAt = sentAt
+    )
+}
+
+@Serializable
+private data class ApiBulkSendReminderRequest(
+    val certificationIds: List<String>,
+    val channels: List<String>
+)
+
+@Serializable
+private data class ApiBulkReminderResponse(
+    val totalRequested: Int,
+    val successCount: Int,
+    val failureCount: Int,
+    val results: List<ApiExpirationReminderResponse>
+) {
+    fun toDomain() = BulkReminderResult(
+        totalRequested = totalRequested,
+        successCount = successCount,
+        failureCount = failureCount,
+        results = results.map { it.toDomain() }
+    )
+}
+
+@Serializable
+private data class ApiCSVImportRequest(
+    val companyId: String,
+    val csvData: String,
+    val validateOnly: Boolean
+)
+
+@Serializable
+private data class ApiCSVImportResponse(
+    val totalRows: Int,
+    val successCount: Int,
+    val errorCount: Int,
+    val errors: List<ApiCSVImportError>,
+    val createdCertifications: List<ApiCertificationResponse>
+) {
+    fun toDomain() = CSVImportResult(
+        totalRows = totalRows,
+        successCount = successCount,
+        errorCount = errorCount,
+        errors = errors.map { it.toDomain() },
+        createdCertifications = createdCertifications.map { it.toDomain() }
+    )
+}
+
+@Serializable
+private data class ApiCSVImportError(
+    val rowNumber: Int,
+    val field: String?,
+    val value: String?,
+    val error: String
+) {
+    fun toDomain() = CSVImportError(
+        rowNumber = rowNumber,
+        field = field,
+        value = value,
+        error = error
+    )
+}

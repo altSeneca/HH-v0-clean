@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
+import com.hazardhawk.models.common.*
 
 /**
  * Implementation of WorkerRepository with in-memory storage.
@@ -61,7 +62,6 @@ class WorkerRepositoryImpl : WorkerRepository {
                 status = WorkerStatus.ACTIVE,
                 hourlyRate = request.hourlyRate,
                 permissions = emptyList(),
-                metadata = request.metadata,
                 createdAt = now,
                 updatedAt = now,
                 workerProfile = profile
@@ -112,7 +112,6 @@ class WorkerRepositoryImpl : WorkerRepository {
                 status = request.status ?: worker.status,
                 hourlyRate = request.hourlyRate ?: worker.hourlyRate,
                 permissions = request.permissions ?: worker.permissions,
-                metadata = request.metadata ?: worker.metadata,
                 updatedAt = Clock.System.now().toString()
             )
 

@@ -269,3 +269,11 @@ object EncryptionConfig {
     const val MAX_PHOTO_SIZE_BYTES = 50 * 1024 * 1024 // 50MB
     const val COMPRESSION_THRESHOLD_BYTES = 1024 * 1024 // 1MB
 }
+/**
+ * Extension function for simple byte array encryption
+ * Convenience wrapper for encryptPhoto when photoId is not critical
+ */
+suspend fun PhotoEncryptionService.encrypt(data: ByteArray): ByteArray {
+    val photoId = "temp-${kotlinx.datetime.Clock.System.now().toEpochMilliseconds()}"
+    return encryptPhoto(data, photoId).getOrThrow().encryptedData
+}

@@ -3,6 +3,10 @@ import kotlinx.datetime.Clock
 
 import com.hazardhawk.performance.DeviceTierDetector
 import com.hazardhawk.performance.DeviceTier
+import com.hazardhawk.performance.LiteRTDeviceCapabilities
+import com.hazardhawk.performance.ThermalState
+import com.hazardhawk.performance.MemoryInfo
+import com.hazardhawk.performance.isCritical
 import com.hazardhawk.platform.IDeviceInfo
 import com.hazardhawk.platform.createPlatformDeviceInfo
 import kotlinx.coroutines.Dispatchers
@@ -59,22 +63,22 @@ class LiteRTDeviceOptimizer(
     /**
      * Analyze comprehensive device capabilities for backend selection.
      */
-    private suspend fun analyzeDeviceCapabilities(): DeviceCapabilities {
+    private suspend fun analyzeDeviceCapabilities(): LiteRTDeviceCapabilities {
         val deviceTier = deviceTierDetector.detectDeviceTier()
         val thermalState = deviceTierDetector.getCurrentThermalState()
         val memoryInfo = deviceTierDetector.getMemoryInfo()
         val supportedBackends = modelEngine.supportedBackends
 
-        return DeviceCapabilities(
+        return LiteRTDeviceCapabilities(
             deviceTier = deviceTier,
             thermalState = thermalState,
             totalMemoryGB = memoryInfo.totalMemoryMB / 1024f,
             availableMemoryGB = memoryInfo.availableMemoryMB / 1024f,
-            supportedBackends = supportedBackends,
+            supportedBackends = supportedBackends.toList(),
             batteryLevel = platformDeviceInfo.getBatteryLevel(),
             powerSaveMode = platformDeviceInfo.isPowerSaveModeEnabled(),
             cpuCoreCount = platformDeviceInfo.getCpuCoreCount(),
-            gpuVendor = platformDeviceInfo.detectGpuVendor(),
+            gpuVendor = platformDeviceInfo.detectGpuVendor().name,
             hasNPU = supportedBackends.any { it.isNPU() },
             hasHighPerformanceGPU = platformDeviceInfo.hasHighPerformanceGpu()
         )
@@ -83,7 +87,7 @@ class LiteRTDeviceOptimizer(
     /**
      * Determine optimal backend based on device capabilities analysis.
      */
-    private fun determineOptimalBackend(capabilities: DeviceCapabilities): LiteRTBackend {
+    private fun determineOptimalBackend(capabilities: LiteRTDeviceCapabilities): LiteRTBackend {
         
         // Priority 1: Thermal throttling protection
         if (capabilities.thermalState.isCritical()) {
@@ -107,7 +111,7 @@ class LiteRTDeviceOptimizer(
     /**
      * Select backend that won't trigger thermal throttling.
      */
-    private fun selectThermalSafeBackend(capabilities: DeviceCapabilities): LiteRTBackend {
+    private fun selectThermalSafeBackend(capabilities: LiteRTDeviceCapabilities): LiteRTBackend {
         return when {
             // NPU is most power efficient for thermal conditions
             capabilities.hasNPU && LiteRTBackend.NPU_NNAPI in capabilities.supportedBackends -> {
@@ -122,7 +126,7 @@ class LiteRTDeviceOptimizer(
     /**
      * Select most power-efficient backend for battery preservation.
      */
-    private fun selectPowerEfficientBackend(capabilities: DeviceCapabilities): LiteRTBackend {
+    private fun selectPowerEfficientBackend(capabilities: LiteRTDeviceCapabilities): LiteRTBackend {
         return when {
             // NPU offers best performance per watt
             capabilities.hasNPU && LiteRTBackend.NPU_NNAPI in capabilities.supportedBackends -> {
@@ -142,7 +146,7 @@ class LiteRTDeviceOptimizer(
     /**
      * Select backend that uses minimal memory.
      */
-    private fun selectMemoryEfficientBackend(capabilities: DeviceCapabilities): LiteRTBackend {
+    private fun selectMemoryEfficientBackend(capabilities: LiteRTDeviceCapabilities): LiteRTBackend {
         return when {
             // NPU typically uses less memory
             capabilities.hasNPU -> {
@@ -157,7 +161,7 @@ class LiteRTDeviceOptimizer(
     /**
      * Select highest performance backend for capable devices.
      */
-    private fun selectHighPerformanceBackend(capabilities: DeviceCapabilities): LiteRTBackend {
+    private fun selectHighPerformanceBackend(capabilities: LiteRTDeviceCapabilities): LiteRTBackend {
         return when (capabilities.deviceTier) {
             DeviceTier.HIGH_END -> {
                 when {
@@ -208,7 +212,7 @@ class LiteRTDeviceOptimizer(
     /**
      * Select best available GPU backend.
      */
-    private fun selectBestGpuBackend(capabilities: DeviceCapabilities): LiteRTBackend {
+    private fun selectBestGpuBackend(capabilities: LiteRTDeviceCapabilities): LiteRTBackend {
         return when {
             LiteRTBackend.GPU_OPENCL in capabilities.supportedBackends -> LiteRTBackend.GPU_OPENCL
             LiteRTBackend.GPU_OPENGL in capabilities.supportedBackends -> LiteRTBackend.GPU_OPENGL
@@ -219,7 +223,7 @@ class LiteRTDeviceOptimizer(
     /**
      * Get device performance recommendations for UI display.
      */
-    fun getPerformanceRecommendations(): List<PerformanceRecommendation> {
+    suspend fun getPerformanceRecommendations(): List<PerformanceRecommendation> {
         val recommendations = mutableListOf<PerformanceRecommendation>()
         
         val capabilities = runCatching { analyzeDeviceCapabilities() }.getOrNull()
@@ -324,19 +328,6 @@ class LiteRTDeviceOptimizer(
 /**
  * Device capabilities analysis result.
  */
-data class DeviceCapabilities(
-    val deviceTier: DeviceTier,
-    val thermalState: ThermalState,
-    val totalMemoryGB: Float,
-    val availableMemoryGB: Float,
-    val supportedBackends: Set<LiteRTBackend>,
-    val batteryLevel: Int,
-    val powerSaveMode: Boolean,
-    val cpuCoreCount: Int,
-    val gpuVendor: GpuVendor,
-    val hasNPU: Boolean,
-    val hasHighPerformanceGPU: Boolean
-)
 
 enum class GpuVendor {
     QUALCOMM_ADRENO,
@@ -346,16 +337,6 @@ enum class GpuVendor {
     UNKNOWN
 }
 
-enum class ThermalState {
-    NORMAL,
-    LIGHT_THROTTLING,
-    MODERATE_THROTTLING,
-    SEVERE_THROTTLING,
-    CRITICAL_THROTTLING,
-    EMERGENCY_SHUTDOWN;
-    
-    fun isCritical(): Boolean = this in listOf(SEVERE_THROTTLING, CRITICAL_THROTTLING, EMERGENCY_SHUTDOWN)
-}
 
 enum class Priority {
     LOW,

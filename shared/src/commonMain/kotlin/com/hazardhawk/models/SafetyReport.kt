@@ -2,6 +2,7 @@ package com.hazardhawk.models
 
 import kotlinx.serialization.Serializable
 import kotlinx.datetime.Instant
+import com.hazardhawk.core.models.ComplianceStatus
 
 /**
  * Core safety report model with OSHA compliance support

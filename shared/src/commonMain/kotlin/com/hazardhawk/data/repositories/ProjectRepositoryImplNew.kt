@@ -5,7 +5,8 @@ import com.hazardhawk.models.crew.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.datetime.LocalDate
-import kotlinx.uuid.uuid4
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 /**
  * In-memory implementation of ProjectRepository

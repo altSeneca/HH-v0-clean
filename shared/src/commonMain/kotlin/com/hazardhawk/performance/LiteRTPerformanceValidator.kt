@@ -6,6 +6,8 @@ import com.hazardhawk.ai.core.SmartAIOrchestrator
 import com.hazardhawk.ai.litert.LiteRTModelEngine
 import com.hazardhawk.ai.litert.LiteRTBackend
 import com.hazardhawk.core.models.WorkType
+import com.hazardhawk.utils.formatDecimal
+import com.hazardhawk.utils.formatPercent
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -192,14 +194,14 @@ class LiteRTPerformanceValidator(
                 results["${backend.displayName}_memoryMB"] = metrics.averageMemoryUsageMB
                 
                 if (!achievesTarget) {
-                    issues.add("${backend.displayName} achieves only ${String.format("%.1f%%", performanceRatio * 100)} of target performance")
+                    issues.add("${backend.displayName} achieves only ${performanceRatio.formatPercent(1)} of target performance")
                 }
                 
                 // Clean up
                 engine.cleanup()
                 
             } catch (e: Exception) {
-                results["${backend.displayName}_error"] = e.message
+                results["${backend.displayName}_error"] = e.message ?: "Unknown error"
                 issues.add("${backend.displayName} test failed: ${e.message}")
             }
         }
@@ -282,14 +284,14 @@ class LiteRTPerformanceValidator(
         
         results["simplifiedAvgMs"] = simplifiedAvg
         results["smartAvgMs"] = smartAvg
-        results["performanceImprovement"] = "${String.format("%.1f", performanceImprovement)}x"
+        results["performanceImprovement"] = "${performanceImprovement.formatDecimal(1)}x"
         results["meetsMinTarget"] = meetsMinTarget
         results["achievesOptimal"] = achievesOptimal
         results["simplifiedSuccessCount"] = simplifiedTimes.size
         results["smartSuccessCount"] = smartTimes.size
         
         if (!meetsMinTarget) {
-            issues.add("Performance improvement of ${String.format("%.1f", performanceImprovement)}x does not meet 3x minimum target")
+            issues.add("Performance improvement of ${performanceImprovement.formatDecimal(1)}x does not meet 3x minimum target")
         }
         
         return LiteRTValidationResult(
@@ -342,14 +344,14 @@ class LiteRTPerformanceValidator(
         
         val realAvgTime = realTimes.takeIf { it.isNotEmpty() }?.average() ?: 0.0
         val mockAvgTime = mockTimes.average()
-        val realAvgAccuracy = realAccuracy.takeIf { it.isNotEmpty() }?.average() ?: 0f
-        val mockAccuracy = 0.3f // Mock has low accuracy
+        val realAvgAccuracy = realAccuracy.takeIf { it.isNotEmpty() }?.average() ?: 0.0
+        val mockAccuracy = 0.3 // Mock has low accuracy
         
-        val speedRatio = realAvgTime / mockAvgTime
+        val speedRatio = (realAvgTime / mockAvgTime).toFloat()
         val accuracyImprovement = realAvgAccuracy / mockAccuracy
-        val qualityScore = realAvgAccuracy * 100f
+        val qualityScore = (realAvgAccuracy * 100).toFloat()
         
-        val worthwhileTradeoff = speedRatio <= 10f && realAvgAccuracy >= 0.7f
+        val worthwhileTradeoff = speedRatio <= 10f && realAvgAccuracy >= 0.7
         val targetsMet = worthwhileTradeoff && qualityScore >= 70f
         
         val score = when {
@@ -362,19 +364,19 @@ class LiteRTPerformanceValidator(
         
         results["realAvgTimeMs"] = realAvgTime
         results["mockAvgTimeMs"] = mockAvgTime
-        results["speedRatio"] = "${String.format("%.1f", speedRatio)}x"
-        results["realAccuracy"] = "${String.format("%.1f", realAvgAccuracy * 100)}%"
-        results["mockAccuracy"] = "${String.format("%.1f", mockAccuracy * 100)}%"
-        results["accuracyImprovement"] = "${String.format("%.1f", accuracyImprovement)}x"
+        results["speedRatio"] = "${speedRatio.formatDecimal(1)}x"
+        results["realAccuracy"] = "${realAvgAccuracy.formatPercent(1)}"
+        results["mockAccuracy"] = "${mockAccuracy.formatPercent(1)}"
+        results["accuracyImprovement"] = "${accuracyImprovement.formatDecimal(1)}x"
         results["qualityScore"] = qualityScore
         results["worthwhileTradeoff"] = worthwhileTradeoff
         
         if (!worthwhileTradeoff) {
             if (speedRatio > 10f) {
-                issues.add("Real AI analysis is ${String.format("%.1f", speedRatio)}x slower than mock (target: d10x)")
+                issues.add("Real AI analysis is ${speedRatio.formatDecimal(1)}x slower than mock (target: d10x)")
             }
-            if (realAvgAccuracy < 0.7f) {
-                issues.add("Real AI accuracy of ${String.format("%.1f", realAvgAccuracy * 100)}% is below 70% target")
+            if (realAvgAccuracy < 0.7) {
+                issues.add("Real AI accuracy of ${realAvgAccuracy.formatPercent(1)}% is below 70% target")
             }
         }
         
@@ -393,7 +395,7 @@ class LiteRTPerformanceValidator(
     }
     
     // Helper method to generate mock analysis
-    private fun generateMockAnalysis(): String {
+    private suspend fun generateMockAnalysis(): String {
         delay(Random.nextLong(5, 20)) // Much faster than real analysis
         return """{"mock": true, "confidence": 0.3}"""
     }

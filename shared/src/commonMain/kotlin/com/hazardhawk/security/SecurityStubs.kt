@@ -39,7 +39,7 @@ class StubAuditLogger : AuditLogger {
         dateRange: DateRange,
         reportType: AuditReportType
     ): Result<AuditReport> {
-        // Return minimal stub report
+        // Return minimal stub report with correct structure
         val now = Clock.System.now()
         return Result.success(
             AuditReport(
@@ -48,15 +48,47 @@ class StubAuditLogger : AuditLogger {
                 dateRange = dateRange,
                 generatedAt = now,
                 generatedBy = "stub",
-                safetyActionCount = 0,
-                complianceEventCount = 0,
-                securityEventCount = 0,
-                dataAccessEventCount = 0,
-                sections = emptyList(),
-                summary = "Stub audit report",
-                complianceScore = 1.0,
-                criticalIssues = 0,
-                recommendations = emptyList()
+                safetyActionSummary = SafetyActionSummary(
+                    totalActions = 0,
+                    actionsByType = emptyMap(),
+                    actionsByWorkType = emptyMap(),
+                    hazardsIdentified = 0,
+                    photosAnalyzed = 0
+                ),
+                complianceEventSummary = ComplianceEventSummary(
+                    totalEvents = 0,
+                    eventsBySeverity = emptyMap(),
+                    openCorrections = 0,
+                    overduCorrections = 0,
+                    complianceRate = 1.0
+                ),
+                securityEventSummary = SecurityEventSummary(
+                    totalEvents = 0,
+                    successfulEvents = 0,
+                    failedEvents = 0,
+                    eventsByType = emptyMap(),
+                    uniqueUsers = 0,
+                    suspiciousActivity = 0
+                ),
+                dataAccessSummary = DataAccessSummary(
+                    totalAccesses = 0,
+                    accessesByType = emptyMap(),
+                    accessesByDataType = emptyMap(),
+                    uniqueUsers = 0,
+                    consentBasedAccesses = 0
+                ),
+                recommendations = emptyList(),
+                nonComplianceIssues = emptyList(),
+                integrityVerification = LogIntegrityResult(
+                    isIntact = true,
+                    totalLogsChecked = 0,
+                    corruptedLogs = 0,
+                    missingLogs = 0,
+                    lastVerifiedTimestamp = now,
+                    verificationMethod = "stub",
+                    issues = emptyList()
+                ),
+                metadata = emptyMap()
             )
         )
     }
@@ -124,21 +156,19 @@ class StubAuditLogger : AuditLogger {
         )
     }
 
-    override suspend fun getAuditStatistics(): Result<AuditStatistics> {
+    override suspend fun getAuditStatistics(): AuditStatistics {
         val now = Clock.System.now()
-        return Result.success(
-            AuditStatistics(
-                totalSafetyActions = 0L,
-                totalComplianceEvents = 0L,
-                totalSecurityEvents = 0L,
-                totalDataAccessEvents = 0L,
-                logsPerDay = 0.0,
-                storageUsed = 0L,
-                oldestLogDate = now,
-                newestLogDate = now,
-                integrityLastChecked = now,
-                complianceScore = 1.0
-            )
+        return AuditStatistics(
+            totalSafetyActions = 0L,
+            totalComplianceEvents = 0L,
+            totalSecurityEvents = 0L,
+            totalDataAccessEvents = 0L,
+            logsPerDay = 0.0,
+            storageUsed = 0L,
+            oldestLogDate = now,
+            newestLogDate = now,
+            integrityLastChecked = now,
+            complianceScore = 1.0
         )
     }
 }

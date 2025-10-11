@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayAt
 
 @Serializable
 data class WorkerCertification(
@@ -29,9 +30,9 @@ data class WorkerCertification(
     val certificationType: CertificationType? = null
 ) {
     val isValid: Boolean get() = status == CertificationStatus.VERIFIED && !isExpired
-    val isExpired: Boolean get() = expirationDate?.let { it < Clock.System.todayIn(TimeZone.currentSystemDefault()) } ?: false
+    val isExpired: Boolean get() = expirationDate?.let { it < Clock.System.todayAt(TimeZone.currentSystemDefault()) } ?: false
     val isExpiringSoon: Boolean get() {
-        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+        val today = Clock.System.todayAt(TimeZone.currentSystemDefault())
         return expirationDate?.let {
             val daysUntilExpiration = it.toEpochDays() - today.toEpochDays()
             daysUntilExpiration in 1..30

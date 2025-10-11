@@ -329,11 +329,11 @@ data class OrchestratorStats(
     private val totalFailures: Int = 0
 ) {
     fun recordSuccess(type: AnalysisType) {
-        successCounts[type] = successCounts.getOrDefault(type, 0) + 1
+        successCounts[type] = (successCounts[type] ?: 0) + 1
     }
     
     fun recordFailure(type: AnalysisType) {
-        failureCounts[type] = failureCounts.getOrDefault(type, 0) + 1
+        failureCounts[type] = (failureCounts[type] ?: 0) + 1
     }
     
     fun recordTotalFailure() {

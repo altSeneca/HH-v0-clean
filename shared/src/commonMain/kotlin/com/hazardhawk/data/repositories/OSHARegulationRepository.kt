@@ -2,6 +2,9 @@ package com.hazardhawk.data.repositories
 
 import com.hazardhawk.core.models.*
 import com.hazardhawk.models.*
+// Explicit imports to resolve enum ambiguity - using com.hazardhawk.models package
+import com.hazardhawk.models.OSHASeverity
+import com.hazardhawk.models.OSHAViolationType
 import com.hazardhawk.security.storage.SecureStorage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow

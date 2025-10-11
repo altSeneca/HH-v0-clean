@@ -3,6 +3,7 @@ package com.hazardhawk.di
 import com.hazardhawk.data.storage.AndroidS3Client
 import com.hazardhawk.data.storage.S3Client
 import com.hazardhawk.domain.services.AndroidFileUploadService
+import com.hazardhawk.domain.services.FileUploadConfig
 import com.hazardhawk.domain.services.FileUploadService
 import org.koin.dsl.module
 
@@ -37,8 +38,10 @@ fun androidStorageModule(
     single<FileUploadService> {
         AndroidFileUploadService(
             s3Client = get(),
-            bucket = s3Bucket,
-            cdnBaseUrl = cdnBaseUrl
+            config = FileUploadConfig(
+                bucket = s3Bucket,
+                uploadPath = "uploads"
+            )
         )
     }
 }

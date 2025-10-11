@@ -2,6 +2,7 @@ package com.hazardhawk.data.repositories.crew
 
 import com.hazardhawk.domain.repositories.*
 import com.hazardhawk.models.crew.*
+import com.hazardhawk.models.common.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -95,7 +96,7 @@ class ProjectRepositoryImpl(
 
     suspend fun updateProject(
         projectId: String,
-        request: UpdateProjectRequest
+        request: com.hazardhawk.domain.repositories.UpdateProjectRequest
     ): Result<Project> {
         return try {
             val project = projects[projectId]
@@ -104,7 +105,7 @@ class ProjectRepositoryImpl(
             val updated = project.copy(
                 name = request.name ?: project.name,
                 projectNumber = request.projectNumber ?: project.projectNumber,
-                status = request.status?.name ?: project.status,
+                status = request.status ?: project.status,
                 clientName = request.clientName ?: project.clientName,
                 streetAddress = request.streetAddress ?: project.streetAddress,
                 city = request.city ?: project.city,
@@ -257,95 +258,6 @@ class ProjectRepositoryImpl(
         }
     }
 
-    // ===== Project Information =====
-
-    suspend fun getProjectClientInfo(projectId: String): ProjectClientInfo? {
-        return projects[projectId]?.let { project ->
-            ProjectClientInfo(
-                clientName = project.clientName,
-                clientContact = project.clientContact,
-                clientPhone = project.clientPhone,
-                clientEmail = project.clientEmail
-            )
-        }
-    }
-
-    suspend fun updateProjectClientInfo(
-        projectId: String,
-        clientName: String?,
-        clientContact: String?,
-        clientPhone: String?,
-        clientEmail: String?
-    ): Result<Unit> {
-        return try {
-            val project = projects[projectId]
-                ?: return Result.failure(IllegalArgumentException("Project not found"))
-
-            projects[projectId] = project.copy(
-                clientName = clientName ?: project.clientName,
-                clientContact = clientContact ?: project.clientContact,
-                clientPhone = clientPhone ?: project.clientPhone,
-                clientEmail = clientEmail ?: project.clientEmail
-            )
-            emitProjectsUpdate()
-
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    suspend fun getProjectLocationInfo(projectId: String): ProjectLocationInfo? {
-        return projects[projectId]?.let { project ->
-            ProjectLocationInfo(
-                streetAddress = project.streetAddress,
-                city = project.city,
-                state = project.state,
-                zip = project.zip,
-                fullAddress = buildString {
-                    project.streetAddress?.let { append(it) }
-                    project.city?.let {
-                        if (isNotEmpty()) append(", ")
-                        append(it)
-                    }
-                    project.state?.let {
-                        if (isNotEmpty()) append(", ")
-                        append(it)
-                    }
-                    project.zip?.let {
-                        if (isNotEmpty()) append(" ")
-                        append(it)
-                    }
-                }
-            )
-        }
-    }
-
-    suspend fun updateProjectLocationInfo(
-        projectId: String,
-        streetAddress: String?,
-        city: String?,
-        state: String?,
-        zip: String?
-    ): Result<Unit> {
-        return try {
-            val project = projects[projectId]
-                ?: return Result.failure(IllegalArgumentException("Project not found"))
-
-            projects[projectId] = project.copy(
-                streetAddress = streetAddress ?: project.streetAddress,
-                city = city ?: project.city,
-                state = state ?: project.state,
-                zip = zip ?: project.zip
-            )
-            emitProjectsUpdate()
-
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
     // ===== Statistics =====
 
     suspend fun getProjectCountByStatus(companyId: String): Map<ProjectStatus, Int> {
@@ -359,19 +271,6 @@ class ProjectRepositoryImpl(
         return projects.values.count {
             it.companyId == companyId && it.status == ProjectStatus.ACTIVE.name
         }
-    }
-
-    suspend fun getProjectStats(projectId: String): ProjectStatistics {
-        // TODO: Aggregate stats from crews, PTPs, incidents
-        return ProjectStatistics(
-            totalCrews = 0,
-            totalWorkers = 0,
-            activePTPs = 0,
-            completedPTPs = 0,
-            totalIncidents = 0,
-            daysActive = 0,
-            estimatedDaysRemaining = null
-        )
     }
 
     // ===== Reactive Queries =====

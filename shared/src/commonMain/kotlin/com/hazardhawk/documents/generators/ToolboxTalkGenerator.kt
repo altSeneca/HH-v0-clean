@@ -6,7 +6,8 @@ import com.hazardhawk.documents.models.*
 import com.hazardhawk.documents.services.DocumentAIService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.uuid.uuid4
+import kotlin.uuid.Uuid
+import kotlin.uuid.ExperimentalUuidApi
 
 /**
  * AI-powered Toolbox Talk generator that creates engaging safety presentations
@@ -19,6 +20,7 @@ class ToolboxTalkGenerator(
     /**
      * Generate a complete Toolbox Talk document from recent hazards and safety topics.
      */
+    @OptIn(ExperimentalUuidApi::class)
     suspend fun generateToolboxTalk(
         request: ToolboxTalkGenerationRequest
     ): Result<ToolboxTalkGenerationResponse> = withContext(Dispatchers.Default) {
@@ -64,7 +66,7 @@ class ToolboxTalkGenerator(
             
             // Phase 7: Assemble complete document
             val toolboxTalk = ToolboxTalkDocument(
-                id = uuid4().toString(),
+                id = Uuid.random().toString(),
                 title = generateTalkTitle(request.topic, relevantHazards),
                 topic = request.topic,
                 createdAt = Clock.System.now().toEpochMilliseconds(),

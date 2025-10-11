@@ -8,14 +8,12 @@ import com.hazardhawk.data.storage.S3Client
  * Uses Android's native image processing capabilities for compression.
  *
  * @property s3Client The S3 client for cloud storage operations
- * @property bucket The default S3 bucket name for uploads
- * @property cdnBaseUrl The base URL for the CDN (if different from S3 direct URL)
+ * @property config Configuration for file upload service
  */
 class AndroidFileUploadService(
     s3Client: S3Client,
-    bucket: String,
-    cdnBaseUrl: String? = null
-) : FileUploadServiceImpl(s3Client, bucket, cdnBaseUrl) {
+    config: FileUploadConfig = FileUploadConfig()
+) : FileUploadServiceImpl(s3Client, config) {
 
     /**
      * Android-specific image compression using native bitmap processing.
@@ -40,3 +38,8 @@ class AndroidFileUploadService(
         }
     }
 }
+
+/**
+ * Exception for file upload related errors
+ */
+class FileUploadException(message: String, cause: Throwable? = null) : Exception(message, cause)

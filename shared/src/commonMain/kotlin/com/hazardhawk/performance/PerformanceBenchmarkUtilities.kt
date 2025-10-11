@@ -1,10 +1,13 @@
 package com.hazardhawk.performance
 import kotlinx.datetime.Clock
-
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlin.random.Random
+
+import com.hazardhawk.utils.formatDecimal
+import com.hazardhawk.utils.formatPercent
 
 /**
  * Utility functions and example usage for HazardHawk performance monitoring system.
@@ -72,7 +75,7 @@ object PerformanceBenchmarkUtilities {
         
         return QuickCheckResult(
             durationMs = duration,
-            integrationPassed = integrationResult.validationPassed,
+            integrationPassed = integrationResult.passed,
             benchmarkScore = benchmarkResult.overallScore,
             currentFPS = currentMetrics.currentFPS,
             memoryUsageMB = currentMetrics.memoryUsedMB,
@@ -245,7 +248,7 @@ object PerformanceBenchmarkUtilities {
         
         // Test CPU Backend (Target: 243 tokens/second)
         val cpuResult = testBackendPerformance(
-            backend = LiteRTBackend.CPU,
+            backend = com.hazardhawk.ai.litert.LiteRTBackend.CPU,
             targetTokensPerSecond = targets.cpuTargetTokensPerSecond,
             performanceMonitor = performanceMonitor
         )
@@ -254,7 +257,7 @@ object PerformanceBenchmarkUtilities {
         // Test GPU Backend (Target: 1876 tokens/second) if available
         if (capabilities.hasGPU) {
             val gpuResult = testBackendPerformance(
-                backend = LiteRTBackend.GPU,
+                backend = com.hazardhawk.ai.litert.LiteRTBackend.GPU_OPENCL,
                 targetTokensPerSecond = targets.gpuTargetTokensPerSecond,
                 performanceMonitor = performanceMonitor
             )
@@ -264,7 +267,7 @@ object PerformanceBenchmarkUtilities {
         // Test NPU Backend (Target: 5836 tokens/second) if available
         if (capabilities.hasNNAPI) {
             val npuResult = testBackendPerformance(
-                backend = LiteRTBackend.NPU,
+                backend = com.hazardhawk.ai.litert.LiteRTBackend.NPU_NNAPI,
                 targetTokensPerSecond = targets.npuTargetTokensPerSecond,
                 performanceMonitor = performanceMonitor
             )
@@ -279,22 +282,42 @@ object PerformanceBenchmarkUtilities {
         val meetsTargets = backendResults.all { it.meetsTarget }
         
         return LiteRTValidationResult(
-            duration = totalDuration,
-            deviceCapabilities = capabilities,
-            backendResults = backendResults,
-            switchingResult = switchingResult,
-            overallScore = overallScore,
-            meetsPerformanceTargets = meetsTargets,
-            recommendedBackend = backendResults.maxByOrNull { it.performanceScore }?.backend ?: LiteRTBackend.CPU,
-            recommendations = generateLiteRTRecommendations(backendResults, capabilities)
+            testName = "LiteRT Backend Validation",
+            score = overallScore,
+            targetsMet = meetsTargets,
+            results = mapOf(
+                "totalDuration" to totalDuration,
+                "deviceCapabilities" to capabilities,
+                "backendResults" to backendResults,
+                "switchingResult" to switchingResult,
+                "overallScore" to overallScore,
+                "recommendedBackend" to (backendResults.maxByOrNull { it.performanceScore }?.backend 
+                    ?: com.hazardhawk.ai.litert.LiteRTBackend.CPU).toString()
+            ),
+            issues = if (meetsTargets) emptyList() else generateLiteRTRecommendations(backendResults, capabilities)
         )
     }
     
+
+    /**
+     * Map from ai.litert.LiteRTBackend to performance.LiteRTBackend
+     */
+    private fun mapToPerformanceBackend(backend: com.hazardhawk.ai.litert.LiteRTBackend): LiteRTBackend {
+        return when (backend) {
+            com.hazardhawk.ai.litert.LiteRTBackend.CPU -> LiteRTBackend.CPU
+            com.hazardhawk.ai.litert.LiteRTBackend.GPU_OPENCL,
+            com.hazardhawk.ai.litert.LiteRTBackend.GPU_OPENGL -> LiteRTBackend.GPU
+            com.hazardhawk.ai.litert.LiteRTBackend.NPU_NNAPI,
+            com.hazardhawk.ai.litert.LiteRTBackend.NPU_QTI_HTP -> LiteRTBackend.NPU
+            com.hazardhawk.ai.litert.LiteRTBackend.AUTO -> LiteRTBackend.CPU // Default to CPU for AUTO
+        }
+    }
+
     /**
      * Test individual backend performance.
      */
     private suspend fun testBackendPerformance(
-        backend: LiteRTBackend,
+        backend: com.hazardhawk.ai.litert.LiteRTBackend,
         targetTokensPerSecond: Float,
         performanceMonitor: PerformanceMonitor
     ): BackendTestResult {
@@ -303,7 +326,7 @@ object PerformanceBenchmarkUtilities {
         
         // Simulate model initialization
         performanceMonitor.recordModelInitialization(
-            backend = backend,
+            backend = mapToPerformanceBackend(backend),
             modelType = "test_model",
             initTimeMs = modelInitStart,
             success = true
@@ -315,9 +338,12 @@ object PerformanceBenchmarkUtilities {
             
             // Simulate inference with varying performance
             val simulatedLatency = when (backend) {
-                LiteRTBackend.CPU -> Random.nextLong(200, 400) // 200-400ms
-                LiteRTBackend.GPU -> Random.nextLong(50, 100)  // 50-100ms
-                LiteRTBackend.NPU -> Random.nextLong(15, 35)   // 15-35ms
+                com.hazardhawk.ai.litert.LiteRTBackend.CPU -> Random.nextLong(200, 400) // 200-400ms
+                com.hazardhawk.ai.litert.LiteRTBackend.GPU_OPENCL,
+                com.hazardhawk.ai.litert.LiteRTBackend.GPU_OPENGL -> Random.nextLong(50, 100)  // 50-100ms
+                com.hazardhawk.ai.litert.LiteRTBackend.NPU_NNAPI,
+                com.hazardhawk.ai.litert.LiteRTBackend.NPU_QTI_HTP -> Random.nextLong(15, 35)   // 15-35ms
+                else -> Random.nextLong(200, 400)
             }
             
             kotlinx.coroutines.delay(simulatedLatency)
@@ -327,7 +353,7 @@ object PerformanceBenchmarkUtilities {
             val memoryUsage = Random.nextFloat() * 100 + 50 // 50-150MB
             
             performanceMonitor.recordLiteRTInference(
-                backend = backend,
+                backend = mapToPerformanceBackend(backend),
                 tokensPerSecond = tokensPerSecond,
                 latencyMs = actualLatency,
                 memoryUsageMB = memoryUsage,
@@ -370,22 +396,30 @@ object PerformanceBenchmarkUtilities {
         // Test NPU -> GPU fallback
         val npuToGpuStart = Clock.System.now().toEpochMilliseconds()
         performanceMonitor.recordBackendSwitch(
-            fromBackend = LiteRTBackend.NPU,
-            toBackend = LiteRTBackend.GPU,
+            fromBackend = mapToPerformanceBackend(com.hazardhawk.ai.litert.LiteRTBackend.NPU_NNAPI),
+            toBackend = mapToPerformanceBackend(com.hazardhawk.ai.litert.LiteRTBackend.GPU_OPENCL),
             reason = BackendSwitchReason.PERFORMANCE_DEGRADATION,
             switchTimeMs = 250L
         )
-        switches.add(SwitchTest(LiteRTBackend.NPU, LiteRTBackend.GPU, 250L))
+        switches.add(SwitchTest(
+            com.hazardhawk.ai.litert.LiteRTBackend.NPU_NNAPI, 
+            com.hazardhawk.ai.litert.LiteRTBackend.GPU_OPENCL, 
+            250L
+        ))
         
         // Test GPU -> CPU fallback
         val gpuToCpuStart = Clock.System.now().toEpochMilliseconds()
         performanceMonitor.recordBackendSwitch(
-            fromBackend = LiteRTBackend.GPU,
-            toBackend = LiteRTBackend.CPU,
+            fromBackend = mapToPerformanceBackend(com.hazardhawk.ai.litert.LiteRTBackend.GPU_OPENCL),
+            toBackend = mapToPerformanceBackend(com.hazardhawk.ai.litert.LiteRTBackend.CPU),
             reason = BackendSwitchReason.MEMORY_PRESSURE,
             switchTimeMs = 180L
         )
-        switches.add(SwitchTest(LiteRTBackend.GPU, LiteRTBackend.CPU, 180L))
+        switches.add(SwitchTest(
+            com.hazardhawk.ai.litert.LiteRTBackend.GPU_OPENCL, 
+            com.hazardhawk.ai.litert.LiteRTBackend.CPU, 
+            180L
+        ))
         
         val avgSwitchTime = switches.map { it.switchTimeMs }.average().toLong()
         val targetSwitchTime = 500L // 500ms target
@@ -407,9 +441,15 @@ object PerformanceBenchmarkUtilities {
     ): List<String> {
         val recommendations = mutableListOf<String>()
         
-        val cpuResult = results.find { it.backend == LiteRTBackend.CPU }
-        val gpuResult = results.find { it.backend == LiteRTBackend.GPU }
-        val npuResult = results.find { it.backend == LiteRTBackend.NPU }
+        val cpuResult = results.find { it.backend == com.hazardhawk.ai.litert.LiteRTBackend.CPU }
+        val gpuResult = results.find { 
+            it.backend == com.hazardhawk.ai.litert.LiteRTBackend.GPU_OPENCL || 
+            it.backend == com.hazardhawk.ai.litert.LiteRTBackend.GPU_OPENGL 
+        }
+        val npuResult = results.find { 
+            it.backend == com.hazardhawk.ai.litert.LiteRTBackend.NPU_NNAPI ||
+            it.backend == com.hazardhawk.ai.litert.LiteRTBackend.NPU_QTI_HTP
+        }
         
         // CPU recommendations
         cpuResult?.let { result ->
@@ -458,11 +498,12 @@ object PerformanceBenchmarkUtilities {
         // Overall recommendations
         val bestBackend = results.maxByOrNull { it.performanceScore }
         bestBackend?.let { best ->
-            val improvement = best.performanceScore / (results.find { it.backend == LiteRTBackend.CPU }?.performanceScore ?: 100f)
+            val improvement = best.performanceScore / 
+                (results.find { it.backend == com.hazardhawk.ai.litert.LiteRTBackend.CPU }?.performanceScore ?: 100f)
             if (improvement >= 3f) {
-                recommendations.add("Performance improvement: ${String.format("%.1f", improvement)}x over CPU - significant gains achieved")
+                recommendations.add("Performance improvement: ${improvement.formatDecimal(1)}x over CPU - significant gains achieved")
             } else if (improvement >= 2f) {
-                recommendations.add("Performance improvement: ${String.format("%.1f", improvement)}x over CPU - moderate gains achieved")
+                recommendations.add("Performance improvement: ${improvement.formatDecimal(1)}x over CPU - moderate gains achieved")
             }
         }
         
@@ -477,7 +518,7 @@ object PerformanceBenchmarkUtilities {
         mockAIAnalyzer: suspend (ByteArray) -> Result<Any>,
         testImageCount: Int = 20
     ): ABTestResult {
-        val testImage = ByteArray(1024 * 1024) { Random.nextByte() } // 1MB test image
+        val testImage = ByteArray(1024 * 1024) { Random.nextInt(256).toByte() } // 1MB test image
         
         val realAIResults = mutableListOf<AITestResult>()
         val mockAIResults = mutableListOf<AITestResult>()
@@ -530,7 +571,7 @@ object PerformanceBenchmarkUtilities {
             performanceImprovement = performanceImprovement.toFloat(),
             recommendation = when {
                 performanceImprovement > 2f && mockSuccessRate > 0.9f -> 
-                    "Mock AI shows ${String.format("%.1f", performanceImprovement)}x improvement - recommend for development"
+                    "Mock AI shows ${performanceImprovement.formatDecimal(1)}x improvement - recommend for development"
                 performanceImprovement > 1.5f && mockSuccessRate > 0.8f -> 
                     "Mock AI shows moderate improvement - suitable for testing"
                 else -> 
@@ -620,7 +661,7 @@ object PerformanceBenchmarkUtilities {
         ```kotlin
         val validation = setup.dashboard.runIntegrationValidation()
         if (validation.validationPassed) {
-            println(" All performance targets met!")
+            println(" All performance targets met!")
         } else {
             println("L Performance issues detected:")
             validation.criticalIssues.forEach { println("  - ${'$'}it") }
@@ -764,19 +805,9 @@ data class MemoryStressResult(
 
 // LiteRT-LM Specific Data Classes
 
-data class LiteRTValidationResult(
-    val duration: Long,
-    val deviceCapabilities: DeviceCapabilities,
-    val backendResults: List<BackendTestResult>,
-    val switchingResult: SwitchingTestResult,
-    val overallScore: Float,
-    val meetsPerformanceTargets: Boolean,
-    val recommendedBackend: LiteRTBackend,
-    val recommendations: List<String>
-)
 
 data class BackendTestResult(
-    val backend: LiteRTBackend,
+    val backend: com.hazardhawk.ai.litert.LiteRTBackend,
     val testResults: List<InferenceTestResult>,
     val avgTokensPerSecond: Float,
     val avgLatencyMs: Long,
@@ -801,8 +832,8 @@ data class SwitchingTestResult(
 )
 
 data class SwitchTest(
-    val fromBackend: LiteRTBackend,
-    val toBackend: LiteRTBackend,
+    val fromBackend: com.hazardhawk.ai.litert.LiteRTBackend,
+    val toBackend: com.hazardhawk.ai.litert.LiteRTBackend,
     val switchTimeMs: Long
 )
 

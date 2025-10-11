@@ -1,5 +1,6 @@
 package com.hazardhawk.performance
 import kotlinx.datetime.Clock
+import com.hazardhawk.utils.formatDecimal
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,8 +28,8 @@ class PerformanceMonitor(
     private val _metricsFlow = MutableSharedFlow<PerformanceMetrics>()
     val metricsFlow: SharedFlow<PerformanceMetrics> = _metricsFlow.asSharedFlow()
     
-    private val _alertsFlow = MutableSharedFlow<PerformanceAlert>()
-    val alertsFlow: SharedFlow<PerformanceAlert> = _alertsFlow.asSharedFlow()
+    private val _alertsFlow = MutableSharedFlow<PerformanceMonitorAlert>()
+    val alertsFlow: SharedFlow<PerformanceMonitorAlert> = _alertsFlow.asSharedFlow()
     
     private var monitoringJob: Job? = null
     private var isMonitoring = false
@@ -62,7 +63,7 @@ class PerformanceMonitor(
                     collectAndEmitMetrics()
                     delay(intervalSeconds.seconds)
                 } catch (e: Exception) {
-                    emitAlert(PerformanceAlert.SystemError("Monitoring error: ${e.message}"))
+                    emitAlert(PerformanceMonitorAlert.SystemError("Monitoring error: ${e.message}"))
                     delay(intervalSeconds.seconds)
                 }
             }
@@ -225,31 +226,31 @@ class PerformanceMonitor(
         
         // Low FPS alert
         if (metrics.currentFPS < config.uiTargetFPS * 0.7f) {
-            emitAlert(PerformanceAlert.LowFPS(metrics.currentFPS, config.uiTargetFPS.toFloat()))
+            emitAlert(PerformanceMonitorAlert.LowFPS(metrics.currentFPS, config.uiTargetFPS.toFloat()))
         }
         
         // High memory usage alert
         if (metrics.memoryUsedMB > config.memoryThresholdMB * 0.9f) {
-            emitAlert(PerformanceAlert.HighMemoryUsage(metrics.memoryUsedMB, config.memoryThresholdMB.toFloat()))
+            emitAlert(PerformanceMonitorAlert.HighMemoryUsage(metrics.memoryUsedMB, config.memoryThresholdMB.toFloat()))
         }
         
         // Thermal throttling alert
         if (metrics.thermalState >= ThermalState.MODERATE_THROTTLING) {
-            emitAlert(PerformanceAlert.ThermalThrottling(metrics.thermalState))
+            emitAlert(PerformanceMonitorAlert.ThermalThrottling(metrics.thermalState))
         }
         
         // Low battery alert (construction workday context)
         if (metrics.batteryLevel < 20f) {
-            emitAlert(PerformanceAlert.LowBattery(metrics.batteryLevel))
+            emitAlert(PerformanceMonitorAlert.LowBattery(metrics.batteryLevel))
         }
         
         // Slow AI processing alert
         if (metrics.analysisTimeMs > 5000) { // > 5 seconds
-            emitAlert(PerformanceAlert.SlowAIProcessing(metrics.analysisTimeMs))
+            emitAlert(PerformanceMonitorAlert.SlowAIProcessing(metrics.analysisTimeMs))
         }
     }
     
-    private fun emitAlert(alert: PerformanceAlert) {
+    private fun emitAlert(alert: PerformanceMonitorAlert) {
         scope.launch {
             _alertsFlow.emit(alert)
         }
@@ -498,15 +499,15 @@ class BatteryMonitor {
 }
 
 /**
- * Performance alert system.
+ * Performance alert system - renamed to avoid conflicts.
  */
-sealed class PerformanceAlert {
-    data class LowFPS(val currentFPS: Float, val targetFPS: Float) : PerformanceAlert()
-    data class HighMemoryUsage(val currentMB: Float, val thresholdMB: Float) : PerformanceAlert()
-    data class ThermalThrottling(val thermalState: ThermalState) : PerformanceAlert()
-    data class LowBattery(val batteryLevel: Float) : PerformanceAlert()
-    data class SlowAIProcessing(val analysisTimeMs: Long) : PerformanceAlert()
-    data class SystemError(val message: String) : PerformanceAlert()
+sealed class PerformanceMonitorAlert {
+    data class LowFPS(val currentFPS: Float, val targetFPS: Float) : PerformanceMonitorAlert()
+    data class HighMemoryUsage(val currentMB: Float, val thresholdMB: Float) : PerformanceMonitorAlert()
+    data class ThermalThrottling(val thermalState: ThermalState) : PerformanceMonitorAlert()
+    data class LowBattery(val batteryLevel: Float) : PerformanceMonitorAlert()
+    data class SlowAIProcessing(val analysisTimeMs: Long) : PerformanceMonitorAlert()
+    data class SystemError(val message: String) : PerformanceMonitorAlert()
 }
 
 /**
@@ -549,9 +550,9 @@ class UIFrameRateLimiter(private val targetFPS: Int) {
      * Check if enough time has passed for the next frame.
      */
     fun shouldRenderFrame(): Boolean {
-        val currentTimeNs = System.nanoTime()
+        val currentTimeNs = Clock.System.now().toEpochMilliseconds() * 1_000_000L
         val elapsedNs = currentTimeNs - lastFrameTimeNs
-        
+
         return if (elapsedNs >= frameIntervalNs) {
             lastFrameTimeNs = currentTimeNs
             true
@@ -559,15 +560,15 @@ class UIFrameRateLimiter(private val targetFPS: Int) {
             false
         }
     }
-    
+
     /**
      * Get time until next frame in milliseconds.
      */
     fun getTimeUntilNextFrameMs(): Long {
-        val currentTimeNs = System.nanoTime()
+        val currentTimeNs = Clock.System.now().toEpochMilliseconds() * 1_000_000L
         val elapsedNs = currentTimeNs - lastFrameTimeNs
         val remainingNs = frameIntervalNs - elapsedNs
-        
+
         return (remainingNs / 1_000_000L).coerceAtLeast(0)
     }
 }
@@ -754,7 +755,7 @@ class IntegrationPerformanceValidator(
         return ValidationResult(
             target = "Memory Usage",
             expected = "< ${targetGB}GB",
-            actual = "${String.format("%.2f", memoryUsageGB)}GB",
+            actual = "${memoryUsageGB.formatDecimal(2)}GB",
             passed = passed,
             performanceScore = performanceScore,
             recommendation = recommendation
@@ -1278,14 +1279,3 @@ data class LiteRTPerformanceTargets(
     val minDeviceSupport: Float = 0.95f // 95% device compatibility
 )
 
-/**
- * LiteRT validation report.
- */
-data class LiteRTValidationReport(
-    val timestamp: Long,
-    val deviceCapabilities: DeviceCapabilities,
-    val validationResults: List<ValidationResult>,
-    val overallScore: Float,
-    val passed: Boolean,
-    val performanceTargets: LiteRTPerformanceTargets
-)

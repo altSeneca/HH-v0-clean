@@ -9,6 +9,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
 
+// Type aliases for nested classes from dependency components
+internal typealias IntegrationValidationReport = IntegrationPerformanceValidator.IntegrationValidationReport
+internal typealias ValidationResult = IntegrationPerformanceValidator.ValidationResult
+internal typealias RegressionAnalysisReport = MemoryRegressionDetector.RegressionAnalysisReport
+internal typealias RepositoryPerformanceMetrics = RepositoryPerformanceTracker.RepositoryPerformanceMetrics
+
+
 /**
  * Comprehensive performance dashboard with LiteRT-LM integration monitoring.
  * Provides real-time metrics visualization, backend switching analytics, and integration performance validation.
@@ -36,8 +43,8 @@ class PerformanceDashboard(
     private val _userSatisfactionMetrics = MutableStateFlow<UserSatisfactionMetrics?>(null)
     val userSatisfactionMetrics: StateFlow<UserSatisfactionMetrics?> = _userSatisfactionMetrics
     
-    private val _integrationStatus = MutableStateFlow<IntegrationValidationStatus?>(null)
-    val integrationStatus: StateFlow<IntegrationValidationStatus?> = _integrationStatus
+    private val _integrationStatus = MutableStateFlow<IntegrationValidationReport?>(null)
+    val integrationStatus: StateFlow<IntegrationValidationReport?> = _integrationStatus
     
     private var isMonitoring = false
     
@@ -69,22 +76,7 @@ class PerformanceDashboard(
         val trends: Map<String, TrendIndicator>
     )
     
-    data class IntegrationValidationStatus(
-        val timestamp: Long,
-        val validationPassed: Boolean,
-        val overallScore: Float,
-        val targetValidation: List<TargetValidationResult>,
-        val criticalIssues: List<String>,
-        val recommendations: List<String>
-    )
     
-    data class TargetValidationResult(
-        val targetName: String,
-        val expected: String,
-        val actual: String,
-        val passed: Boolean,
-        val score: Float
-    )
     
     sealed class DashboardState {
         object Loading : DashboardState()
@@ -157,30 +149,10 @@ class PerformanceDashboard(
     /**
      * Run comprehensive integration performance validation.
      */
-    suspend fun runIntegrationValidation(): IntegrationValidationStatus {
-        val validationReport = integrationValidator.validateIntegrationPerformance()
-        
-        val targetResults = validationReport.validationResults.map { result ->
-            TargetValidationResult(
-                targetName = result.target,
-                expected = result.expected.toString(),
-                actual = result.actual.toString(),
-                passed = result.passed,
-                score = result.performanceScore
-            )
+    suspend fun runIntegrationValidation(): IntegrationValidationReport {
+        return integrationValidator.validateIntegrationPerformance().also {
+            _integrationStatus.value = it
         }
-        
-        val status = IntegrationValidationStatus(
-            timestamp = Clock.System.now().toEpochMilliseconds(),
-            validationPassed = validationReport.passed,
-            overallScore = validationReport.overallScore,
-            targetValidation = targetResults,
-            criticalIssues = validationReport.criticalIssues,
-            recommendations = validationReport.recommendations
-        )
-        
-        _integrationStatus.value = status
-        return status
     }
     
     /**
@@ -314,7 +286,7 @@ class PerformanceDashboard(
      */
     suspend fun trackUserEngagementImpact(): UserEngagementMetrics {
         val performanceSummary = performanceMonitor.getPerformanceSummary(60) // Last hour
-        val workflowStats = workflowMonitor.getPerformanceAnalytics(60)
+        val workflowStats = workflowMonitor.getWorkflowAnalytics(null, 1)  // Last hour
         
         // Calculate engagement based on performance
         val cameraUsageQuality = when {
@@ -332,8 +304,8 @@ class PerformanceDashboard(
         }
         
         val workflowCompletionRate = workflowStats?.let { stats ->
-            stats.totalCompletedWorkflows.toFloat() / 
-            (stats.totalCompletedWorkflows + stats.totalFailedWorkflows)
+            stats.successfulWorkflows.toFloat() / 
+            (stats.successfulWorkflows + stats.failedWorkflows)
         } ?: 0.8f
         
         return UserEngagementMetrics(
@@ -612,8 +584,8 @@ class PerformanceDashboard(
             IntegrationStatus.WARNING
         } else {
             when {
-                currentStatus.validationPassed && currentStatus.overallScore >= 80f -> IntegrationStatus.PASSING
-                currentStatus.validationPassed -> IntegrationStatus.WARNING
+                currentStatus.passed && currentStatus.overallScore >= 80f -> IntegrationStatus.PASSING
+                currentStatus.passed -> IntegrationStatus.WARNING
                 else -> IntegrationStatus.FAILING
             }
         }
@@ -701,7 +673,7 @@ class PerformanceDashboard(
         performance: PerformanceMetrics,
         repository: RepositoryPerformanceMetrics,
         workflow: WorkflowPerformanceMetrics,
-        integration: IntegrationValidationStatus,
+        integration: IntegrationValidationReport,
         benchmark: BenchmarkResults
     ): String {
         val scores = listOf(
@@ -725,7 +697,7 @@ class PerformanceDashboard(
         performance: PerformanceMetrics,
         repository: RepositoryPerformanceMetrics,
         workflow: WorkflowPerformanceMetrics,
-        integration: IntegrationValidationStatus,
+        integration: IntegrationValidationReport,
         benchmark: BenchmarkResults
     ): List<String> {
         val recommendations = mutableListOf<String>()
@@ -754,7 +726,7 @@ data class ComprehensivePerformanceReport(
     val performanceMetrics: PerformanceMetrics,
     val repositoryMetrics: RepositoryPerformanceMetrics,
     val workflowMetrics: WorkflowPerformanceMetrics,
-    val integrationValidation: IntegrationValidationStatus,
+    val integrationValidation: IntegrationValidationReport,
     val benchmarkResults: BenchmarkResults,
     val overallGrade: String,
     val recommendations: List<String>
@@ -790,7 +762,7 @@ class IntegrationPerformanceTestRunner(
         val totalDuration = Clock.System.now().toEpochMilliseconds() - startTime
         
         // Determine if integration passes
-        val passed = integrationValidation.validationPassed &&
+        val passed = integrationValidation.passed &&
                     memoryAnalysis.passesRegressionThreshold &&
                     workflowResults.allWorkflowsPassedTarget
         
@@ -857,7 +829,7 @@ data class IntegrationTestResults(
     val buildVersion: String,
     val testDurationMs: Long,
     val passed: Boolean,
-    val integrationValidation: IntegrationValidationStatus,
+    val integrationValidation: IntegrationValidationReport,
     val memoryAnalysis: RegressionAnalysisReport,
     val workflowResults: WorkflowTestResults,
     val comprehensiveReport: ComprehensivePerformanceReport,

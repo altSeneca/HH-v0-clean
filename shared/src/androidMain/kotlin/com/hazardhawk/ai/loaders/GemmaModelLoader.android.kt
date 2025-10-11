@@ -1,6 +1,5 @@
 package com.hazardhawk.ai.loaders
 
-import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import kotlinx.coroutines.Dispatchers
@@ -14,9 +13,7 @@ import java.nio.ByteOrder
  * Android-specific implementation of GemmaModelLoader using ONNX Runtime.
  * Handles loading and inference with Gemma 3N E2B multimodal models.
  */
-actual class GemmaModelLoader(
-    private val context: Context
-) {
+actual class GemmaModelLoader {
     
     // ONNX Runtime session placeholders - will be replaced with actual ONNX integration
     private var visionSession: Any? = null
@@ -41,44 +38,17 @@ actual class GemmaModelLoader(
     ): Boolean = withContext(Dispatchers.IO) {
         
         try {
-            // Load model configuration
-            val configFile = File(context.getExternalFilesDir(null), configPath)
-            if (configFile.exists()) {
-                val configJson = configFile.readText()
-                config = Json.decodeFromString(configJson)
-            }
+            // Load model configuration (stub - needs context for file access)
+            // In production, this would load from external storage
             
             // TODO: Implement ONNX Runtime model loading
             // This is a placeholder - actual ONNX integration will be added
-            
-            /*
-            val env = OrtEnvironment.getEnvironment()
-            val sessionOptions = OrtSession.SessionOptions()
-            
-            // Load vision encoder
-            val visionModelFile = File(context.getExternalFilesDir(null), visionEncoderPath)
-            if (visionModelFile.exists()) {
-                visionSession = env.createSession(visionModelFile.absolutePath, sessionOptions)
-            }
-            
-            // Load text decoder  
-            val textModelFile = File(context.getExternalFilesDir(null), textDecoderPath)
-            if (textModelFile.exists()) {
-                textSession = env.createSession(textModelFile.absolutePath, sessionOptions)
-            }
-            
-            // Load tokenizer
-            val tokenizerFile = File(context.getExternalFilesDir(null), tokenizerPath)
-            if (tokenizerFile.exists()) {
-                val tokenizerJson = tokenizerFile.readText()
-                tokenizer = Json.decodeFromString<TokenizerConfig>(tokenizerJson)
-            }
-            */
             
             // For now, simulate successful loading
             visionSession = "mock_vision_session"
             textSession = "mock_text_session"
             tokenizer = "mock_tokenizer"
+            config = mapOf("version" to "1.0.0")
             
             true
             
@@ -101,12 +71,6 @@ actual class GemmaModelLoader(
             val inputTensor = bitmapToFloatArray(resizedBitmap)
             
             // TODO: Run ONNX inference
-            /*
-            val inputMap = mapOf("input" to OnnxTensor.createTensor(env, inputTensor))
-            val results = visionSession.run(inputMap)
-            val outputTensor = results.get(0) as OnnxTensor
-            return@withContext outputTensor.floatBuffer.array()
-            */
             
             // Mock vision features for now
             FloatArray(768) { kotlin.random.Random.nextFloat() }
@@ -130,16 +94,6 @@ actual class GemmaModelLoader(
             val inputTokens = tokenizeText(prompt) ?: return@withContext null
             
             // TODO: Run ONNX text generation with image context
-            /*
-            val inputMap = mapOf(
-                "input_ids" to OnnxTensor.createTensor(env, inputTokens),
-                "image_features" to OnnxTensor.createTensor(env, imageContext)
-            )
-            
-            val results = textSession.run(inputMap)
-            val outputTokens = results.get(0) as OnnxTensor
-            return@withContext detokenizeTokens(outputTokens.longBuffer.array().map { it.toInt() }.toIntArray())
-            */
             
             // Mock text generation - return a structured JSON response
             generateMockAnalysisResponse(prompt)
@@ -160,10 +114,6 @@ actual class GemmaModelLoader(
     actual suspend fun cleanup() = withContext(Dispatchers.IO) {
         try {
             // TODO: Close ONNX sessions
-            /*
-            (visionSession as? OrtSession)?.close()
-            (textSession as? OrtSession)?.close()
-            */
             
             visionSession = null
             textSession = null

@@ -4,7 +4,6 @@ import com.hazardhawk.ai.SimpleAIPhotoAnalyzer
 import com.hazardhawk.ai.core.AIPhotoAnalyzer
 import com.hazardhawk.ai.litert.LiteRTModelEngine
 import com.hazardhawk.performance.*
-import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 /**
@@ -21,13 +20,11 @@ val aiModule = module {
         LiteRTModelEngine()
     }
     
-    // Performance Components - Keep essential monitoring
+    // Performance Components - Platform-specific DeviceTierDetector is provided in platform modules
     single<PerformanceMonitor> {
-        PerformanceMonitor()
-    }
-    
-    single<DeviceTierDetector> {
-        DeviceTierDetector()
+        PerformanceMonitor(
+            deviceDetector = get() // Provided by platform-specific module
+        )
     }
     
     // Simplified AI Photo Analyzer - Replaces all orchestrators
@@ -38,28 +35,5 @@ val aiModule = module {
     // Main AI Service Interface
     single<AIPhotoAnalyzer> {
         get<SimpleAIPhotoAnalyzer>()
-    }
-}
-
-/**
- * AI testing module with mock implementations for unit tests.
- */
-val aiTestModule = module {
-    
-    // Mock AI services for testing
-    factory<LiteRTModelEngine>(qualifier = named("mock")) {
-        MockLiteRTModelEngine()
-    }
-    
-    factory<LiteRTDeviceOptimizer>(qualifier = named("mock")) {
-        MockLiteRTDeviceOptimizer()
-    }
-    
-    factory<LiteRTVisionService>(qualifier = named("mock")) {
-        MockLiteRTVisionService()
-    }
-    
-    factory<AIPhotoAnalyzer>(qualifier = named("mock")) {
-        MockAIPhotoAnalyzer()
     }
 }

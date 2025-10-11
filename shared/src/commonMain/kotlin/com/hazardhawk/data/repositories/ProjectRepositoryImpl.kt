@@ -7,7 +7,8 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
-import kotlinx.uuid.uuid4
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 /**
  * Default implementation of ProjectRepository.

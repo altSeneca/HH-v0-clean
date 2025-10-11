@@ -5,36 +5,32 @@ import android.util.Base64
 import com.google.firebase.Firebase
 import com.google.firebase.vertexai.GenerativeModel
 import com.google.firebase.vertexai.type.content
-import com.google.firebase.vertexai.type.generationConfig
 import com.google.firebase.vertexai.vertexAI
 import com.hazardhawk.core.models.*
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import kotlinx.uuid.uuid4
+import kotlin.uuid.Uuid
+import kotlin.uuid.ExperimentalUuidApi
+import kotlinx.datetime.Clock
 
 /**
  * Android-specific implementation of Vertex AI client using Firebase Vertex AI SDK
  */
+@OptIn(ExperimentalUuidApi::class)
 actual class VertexAIClient {
     
     private var model: GenerativeModel? = null
     private var isConfigured = false
     
-    suspend fun configure(apiKey: String): Result<Unit> {
+    actual suspend fun configure(apiKey: String): Result<Unit> {
         return try {
             // Configure Firebase Vertex AI with the provided API key
             val vertexAI = Firebase.vertexAI
             
-            model = vertexAI.generativeModel("gemini-1.5-pro-vision-latest") {
-                generationConfig {
-                    temperature = 0.3f
-                    topK = 32
-                    topP = 0.8f
-                    maxOutputTokens = 2048
-                }
-            }
+            // Create model with generation config
+            model = vertexAI.generativeModel("gemini-1.5-pro-vision-latest")
             
             isConfigured = true
             Result.success(Unit)
@@ -44,7 +40,7 @@ actual class VertexAIClient {
         }
     }
     
-    suspend fun analyzePhoto(
+    actual suspend fun analyzePhoto(
         imageData: ByteArray,
         workType: WorkType
     ): Result<SafetyAnalysis> {
@@ -55,7 +51,7 @@ actual class VertexAIClient {
         
         return try {
             withTimeout(30000) { // 30 second timeout
-                val startTime = System.currentTimeMillis()
+                val startTime = Clock.System.now().toEpochMilliseconds()
                 
                 // Convert ByteArray to bitmap for Firebase Vertex AI
                 val bitmap = BitmapFactory.decodeByteArray(imageData, 0, imageData.size)
@@ -211,7 +207,7 @@ actual class VertexAIClient {
                             val boundingBox = parseBoundingBox(hazardObj["boundingBox"]?.jsonObject)
 
                             hazards.add(Hazard(
-                                id = uuid4().toString(),
+                                id = Uuid.random().toString(),
                                 type = hazardType,
                                 severity = severity,
                                 description = hazardObj["description"]?.jsonPrimitive?.content
@@ -278,23 +274,25 @@ actual class VertexAIClient {
             
             // Parse overall risk level
             val riskLevel = parseRiskLevel(json["overallRiskLevel"]?.jsonPrimitive?.content)
-            val confidence = json["confidence"]?.jsonPrimitive?.content?.toFloatOrNull() ?: 0.8f
+            val aiConfidence = json["confidence"]?.jsonPrimitive?.content?.toFloatOrNull() ?: 0.8f
             
             SafetyAnalysis(
-                id = uuid4().toString(),
-                timestamp = System.currentTimeMillis(),
+                id = Uuid.random().toString(),
+                photoId = "photo-${Uuid.random()}",
+                timestamp = kotlinx.datetime.Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
                 analysisType = AnalysisType.CLOUD_GEMINI,
                 workType = workType,
                 hazards = hazards,
                 ppeStatus = ppeStatus,
                 recommendations = listOf(
-                    "Cloud AI analysis completed with ${confidence * 100}% confidence",
+                    "Cloud AI analysis completed with ${aiConfidence * 100}% confidence",
                     "Review identified hazards and implement corrective actions",
                     "Ensure all workers comply with PPE requirements"
                 ),
                 overallRiskLevel = riskLevel,
-                confidence = confidence,
-                processingTimeMs = System.currentTimeMillis() - startTime,
+                severity = Severity.MEDIUM, // Required parameter
+                aiConfidence = aiConfidence,
+                processingTimeMs = Clock.System.now().toEpochMilliseconds() - startTime,
                 oshaViolations = hazards.mapNotNull { hazard ->
                     hazard.oshaCode?.let { code ->
                         OSHAViolation(
@@ -384,7 +382,7 @@ actual class VertexAIClient {
     private fun createHazardFromType(type: HazardType, workType: WorkType): Hazard {
         return when (type) {
             HazardType.ELECTRICAL_HAZARD -> Hazard(
-                id = uuid4().toString(),
+                id = Uuid.random().toString(),
                 type = type,
                 severity = Severity.CRITICAL,
                 description = "Electrical hazard detected in work area",
@@ -398,7 +396,7 @@ actual class VertexAIClient {
                 immediateAction = "Stop work and secure electrical hazard"
             )
             HazardType.FALL_PROTECTION -> Hazard(
-                id = uuid4().toString(),
+                id = Uuid.random().toString(),
                 type = type,
                 severity = Severity.HIGH,
                 description = "Fall protection hazard identified",
@@ -411,7 +409,7 @@ actual class VertexAIClient {
                 )
             )
             else -> Hazard(
-                id = uuid4().toString(),
+                id = Uuid.random().toString(),
                 type = type,
                 severity = Severity.MEDIUM,
                 description = "Safety compliance issue detected",
@@ -439,8 +437,9 @@ actual class VertexAIClient {
     
     private fun createFallbackAnalysis(workType: WorkType, startTime: Long, rawResponse: String): SafetyAnalysis {
         return SafetyAnalysis(
-            id = uuid4().toString(),
-            timestamp = System.currentTimeMillis(),
+            id = Uuid.random().toString(),
+            photoId = "photo-${Uuid.random()}",
+            timestamp = kotlinx.datetime.Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
             analysisType = AnalysisType.CLOUD_GEMINI,
             workType = workType,
             hazards = listOf(createHazardFromType(getDefaultHazardType(workType), workType)),
@@ -451,8 +450,9 @@ actual class VertexAIClient {
                 "Raw AI response available in logs"
             ),
             overallRiskLevel = RiskLevel.MODERATE,
-            confidence = 0.7f,
-            processingTimeMs = System.currentTimeMillis() - startTime,
+            severity = Severity.MEDIUM,
+            aiConfidence = 0.7f,
+            processingTimeMs = Clock.System.now().toEpochMilliseconds() - startTime,
             oshaViolations = emptyList()
         )
     }

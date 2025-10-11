@@ -4,8 +4,9 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 enum class CertificationStatus {
+    PENDING,
     PENDING_VERIFICATION,
     VERIFIED,
-    EXPIRED,
-    REJECTED
+    REJECTED,
+    EXPIRED
 }

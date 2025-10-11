@@ -23,7 +23,11 @@ actual class SecurityPlatform(private val context: Context) {
             "platform" to "Android",
             "apiLevel" to android.os.Build.VERSION.SDK_INT,
             "hardwareBacked" to secureStorage.isHardwareBackedSecurity(),
-            "encryptionInfo" to photoEncryption.getEncryptionInfo(),
+            "encryptionInfo" to mapOf(
+                "algorithm" to photoEncryption.getEncryptionInfo().algorithm,
+                "keyLength" to photoEncryption.getEncryptionInfo().keyLength,
+                "mode" to photoEncryption.getEncryptionInfo().mode
+            ),
             "strongBoxAvailable" to isStrongBoxAvailable(),
             "deviceSecure" to isDeviceSecure()
         )

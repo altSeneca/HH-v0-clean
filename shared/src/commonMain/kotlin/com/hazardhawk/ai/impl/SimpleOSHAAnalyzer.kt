@@ -115,21 +115,29 @@ class SimpleOSHAAnalyzer : OSHAPhotoAnalyzer {
         }
 
         val violations = hazards.map { hazard ->
-            OSHAViolation(
-                code = hazard.oshaStandard,
-                title = getStandardTitle(hazard.oshaStandard),
-                description = hazard.violationDetails,
-                severity = when (hazard.severity) {
-                    OSHASeverity.SERIOUS -> Severity.HIGH
-                    OSHASeverity.OTHER_THAN_SERIOUS -> Severity.MEDIUM
-                    else -> Severity.MEDIUM
+            OSHADetailedViolation(
+                violationId = "simple_${hazard.id}",
+                oshaStandard = hazard.oshaStandard,
+                standardTitle = getStandardTitle(hazard.oshaStandard),
+                violationType = when (hazard.severity) {
+                    OSHASeverity.SERIOUS -> OSHAViolationType.SERIOUS
+                    OSHASeverity.OTHER_THAN_SERIOUS -> OSHAViolationType.OTHER_THAN_SERIOUS
+                    OSHASeverity.DE_MINIMIS -> OSHAViolationType.DE_MINIMIS
+                    OSHASeverity.WILLFUL -> OSHAViolationType.WILLFUL
+                    OSHASeverity.REPEAT -> OSHAViolationType.REPEAT
+                    else -> OSHAViolationType.OTHER_THAN_SERIOUS
                 },
-                fineRange = when (hazard.severity) {
+                description = hazard.violationDetails,
+                potentialPenalty = when (hazard.severity) {
                     OSHASeverity.SERIOUS -> "Up to $15,625 per violation"
                     OSHASeverity.OTHER_THAN_SERIOUS -> "Up to $15,625 per violation"
                     else -> "Up to $15,625 per violation"
                 },
-                correctiveAction = hazard.requiredAction
+                correctiveAction = hazard.requiredAction,
+                timeframe = when (hazard.severity) {
+                    OSHASeverity.SERIOUS -> "Immediate correction required"
+                    else -> "Correction required within 30 days"
+                }
             )
         }
 

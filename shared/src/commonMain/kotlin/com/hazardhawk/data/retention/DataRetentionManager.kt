@@ -5,7 +5,8 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
 import com.hazardhawk.security.AuditLogger
-import com.hazardhawk.core.models.Photo
+import com.hazardhawk.security.logEvent
+import com.hazardhawk.domain.entities.Photo
 import com.hazardhawk.core.models.ComplianceStatus
 
 /**

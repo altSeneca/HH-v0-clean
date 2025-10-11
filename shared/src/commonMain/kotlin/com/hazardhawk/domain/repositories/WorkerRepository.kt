@@ -2,6 +2,7 @@ package com.hazardhawk.domain.repositories
 
 import com.hazardhawk.models.crew.*
 import kotlinx.coroutines.flow.Flow
+import com.hazardhawk.models.common.*
 
 /**
  * Repository for worker management with support for CRUD, search, filtering, and pagination.

@@ -1,7 +1,11 @@
+@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
+
 package com.hazardhawk.security
 
+import kotlinx.cinterop.*
 import platform.Security.*
 import platform.LocalAuthentication.*
+import platform.Foundation.NSError
 
 /**
  * iOS-specific security configuration constants and utilities
@@ -82,12 +86,14 @@ object IOSSecurityConfig {
         fun hasSecureEnclave(): Boolean {
             return try {
                 val context = LAContext()
-                var error: NSError?
-                val result = context.canEvaluatePolicy(
-                    LAPolicyDeviceOwnerAuthenticationWithBiometrics, 
-                    error = null
-                )
-                result && error == null
+                memScoped {
+                    val errorPtr = alloc<ObjCObjectVar<NSError?>>()
+                    val result = context.canEvaluatePolicy(
+                        LAPolicyDeviceOwnerAuthenticationWithBiometrics, 
+                        error = errorPtr.ptr
+                    )
+                    result && errorPtr.value == null
+                }
             } catch (e: Exception) {
                 false
             }
@@ -99,11 +105,13 @@ object IOSSecurityConfig {
         fun hasTouchID(): Boolean {
             return try {
                 val context = LAContext()
-                var error: NSError?
-                context.canEvaluatePolicy(
-                    LAPolicyDeviceOwnerAuthenticationWithBiometrics,
-                    error = null
-                ) && context.biometryType == LABiometryTypeTouchID
+                memScoped {
+                    val errorPtr = alloc<ObjCObjectVar<NSError?>>()
+                    context.canEvaluatePolicy(
+                        LAPolicyDeviceOwnerAuthenticationWithBiometrics,
+                        error = errorPtr.ptr
+                    ) && context.biometryType == LABiometryTypeTouchID
+                }
             } catch (e: Exception) {
                 false
             }
@@ -115,11 +123,13 @@ object IOSSecurityConfig {
         fun hasFaceID(): Boolean {
             return try {
                 val context = LAContext()
-                var error: NSError?
-                context.canEvaluatePolicy(
-                    LAPolicyDeviceOwnerAuthenticationWithBiometrics,
-                    error = null
-                ) && context.biometryType == LABiometryTypeFaceID
+                memScoped {
+                    val errorPtr = alloc<ObjCObjectVar<NSError?>>()
+                    context.canEvaluatePolicy(
+                        LAPolicyDeviceOwnerAuthenticationWithBiometrics,
+                        error = errorPtr.ptr
+                    ) && context.biometryType == LABiometryTypeFaceID
+                }
             } catch (e: Exception) {
                 false
             }
@@ -131,11 +141,13 @@ object IOSSecurityConfig {
         fun hasPasscode(): Boolean {
             return try {
                 val context = LAContext()
-                var error: NSError?
-                context.canEvaluatePolicy(
-                    LAPolicyDeviceOwnerAuthentication,
-                    error = null
-                )
+                memScoped {
+                    val errorPtr = alloc<ObjCObjectVar<NSError?>>()
+                    context.canEvaluatePolicy(
+                        LAPolicyDeviceOwnerAuthentication,
+                        error = errorPtr.ptr
+                    )
+                }
             } catch (e: Exception) {
                 false
             }

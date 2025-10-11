@@ -1,11 +1,34 @@
 package com.hazardhawk.performance
-import kotlinx.datetime.Clock
 
+import kotlinx.datetime.Clock
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.seconds
+
+// Import AI orchestrator classes from ai.core package
+import com.hazardhawk.ai.core.SimplifiedAIOrchestrator
+import com.hazardhawk.ai.core.SmartAIOrchestrator
+import com.hazardhawk.ai.core.AIFrameLimiter
+
+// Import LiteRT engine and related classes from ai.litert package
+import com.hazardhawk.ai.litert.LiteRTModelEngine
+import com.hazardhawk.ai.litert.LiteRTBackend
+import com.hazardhawk.ai.litert.LiteRTAnalysisResult
+import com.hazardhawk.ai.litert.LiteRTPerformanceMetrics
+import com.hazardhawk.ai.litert.LiteRTProgressUpdate
+
+// Import WorkType from core models (canonical location)
+import com.hazardhawk.core.models.WorkType
+import com.hazardhawk.utils.formatDecimal
+import com.hazardhawk.utils.formatPercent
+
+// Note: The following types are in the same package (com.hazardhawk.performance) and don't need imports:
+// - DeviceTierDetector, MemoryManager, PerformanceMonitor (constructor parameters)
+// - DeviceCapabilities, DeviceTier, MemoryPressure, ModelComplexity, PerformanceConfig
+// - FrameCounter, UIFrameRateLimiter (from PerformanceMonitor.kt)
+
 
 /**
  * Comprehensive performance benchmarking system for HazardHawk with LiteRT-LM integration.
@@ -703,13 +726,13 @@ class PerformanceBenchmark(
                     } else {
                         performanceResults[backend.displayName] = mapOf(
                             "initSuccess" to false,
-                            "error" to initResult.exceptionOrNull()?.message
+                            "error" to (initResult.exceptionOrNull()?.message ?: "Unknown error")
                         )
                     }
                 } catch (e: Exception) {
                     performanceResults[backend.displayName] = mapOf(
                         "initSuccess" to false,
-                        "error" to e.message
+                        "error" to (e.message ?: "Unknown error")
                     )
                 }
             }
@@ -801,7 +824,7 @@ class PerformanceBenchmark(
             
             results["simplifiedAvgMs"] = simplifiedAvg
             results["smartAvgMs"] = smartAvg
-            results["performanceImprovement"] = String.format("%.1fx", performanceImprovement)
+            results["performanceImprovement"] = "${performanceImprovement.formatDecimal(1)}x"
             results["meetsMinTarget"] = meetsTarget
             results["achievesOptimal"] = achievesOptimal
             results["simplifiedSuccessCount"] = simplifiedResults.size
@@ -852,15 +875,15 @@ class PerformanceBenchmark(
             }
             
             // Simulate realistic construction site usage patterns
-            val scenarios = listOf(
+            val scenarios: List<Pair<String, suspend () -> Map<String, Any>>> = listOf(
                 // Scenario 1: Rapid successive captures (site walk-through)
-                "rapid_captures" to { simulateRapidCaptures(orchestrator) },
+                "rapid_captures" to suspend { simulateRapidCaptures(orchestrator) },
                 // Scenario 2: Batch processing (end-of-day review)
-                "batch_processing" to { simulateBatchProcessing(orchestrator) },
+                "batch_processing" to suspend { simulateBatchProcessing(orchestrator) },
                 // Scenario 3: Memory pressure scenario
-                "memory_pressure" to { simulateMemoryPressure(orchestrator) },
+                "memory_pressure" to suspend { simulateMemoryPressure(orchestrator) },
                 // Scenario 4: Thermal throttling scenario
-                "thermal_scenario" to { simulateThermalScenario(orchestrator) }
+                "thermal_scenario" to suspend { simulateThermalScenario(orchestrator) }
             )
             
             val scenarioResults = mutableMapOf<String, Map<String, Any>>()
@@ -879,7 +902,7 @@ class PerformanceBenchmark(
                 } catch (e: Exception) {
                     scenarioResults[scenarioName] = mapOf(
                         "success" to false,
-                        "error" to e.message
+                        "error" to (e.message ?: "Unknown error")
                     )
                 }
             }
@@ -964,10 +987,10 @@ class PerformanceBenchmark(
             
             results["realAnalysisAvgMs"] = realAvgTime
             results["mockGenerationAvgMs"] = mockAvgTime
-            results["speedRatio"] = String.format("%.1fx", speedRatio)
-            results["realAccuracy"] = String.format("%.1f%%", realAvgAccuracy * 100)
-            results["mockAccuracy"] = String.format("%.1f%%", mockAccuracy * 100)
-            results["accuracyImprovement"] = String.format("%.1fx", accuracyImprovement)
+            results["speedRatio"] = "${speedRatio.formatDecimal(1)}x"
+            results["realAccuracy"] = "${realAvgAccuracy.formatPercent(1)}"
+            results["mockAccuracy"] = "${mockAccuracy.formatPercent(1)}"
+            results["accuracyImprovement"] = "${accuracyImprovement.formatDecimal(1)}x"
             results["qualityScore"] = qualityScore
             results["realSuccessCount"] = realAnalysisTimes.size
             results["worthwhileTradeoff"] = speedRatio <= 10f && realAvgAccuracy >= 0.7f
@@ -1130,7 +1153,7 @@ class PerformanceBenchmark(
         return results
     }
     
-    private fun generateMockAnalysisJson(): String {
+    private suspend fun generateMockAnalysisJson(): String {
         // Simulate fast but low-quality mock JSON generation
         delay(Random.nextLong(5, 20)) // Much faster than real analysis
         

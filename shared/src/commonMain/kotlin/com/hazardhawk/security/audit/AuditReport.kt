@@ -2,6 +2,7 @@ package com.hazardhawk.security.audit
 
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
+import kotlin.time.Duration.Companion.days
 import com.hazardhawk.security.DateRange
 import com.hazardhawk.security.AuditReportType
 import com.hazardhawk.security.EventSeverity
@@ -520,7 +521,7 @@ class AuditReportBuilder {
         keyFindings = emptyList(),
         criticalIssues = emptyList(),
         improvementHighlights = emptyList(),
-        nextReviewDate = kotlinx.datetime.Clock.System.now().plus(30, kotlinx.datetime.DateTimeUnit.DAY),
+        nextReviewDate = kotlinx.datetime.Clock.System.now().plus(30.days),
         executiveRecommendations = emptyList()
     )
     

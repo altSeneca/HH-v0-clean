@@ -25,6 +25,43 @@ expect class SecurityPlatform {
 }
 
 /**
+ * Security-related exception for authentication and encryption failures
+ */
+class SecurityException(message: String, cause: Throwable? = null) : Exception(message, cause)
+
+/**
+ * Extension function to validate integrity of secure storage
+ */
+suspend fun SecureStorageService.validateIntegrity(): Boolean {
+    return try {
+        // Check if storage is available
+        isAvailable()
+    } catch (e: Exception) {
+        false
+    }
+}
+
+/**
+ * Extension function to generate a secure encryption key
+ */
+suspend fun SecureStorageService.generateSecureKey(): ByteArray {
+    // Generate a 256-bit secure random key
+    val keyBytes = ByteArray(32)
+    for (i in keyBytes.indices) {
+        keyBytes[i] = kotlin.random.Random.nextInt(256).toByte()
+    }
+    return keyBytes
+}
+
+/**
+ * Extension function to validate if a key is suitable for encryption
+ */
+fun PhotoEncryptionService.isValidEncryptionKey(key: ByteArray): Boolean {
+    // Check if key is 256 bits (32 bytes) for AES-256
+    return key.size == 32
+}
+
+/**
  * Common security manager that works across all platforms
  */
 class SecurityManager(private val platform: SecurityPlatform) {

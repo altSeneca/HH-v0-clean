@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.datetime.Clock
 import com.hazardhawk.core.models.WorkType
 import com.hazardhawk.core.models.SafetyAnalysis
+import com.hazardhawk.core.models.Severity
 
 /**
  * YOLO11 Safety Analyzer Usage Examples
@@ -324,7 +325,7 @@ class YOLO11SafetyAnalyzerExample {
                     )
                     
                     // Check for immediate actions required
-                    if (analysis.severity == com.hazardhawk.models.Severity.CRITICAL) {
+                    if (analysis.severity == Severity.CRITICAL) {
                         triggerImmediateSafetyResponse(analysis)
                     }
                     
@@ -356,7 +357,7 @@ class YOLO11SafetyAnalyzerExample {
         println("Hazards Detected:")
         
         analysis.hazards.forEach { hazard ->
-            if (hazard.severity == com.hazardhawk.models.Severity.CRITICAL) {
+            if (hazard.severity == Severity.CRITICAL) {
                 println("  ⛔ ${hazard.type}: ${hazard.description}")
                 println("     Confidence: ${(hazard.confidence * 100).toInt()}%")
                 hazard.oshaReference?.let { osha ->

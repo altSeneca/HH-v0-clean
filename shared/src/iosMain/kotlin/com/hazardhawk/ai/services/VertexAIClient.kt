@@ -1,12 +1,15 @@
 package com.hazardhawk.ai.services
 
 import com.hazardhawk.core.models.*
-import kotlinx.uuid.uuid4
+import kotlin.uuid.Uuid
+import kotlin.uuid.ExperimentalUuidApi
+import kotlinx.datetime.Clock
 
 /**
  * iOS-specific implementation of Vertex AI client
  * TODO: Implement using iOS Google AI SDK when available
  */
+@OptIn(ExperimentalUuidApi::class)
 actual class VertexAIClient {
     
     private var isConfigured = false
@@ -32,7 +35,7 @@ actual class VertexAIClient {
         }
         
         return try {
-            val startTime = System.currentTimeMillis()
+            val startTime = Clock.System.now().toEpochMilliseconds()
             
             // TODO: Implement actual iOS Vertex AI integration
             // For now, return a structured mock response
@@ -46,13 +49,14 @@ actual class VertexAIClient {
     
     private fun createMockiOSAnalysis(workType: WorkType, startTime: Long): SafetyAnalysis {
         return SafetyAnalysis(
-            id = uuid4().toString(),
-            timestamp = System.currentTimeMillis(),
+            id = Uuid.random().toString(),
+            photoId = "photo-${Uuid.random()}",
+            timestamp = kotlinx.datetime.Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds()),
             analysisType = AnalysisType.CLOUD_GEMINI,
             workType = workType,
             hazards = listOf(
                 Hazard(
-                    id = uuid4().toString(),
+                    id = Uuid.random().toString(),
                     type = when (workType) {
                         WorkType.ELECTRICAL -> HazardType.ELECTRICAL_HAZARD
                         WorkType.FALL_PROTECTION -> HazardType.FALL_PROTECTION
@@ -83,8 +87,9 @@ actual class VertexAIClient {
                 "Consider using local AI analysis as alternative"
             ),
             overallRiskLevel = RiskLevel.MODERATE,
-            confidence = 0.8f,
-            processingTimeMs = System.currentTimeMillis() - startTime,
+            severity = Severity.MEDIUM,
+            aiConfidence = 0.8f,
+            processingTimeMs = Clock.System.now().toEpochMilliseconds() - startTime,
             oshaViolations = emptyList()
         )
     }

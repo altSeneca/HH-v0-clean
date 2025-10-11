@@ -15,6 +15,7 @@ import com.hazardhawk.core.models.WorkType
 import com.hazardhawk.core.models.Severity
 import com.hazardhawk.core.models.AlertType
 import com.hazardhawk.security.AuditLogger
+import com.hazardhawk.security.logEvent
 
 /**
  * Phase 3 Production Monitoring and Alerting System

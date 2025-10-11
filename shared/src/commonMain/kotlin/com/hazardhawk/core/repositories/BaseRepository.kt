@@ -19,9 +19,9 @@ interface BaseRepository<T, ID> {
 sealed class RepositoryError : Exception() {
     data class NotFound(val id: String) : RepositoryError()
     data class ValidationError(val errors: List<String>) : RepositoryError()
-    data class NetworkError(val cause: Throwable) : RepositoryError()
-    data class DatabaseError(val cause: Throwable) : RepositoryError()
-    data class UnauthorizedError(val message: String) : RepositoryError()
+    data class NetworkError(override val cause: Throwable) : RepositoryError()
+    data class DatabaseError(override val cause: Throwable) : RepositoryError()
+    data class UnauthorizedError(override val message: String) : RepositoryError()
 }
 
 /**

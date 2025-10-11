@@ -64,7 +64,7 @@ data class AuditTrail(
         return entries.filterIsInstance<T>()
     }
     
-    private fun calculateIntegrityHash(entries: List<AuditEntry>): String {
+    internal fun calculateIntegrityHash(entries: List<AuditEntry>): String {
         // Implementation would use SHA-256 hash of serialized entries
         val content = entries.joinToString("|") { "${it.id}:${it.timestamp}:${it.type}" }
         return "sha256:${content.hashCode().toString(16)}" // Simplified for demo
@@ -121,7 +121,7 @@ data class SafetyActionAuditEntry(
     }
     
     override fun requiresAttention(): Boolean {
-        return hazardCount > 3 || safetyAction.complianceLevel == com.hazardhawk.security.ComplianceLevel.Critical
+        return hazardCount > 3 || safetyAction.complianceLevel == com.hazardhawk.security.AuditComplianceLevel.Critical
     }
 }
 
@@ -271,7 +271,7 @@ data class AuditTrailMetadata(
     val geoLocation: String? = null,
     val sessionDuration: Long? = null, // milliseconds
     val totalActions: Int = 0,
-    val complianceLevel: com.hazardhawk.security.ComplianceLevel,
+    val complianceLevel: com.hazardhawk.security.AuditComplianceLevel,
     val encryptionEnabled: Boolean = true,
     val backupLocation: String? = null
 )
@@ -391,7 +391,7 @@ class AuditTrailBuilder {
     private fun createDefaultMetadata() = AuditTrailMetadata(
         platform = "Unknown",
         appVersion = "1.0.0",
-        complianceLevel = com.hazardhawk.security.ComplianceLevel.Standard
+        complianceLevel = com.hazardhawk.security.AuditComplianceLevel.Standard
     )
     
     private fun generateTrailId(): String {

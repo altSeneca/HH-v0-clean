@@ -228,13 +228,15 @@ class LiveOSHAAnalyzer(
         )
 
         val fallbackViolations = listOf(
-            OSHAViolation(
-                code = "29 CFR 1926.20",
-                title = "General Safety and Health Provisions",
+            OSHADetailedViolation(
+                violationId = "fallback_violation_001",
+                oshaStandard = "29 CFR 1926.20",
+                standardTitle = "General Safety and Health Provisions",
+                violationType = OSHAViolationType.OTHER_THAN_SERIOUS,
                 description = "Automated compliance analysis not available",
-                severity = Severity.MEDIUM,
-                fineRange = "Manual assessment required",
-                correctiveAction = "Perform manual OSHA compliance inspection"
+                potentialPenalty = "Manual assessment required",
+                correctiveAction = "Perform manual OSHA compliance inspection",
+                timeframe = "As soon as possible"
             )
         )
 

@@ -12,6 +12,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 import kotlinx.serialization.Serializable
+import com.hazardhawk.models.common.*
 
 /**
  * API-backed implementation of CertificationRepository
@@ -209,7 +210,7 @@ class CertificationApiRepository(
                     pagination = PaginationInfo(
                         nextCursor = apiResponse.pagination.nextCursor,
                         hasMore = apiResponse.pagination.hasMore,
-                        totalCount = apiResponse.pagination.totalCount
+                        totalCount = apiResponse.pagination.totalCount ?: 0
                     )
                 )
             } ?: PaginatedResult(emptyList(), PaginationInfo(hasMore = false))
@@ -685,7 +686,7 @@ class CertificationApiRepository(
                     pagination = PaginationInfo(
                         nextCursor = apiResponse.pagination.nextCursor,
                         hasMore = apiResponse.pagination.hasMore,
-                        totalCount = apiResponse.pagination.totalCount
+                        totalCount = apiResponse.pagination.totalCount ?: 0
                     )
                 )
             } ?: PaginatedResult(emptyList(), PaginationInfo(hasMore = false))

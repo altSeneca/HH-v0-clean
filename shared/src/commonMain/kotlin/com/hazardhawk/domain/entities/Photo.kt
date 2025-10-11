@@ -2,6 +2,8 @@ package com.hazardhawk.domain.entities
 
 import kotlinx.serialization.Serializable
 import kotlinx.datetime.Instant
+import com.hazardhawk.core.models.WorkType
+import com.hazardhawk.core.models.ComplianceStatus
 
 /**
  * Photo entity model for the HazardHawk application
@@ -26,7 +28,7 @@ data class Photo(
     val metadata: String? = null,
     
     // Enhanced fields from domain.entities version
-    val complianceStatus: ComplianceStatus = ComplianceStatus.Unknown,
+    val complianceStatus: ComplianceStatus = ComplianceStatus.UNKNOWN,
     val syncStatus: SyncStatus = SyncStatus.Pending,
     val s3Url: String? = null,
     val width: Int? = null,
@@ -122,41 +124,6 @@ enum class HazardSeverity {
     MEDIUM,
     HIGH,
     CRITICAL
-}
-
-/**
- * Work type enumeration
- */
-@Serializable
-enum class WorkType {
-    GENERAL_CONSTRUCTION,
-    ELECTRICAL,
-    PLUMBING,
-    HVAC,
-    ROOFING,
-    CONCRETE,
-    STEEL_WORK,
-    EXCAVATION,
-    PAINTING,
-    WELDING,
-    CARPENTRY,
-    DEMOLITION,
-    INSPECTION,
-    MAINTENANCE,
-    OTHER,
-    // Additional work types for OSHA compliance
-    GENERAL_SAFETY,
-    ELECTRICAL_SAFETY,
-    FALL_PROTECTION,
-    CRANE_LIFTING,
-    CONFINED_SPACE,
-    CHEMICAL_SAFETY,
-    FIRE_SAFETY,
-    EMERGENCY_PROCEDURES,
-    EQUIPMENT_SAFETY,
-    ERGONOMICS,
-    HOUSEKEEPING,
-    TRAINING_COMMUNICATION
 }
 
 @Serializable
@@ -330,14 +297,17 @@ data class WorkTypeInfo(
                 description = "Safety training and communication",
                 commonHazards = emptyList()
             )
+            // Handle any additional WorkType values not explicitly mapped
+            else -> WorkTypeInfo(
+                type = type,
+                name = type.name.replace('_', ' ').lowercase().capitalize(),
+                description = "Work type: ${type.name}",
+                commonHazards = emptyList()
+            )
         }
     }
 }
 
-@Serializable
-enum class ComplianceStatus {
-    Unknown, Compliant, NonCompliant, ReviewRequired
-}
 
 @Serializable
 enum class SyncStatus {

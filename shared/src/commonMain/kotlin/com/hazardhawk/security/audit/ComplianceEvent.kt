@@ -2,6 +2,7 @@ package com.hazardhawk.security.audit
 
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
+import kotlin.time.Duration.Companion.days
 import com.hazardhawk.core.models.HazardType
 import com.hazardhawk.core.models.WorkType
 import com.hazardhawk.security.EventSeverity
@@ -79,10 +80,10 @@ data class OSHAComplianceEvent(
         if (status == ComplianceEventStatus.CLOSED) return false
         
         val deadline = when (severity) {
-            EventSeverity.CRITICAL -> occurredAt.plus(1, kotlinx.datetime.DateTimeUnit.DAY)
-            EventSeverity.HIGH -> occurredAt.plus(7, kotlinx.datetime.DateTimeUnit.DAY)
-            EventSeverity.MEDIUM -> occurredAt.plus(30, kotlinx.datetime.DateTimeUnit.DAY)
-            EventSeverity.LOW -> occurredAt.plus(90, kotlinx.datetime.DateTimeUnit.DAY)
+            EventSeverity.CRITICAL -> occurredAt.plus(1.days)
+            EventSeverity.HIGH -> occurredAt.plus(7.days)
+            EventSeverity.MEDIUM -> occurredAt.plus(30.days)
+            EventSeverity.LOW -> occurredAt.plus(90.days)
         }
         
         return kotlinx.datetime.Clock.System.now() > deadline
@@ -141,7 +142,7 @@ data class CorrectiveAction(
     fun getDaysOverdue(): Long {
         val now = kotlinx.datetime.Clock.System.now()
         return if (now > dueDate) {
-            dueDate.until(now, kotlinx.datetime.DateTimeUnit.DAY)
+            (now - dueDate).inWholeDays
         } else {
             -1L
         }

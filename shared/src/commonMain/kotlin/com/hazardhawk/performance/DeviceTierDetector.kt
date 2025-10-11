@@ -137,6 +137,11 @@ expect class DeviceTierDetector {
     suspend fun isThermalThrottled(): Boolean
     suspend fun getScreenDensity(): Float
     suspend fun getAndroidVersion(): Int
+    
+    // New methods for LiteRTDeviceOptimizer compatibility
+    suspend fun detectDeviceTier(): DeviceTier
+    suspend fun getCurrentThermalState(): ThermalState
+    suspend fun getMemoryInfo(): MemoryInfo
 }
 
 /**
@@ -279,4 +284,36 @@ data class PerformanceInsights(
     val cacheEffectiveness: Float = 0f,
     val thermalEvents: Int = 0,
     val recommendations: List<String> = emptyList()
+)
+/**
+ * Memory information for device optimization.
+ */
+data class MemoryInfo(
+    val totalMemoryMB: Float,
+    val availableMemoryMB: Float
+)
+
+/**
+ * Extension function to check if thermal state is critical.
+ */
+fun ThermalState.isCritical(): Boolean {
+    return this >= ThermalState.MODERATE_THROTTLING
+}
+
+/**
+ * LiteRT-specific device capabilities for backend selection.
+ * This is separate from the performance DeviceCapabilities to avoid conflicts.
+ */
+data class LiteRTDeviceCapabilities(
+    val deviceTier: DeviceTier,
+    val thermalState: ThermalState,
+    val totalMemoryGB: Float,
+    val availableMemoryGB: Float,
+    val supportedBackends: List<com.hazardhawk.ai.litert.LiteRTBackend>,
+    val batteryLevel: Int,
+    val powerSaveMode: Boolean,
+    val cpuCoreCount: Int,
+    val gpuVendor: String,
+    val hasNPU: Boolean,
+    val hasHighPerformanceGPU: Boolean
 )

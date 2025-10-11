@@ -342,7 +342,7 @@ class SimplifiedAIOrchestrator(
     /**
      * Get LiteRT-specific performance recommendations.
      */
-    fun getLiteRTRecommendations(): List<String> {
+    suspend fun getLiteRTRecommendations(): List<String> {
         return if (liteRTVision.isAvailable) {
             liteRTVision.getDeviceRecommendations().map { it.description }
         } else {

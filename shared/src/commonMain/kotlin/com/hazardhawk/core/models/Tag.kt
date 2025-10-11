@@ -295,7 +295,8 @@ enum class TagCategory {
 }
 
 /**
- * Compliance status
+ * Unified ComplianceStatus enum - consolidates all compliance status definitions
+ * Replaces duplicates in OSHAAnalysisResult.kt and Photo.kt
  */
 @Serializable
 enum class ComplianceStatus {
@@ -305,7 +306,8 @@ enum class ComplianceStatus {
     SERIOUS_VIOLATIONS,
     REQUIRES_REVIEW,
     NEEDS_IMPROVEMENT,
-    CRITICAL;
+    CRITICAL,
+    UNKNOWN;                // For backward compatibility with Photo.kt
     
     val displayName: String
         get() = when (this) {
@@ -316,6 +318,7 @@ enum class ComplianceStatus {
             REQUIRES_REVIEW -> "Requires Review"
             NEEDS_IMPROVEMENT -> "Needs Improvement"
             CRITICAL -> "Critical"
+            UNKNOWN -> "Unknown"
         }
     
     val statusColor: String
@@ -327,6 +330,7 @@ enum class ComplianceStatus {
             REQUIRES_REVIEW -> "#FFC107"
             NEEDS_IMPROVEMENT -> "#FF9800"
             CRITICAL -> "#F44336"
+            UNKNOWN -> "#9E9E9E"
         }
 }
 
@@ -365,26 +369,50 @@ data class TagSelectionResult(
 )
 
 /**
- * Missing enums for full compatibility
+ * Unified WorkType enum - consolidates all work type definitions
+ * Replaces duplicates in SafetyAnalysis.kt and Photo.kt
  */
 @Serializable
 enum class WorkType {
+    // Core construction work
     GENERAL_CONSTRUCTION,
     ELECTRICAL,
+    ELECTRICAL_WORK,        // Alias for ELECTRICAL
+    ELECTRICAL_SAFETY,
     PLUMBING,
+    HVAC,
     ROOFING,
+    CONCRETE,
+    STEEL_WORK,
+    STEEL_ERECTION,         // Similar to STEEL_WORK
     SCAFFOLDING,
     EXCAVATION,
-    CONCRETE,
-    WELDING,
     PAINTING,
+    WELDING,
+    CARPENTRY,
     DEMOLITION,
+    LANDSCAPING,
+    
+    // Specialized work
+    INSPECTION,
+    MAINTENANCE,
+    
+    // Safety-related work types
+    GENERAL_SAFETY,
     FALL_PROTECTION,
     CRANE_OPERATIONS,
-    ELECTRICAL_WORK,
-    STEEL_ERECTION,
-    MAINTENANCE,
-    LANDSCAPING
+    CRANE_LIFTING,          // Alias for CRANE_OPERATIONS
+    CONFINED_SPACE,
+    CHEMICAL_SAFETY,
+    FIRE_SAFETY,
+    EMERGENCY_PROCEDURES,
+    EQUIPMENT_SAFETY,
+    ERGONOMICS,
+    HOUSEKEEPING,
+    TRAINING_COMMUNICATION,
+    
+    // Miscellaneous
+    OTHER
 }
 
 

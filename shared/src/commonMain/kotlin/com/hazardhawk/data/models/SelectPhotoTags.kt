@@ -3,10 +3,62 @@ package com.hazardhawk.data.models
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import com.hazardhawk.core.models.ComplianceStatus
-import com.hazardhawk.core.models.TagSource
-import com.hazardhawk.core.models.PhotoTag
-import com.hazardhawk.core.models.GpsLocation
-import com.hazardhawk.core.models.DigitalSignature
+
+/**
+ * Tag source enumeration - where the tag was applied from
+ */
+enum class TagSource {
+    MANUAL,
+    AI_DETECTED,
+    AI_SUGGESTED,
+    IMPORTED,
+    TEMPLATE
+}
+
+/**
+ * Photo tag association model
+ */
+@Serializable
+data class PhotoTag(
+    val photoId: String,
+    val tagId: String,
+    val appliedAt: Instant,
+    val appliedBy: String,
+    val gpsLocation: GpsLocation? = null,
+    val digitalSignature: DigitalSignature? = null,
+    val complianceStatus: ComplianceStatus = ComplianceStatus.REQUIRES_REVIEW,
+    val auditTrailId: String,
+    val verifiedAt: Instant? = null,
+    val verifiedBy: String? = null,
+    val notes: String? = null,
+    val confidence: Double? = null,
+    val source: TagSource = TagSource.MANUAL,
+    val metadata: Map<String, String> = emptyMap()
+)
+
+/**
+ * GPS location data for photo tags
+ */
+@Serializable
+data class GpsLocation(
+    val latitude: Double,
+    val longitude: Double,
+    val accuracy: Float? = null,
+    val altitude: Double? = null,
+    val timestamp: Long
+)
+
+/**
+ * Digital signature for compliance
+ */
+@Serializable
+data class DigitalSignature(
+    val signerId: String,
+    val signerName: String,
+    val signatureData: String,
+    val timestamp: Long,
+    val verified: Boolean = false
+)
 
 /**
  * SQLDelight query result mapping class for photo-tag associations
@@ -45,7 +97,7 @@ data class SelectPhotoTags(
             appliedBy = applied_by,
             gpsLocation = null, // GPS location would need separate query or join
             digitalSignature = null, // Digital signature would need separate query or join
-            complianceStatus = ComplianceStatus.fromString(tag_compliance_status) ?: ComplianceStatus.UNDER_REVIEW,
+            complianceStatus = ComplianceStatus.fromString(tag_compliance_status) ?: ComplianceStatus.REQUIRES_REVIEW,
             auditTrailId = "audit_${photo_id}_${tag_id}",
             verifiedAt = reviewed_at?.let { Instant.fromEpochMilliseconds(it) },
             verifiedBy = reviewed_by,
@@ -117,6 +169,15 @@ data class SelectPhotoTags(
                 updated_at = updated_at
             )
         }
+    }
+}
+
+/**
+ * Extension for ComplianceStatus deserialization
+ */
+fun ComplianceStatus.Companion.fromString(value: String?): ComplianceStatus? {
+    return value?.let { str ->
+        ComplianceStatus.values().find { it.name.equals(str, ignoreCase = true) }
     }
 }
 

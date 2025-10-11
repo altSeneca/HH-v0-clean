@@ -7,6 +7,10 @@ import android.os.Build
 import android.util.Log
 import com.hazardhawk.ai.litert.*
 import com.hazardhawk.core.models.WorkType
+import com.hazardhawk.core.models.HazardType
+import com.hazardhawk.core.models.Severity
+import com.hazardhawk.core.models.PPEType
+import com.hazardhawk.core.models.PPEDetection
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.gpu.GpuDelegate
 import org.tensorflow.lite.nnapi.NnApiDelegate
@@ -97,7 +101,7 @@ class TFLiteModelEngine {
             // Create interpreter options for the selected backend
             val options = Interpreter.Options().apply {
                 when (resolvedBackend) {
-                    LiteRTBackend.GPU -> {
+                    LiteRTBackend.GPU_OPENCL, LiteRTBackend.GPU_OPENGL -> {
                         try {
                             gpuDelegate = GpuDelegate()
                             addDelegate(gpuDelegate)
@@ -106,7 +110,7 @@ class TFLiteModelEngine {
                             Log.w(TAG, "Failed to create GPU delegate, falling back to CPU", e)
                         }
                     }
-                    LiteRTBackend.NNAPI -> {
+                    LiteRTBackend.NPU_NNAPI, LiteRTBackend.NPU_QTI_HTP -> {
                         try {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
                                 nnApiDelegate = NnApiDelegate()
@@ -129,7 +133,7 @@ class TFLiteModelEngine {
                 }
                 
                 // Performance options
-                setUseNNAPI(resolvedBackend == LiteRTBackend.NNAPI)
+                setUseNNAPI(resolvedBackend == LiteRTBackend.NPU_NNAPI || resolvedBackend == LiteRTBackend.NPU_QTI_HTP)
                 setAllowFp16PrecisionForFp32(true)
                 setAllowBufferHandleOutput(true)
             }
@@ -245,13 +249,14 @@ class TFLiteModelEngine {
      */
     fun getPerformanceMetrics(): LiteRTPerformanceMetrics {
         return LiteRTPerformanceMetrics(
-            backendUsed = selectedBackend,
-            totalInferences = analysisCount,
-            averageInferenceTime = if (analysisCount > 0) totalProcessingTime / analysisCount else 0L,
+            analysisCount = analysisCount,
+            averageProcessingTimeMs = if (analysisCount > 0) totalProcessingTime / analysisCount else 0L,
+            tokensPerSecond = 0f, // Not applicable for TFLite image models
+            peakMemoryUsageMB = peakMemoryUsage,
+            averageMemoryUsageMB = averageMemoryUsage,
             successRate = if (analysisCount > 0) (successCount.toFloat() / analysisCount) * 100f else 0f,
-            peakMemoryUsage = peakMemoryUsage,
-            averageMemoryUsage = averageMemoryUsage,
-            deviceTemperature = getDeviceTemperature()
+            preferredBackend = selectedBackend,
+            thermalThrottlingDetected = getCurrentThermalState() >= THERMAL_STATE_SEVERE
         )
     }
     
@@ -285,7 +290,8 @@ class TFLiteModelEngine {
         try {
             val testDelegate = GpuDelegate()
             testDelegate.close()
-            supported.add(LiteRTBackend.GPU)
+            supported.add(LiteRTBackend.GPU_OPENCL)
+            supported.add(LiteRTBackend.GPU_OPENGL)
         } catch (e: Exception) {
             Log.d(TAG, "GPU delegate not supported: ${e.message}")
         }
@@ -295,7 +301,7 @@ class TFLiteModelEngine {
             try {
                 val testDelegate = NnApiDelegate()
                 testDelegate.close()
-                supported.add(LiteRTBackend.NNAPI)
+                supported.add(LiteRTBackend.NPU_NNAPI)
             } catch (e: Exception) {
                 Log.d(TAG, "NNAPI delegate not supported: ${e.message}")
             }
@@ -308,8 +314,8 @@ class TFLiteModelEngine {
         val supported = supportedBackends
         
         return when {
-            LiteRTBackend.GPU in supported -> LiteRTBackend.GPU
-            LiteRTBackend.NNAPI in supported -> LiteRTBackend.NNAPI
+            LiteRTBackend.NPU_NNAPI in supported -> LiteRTBackend.NPU_NNAPI
+            LiteRTBackend.GPU_OPENCL in supported -> LiteRTBackend.GPU_OPENCL
             else -> LiteRTBackend.CPU
         }
     }
@@ -346,9 +352,9 @@ class TFLiteModelEngine {
     ): LiteRTAnalysisResult {
         
         // This is a simplified implementation - replace with actual post-processing logic
-        val detectedHazards = mutableListOf<LiteRTHazardDetection>()
-        val ppeDetections = mutableListOf<LiteRTPPEDetection>()
-        val oshaViolations = if (includeOSHACodes) mutableListOf<LiteRTOSHAViolation>() else null
+        val detectedHazards = mutableListOf<DetectedHazard>()
+        val ppeStatus = mutableMapOf<PPEType, PPEDetection>()
+        val oshaViolations = mutableListOf<com.hazardhawk.core.models.OSHAViolation>()
         
         // Process output array and extract detections
         // This is placeholder logic - implement based on your model's output format
@@ -360,42 +366,27 @@ class TFLiteModelEngine {
             }
         }
         
+        // Calculate overall risk
+        val overallRisk = com.hazardhawk.core.models.RiskAssessment(
+            level = com.hazardhawk.core.models.RiskLevel.LOW,
+            score = 0.0f,
+            factors = emptyList(),
+            recommendations = emptyList()
+        )
+        
         return LiteRTAnalysisResult(
+            hazards = detectedHazards,
+            ppeStatus = ppeStatus,
+            oshaViolations = oshaViolations,
+            overallRiskAssessment = overallRisk,
+            confidence = 0.8f,
             processingTimeMs = processingTime,
             backendUsed = selectedBackend,
-            confidenceThreshold = confidenceThreshold,
-            detectedHazards = detectedHazards,
-            ppeDetections = ppeDetections,
-            oshaViolations = oshaViolations,
-            overallRiskLevel = calculateOverallRisk(detectedHazards),
-            recommendations = generateRecommendations(detectedHazards, ppeDetections, workType)
+            debugInfo = null
         )
     }
     
     private fun sigmoid(x: Float): Float = 1f / (1f + exp(-x))
-    
-    private fun calculateOverallRisk(hazards: List<LiteRTHazardDetection>): String {
-        return when {
-            hazards.any { it.severity == "HIGH" } -> "HIGH"
-            hazards.any { it.severity == "MEDIUM" } -> "MEDIUM"
-            hazards.isNotEmpty() -> "LOW"
-            else -> "MINIMAL"
-        }
-    }
-    
-    private fun generateRecommendations(
-        hazards: List<LiteRTHazardDetection>,
-        ppe: List<LiteRTPPEDetection>,
-        workType: WorkType
-    ): List<String> {
-        val recommendations = mutableListOf<String>()
-        
-        // Add work-type specific recommendations
-        // Add hazard-specific recommendations
-        // Add PPE recommendations
-        
-        return recommendations
-    }
     
     private fun updatePerformanceMetrics(processingTime: Long, memoryUsed: Float) {
         analysisCount++

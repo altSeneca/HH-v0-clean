@@ -6,12 +6,14 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.uuid.uuid4
+import kotlin.uuid.Uuid
+import kotlin.uuid.ExperimentalUuidApi
 
 /**
  * End-to-End workflow performance monitoring for HazardHawk safety inspection workflows.
  * Tracks complete user journeys from photo capture to report generation.
  */
+@OptIn(ExperimentalUuidApi::class)
 class WorkflowPerformanceMonitor {
     
     private val mutex = Mutex()
@@ -50,30 +52,6 @@ class WorkflowPerformanceMonitor {
         val durationMs: Long get() = (endTime ?: Clock.System.now().toEpochMilliseconds()) - startTime
     }
     
-    enum class WorkflowType {
-        PHOTO_CAPTURE_ANALYSIS,
-        SAFETY_INSPECTION,
-        INCIDENT_REPORTING,
-        PTP_GENERATION,
-        TOOLBOX_TALK_CREATION,
-        BATCH_ANALYSIS,
-        REPORT_GENERATION
-    }
-    
-    enum class StepType {
-        PHOTO_CAPTURE,
-        IMAGE_PREPROCESSING,
-        AI_ANALYSIS,
-        RESULTS_PROCESSING,
-        CACHE_OPERATIONS,
-        DATABASE_OPERATIONS,
-        REPORT_GENERATION,
-        PDF_CREATION,
-        FILE_OPERATIONS,
-        UI_RENDERING,
-        NETWORK_OPERATIONS
-    }
-    
     sealed class WorkflowPerformanceAlert {
         data class SlowWorkflow(val workflowId: String, val workflowType: WorkflowType, val durationMs: Long) : WorkflowPerformanceAlert()
         data class StepFailure(val workflowId: String, val stepName: String, val errorMessage: String) : WorkflowPerformanceAlert()
@@ -86,7 +64,7 @@ class WorkflowPerformanceMonitor {
      */
     suspend fun startWorkflow(workflowType: WorkflowType, metadata: Map<String, Any> = emptyMap()): String {
         return mutex.withLock {
-            val workflowId = uuid4().toString()
+            val workflowId = Uuid.random().toString()
             val workflow = WorkflowExecution(
                 workflowId = workflowId,
                 workflowType = workflowType,

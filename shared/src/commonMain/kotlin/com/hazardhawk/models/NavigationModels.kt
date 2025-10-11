@@ -63,9 +63,9 @@ sealed class HazardHawkDestination(val route: String) {
      */
     fun getBaseRoute(): String {
         return when (this) {
-            is PDFExport -> ROUTE_TEMPLATE
-            is DocumentGeneration -> ROUTE_TEMPLATE
-            is PhotoDetail -> ROUTE_TEMPLATE
+            is PDFExport -> PDFExport.ROUTE_TEMPLATE
+            is DocumentGeneration -> DocumentGeneration.ROUTE_TEMPLATE
+            is PhotoDetail -> PhotoDetail.ROUTE_TEMPLATE
             else -> route
         }
     }

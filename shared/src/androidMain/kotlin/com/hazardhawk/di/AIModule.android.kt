@@ -1,12 +1,10 @@
 package com.hazardhawk.di
 
 import android.content.Context
-import com.hazardhawk.ai.tflite.TFLiteModelEngine
-import com.hazardhawk.ai.services.TFLiteVisionService
-import com.hazardhawk.ai.litert.AndroidDeviceAnalyzer
-import com.hazardhawk.ai.litert.LiteRTDeviceOptimizer
 import com.hazardhawk.ai.litert.LiteRTModelEngine
-import org.koin.android.ext.koin.androidContext
+import com.hazardhawk.ai.litert.LiteRTDeviceOptimizer
+import com.hazardhawk.performance.DeviceTierDetector
+import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
 /**
@@ -15,49 +13,25 @@ import org.koin.dsl.module
  */
 val androidAIModule = module {
     
-    // Android Context provider for LiteRT components
-    single<Context> {
-        androidContext()
+    // Android Context provider - gets from Koin Android extension
+    // Must be initialized with startKoin { androidContext(this@Application) }
+    
+    // Android-specific DeviceTierDetector (actual implementation)
+    single<DeviceTierDetector> {
+        DeviceTierDetector(get<Context>()) // Provide Android context
     }
     
-    // Android-specific device analyzer
-    single<AndroidDeviceAnalyzer> {
-        AndroidDeviceAnalyzer(
-            context = get()
-        )
-    }
-    
-    // Override LiteRT components to inject Android Context
-    single<LiteRTModelEngine>(override = true) {
+    // LiteRT components with Android Context if needed
+    factory<LiteRTModelEngine> {
         LiteRTModelEngine().apply {
-            // Initialize with Android context for asset loading
-            setAndroidContext(get<Context>())
+            // Initialize with Android context for asset loading if needed
         }
     }
     
-    single<LiteRTDeviceOptimizer>(override = true) {
+    factory<LiteRTDeviceOptimizer> {
         LiteRTDeviceOptimizer(
             deviceTierDetector = get(),
             modelEngine = get()
-        ).apply {
-            // Initialize with Android context for device analysis
-            setAndroidContext(get<Context>())
-        }
-    }
-}
-
-/**
- * Android-specific test AI module with mock Context.
- */
-val androidAITestModule = module {
-    
-    // Mock Context for testing
-    single<Context> {
-        mockk<Context>()
-    }
-    
-    // Mock Android device analyzer
-    single<AndroidDeviceAnalyzer> {
-        mockk<AndroidDeviceAnalyzer>()
+        )
     }
 }

@@ -140,17 +140,6 @@ enum class OSHARecommendationCategory {
     REGULATORY_COMPLIANCE
 }
 
-/**
- * Overall compliance status for OSHA analysis
- */
-@Serializable
-enum class ComplianceStatus {
-    COMPLIANT,
-    NON_COMPLIANT,
-    MINOR_VIOLATIONS,
-    SERIOUS_VIOLATIONS,
-    REQUIRES_REVIEW
-}
 
 // BoundingBox is imported from SafetyAnalysis.kt
 

@@ -447,7 +447,7 @@ class LiteRTVisionService(
     /**
      * Get device optimization recommendations.
      */
-    fun getDeviceRecommendations() = deviceOptimizer.getPerformanceRecommendations()
+    suspend fun getDeviceRecommendations() = deviceOptimizer.getPerformanceRecommendations()
     
     /**
      * Cleanup LiteRT resources.

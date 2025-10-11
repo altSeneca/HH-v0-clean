@@ -1,5 +1,6 @@
 package com.hazardhawk.security
 
+import kotlin.time.Duration.Companion.days
 import kotlinx.datetime.Instant
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.serialization.Serializable
@@ -121,7 +122,7 @@ data class SafetyAction(
     val timestamp: Instant,
     val metadata: Map<String, String> = emptyMap(),
     val oshaReference: String? = null,
-    val complianceLevel: ComplianceLevel = ComplianceLevel.Standard
+    val complianceLevel: AuditComplianceLevel = AuditComplianceLevel.Standard
 )
 
 /**
@@ -203,7 +204,7 @@ data class DateRange(
      * Get the duration of this range in days
      */
     fun getDurationInDays(): Long {
-        return startDate.until(endDate, DateTimeUnit.DAY)
+        return endDate.minus(startDate).inWholeDays
     }
     
     companion object {
@@ -212,7 +213,7 @@ data class DateRange(
          */
         fun lastDays(days: Int): DateRange {
             val now = kotlinx.datetime.Clock.System.now()
-            val start = now.minus(days, DateTimeUnit.DAY)
+            val start = now.minus(days.days)
             return DateRange(start, now)
         }
         
@@ -458,4 +459,9 @@ private fun generateId(): String {
     val timestamp = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
     val random = kotlin.random.Random.nextInt(1000, 9999)
     return "audit_${timestamp}_$random"
+}
+
+@Serializable
+enum class AuditComplianceLevel {
+    Standard, Enhanced, Critical
 }

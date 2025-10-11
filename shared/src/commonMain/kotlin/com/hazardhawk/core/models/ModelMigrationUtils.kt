@@ -82,9 +82,9 @@ object ModelMigrationUtils {
             )
             
             // Test backward compatibility properties
-            val _ = testAnalysis.oshaCodes
-            val _ = testAnalysis.analyzedAt
-            val _ = testAnalysis.confidence
+            val unusedCodes = testAnalysis.oshaCodes
+            val unusedTimestamp = testAnalysis.analyzedAt
+            val unusedConfidence = testAnalysis.confidence
             checks.add("SafetyAnalysis backward compatibility: PASSED")
         } catch (e: Exception) {
             errors.add("SafetyAnalysis backward compatibility: FAILED - ${e.message}")
@@ -99,9 +99,9 @@ object ModelMigrationUtils {
             )
             
             // Test backward compatibility properties
-            val _ = testTag.oshaCode
-            val _ = testTag.workType
-            val _ = testTag.projectSpecific
+            val unusedOshaCode = testTag.oshaCode
+            val unusedWorkType = testTag.workType
+            val unusedProjectSpecific = testTag.projectSpecific
             checks.add("Tag backward compatibility: PASSED")
         } catch (e: Exception) {
             errors.add("Tag backward compatibility: FAILED - ${e.message}")

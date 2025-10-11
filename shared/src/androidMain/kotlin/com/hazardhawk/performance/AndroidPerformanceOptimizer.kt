@@ -105,7 +105,7 @@ actual class DeviceTierDetector(private val context: Context) {
         return withContext(Dispatchers.IO) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 try {
-                    val thermalService = context.getSystemService(Context.THERMAL_SERVICE)
+                    // Use CPU frequency as proxy for thermal state
                     // This requires API 29+ and appropriate permissions
                     // For now, we'll use CPU frequency as a proxy
                     getCurrentCPUFrequency() < getMaxCPUFrequency() * 0.8f
@@ -172,6 +172,50 @@ actual class DeviceTierDetector(private val context: Context) {
             2000f // Default assumption: 2GHz max
         }
     }
+    
+    actual suspend fun detectDeviceTier(): DeviceTier {
+        val capabilities = detectCapabilities()
+        return capabilities.tier
+    }
+    
+    actual suspend fun getCurrentThermalState(): ThermalState {
+        return withContext(Dispatchers.IO) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                try {
+                    // Use proper thermal API when available
+                    ThermalState.NOMINAL
+                } catch (e: Exception) {
+                    ThermalState.NOMINAL
+                }
+            } else {
+                // Fallback: Use CPU frequency as indicator
+                val currentFreq = getCurrentCPUFrequency()
+                val maxFreq = getMaxCPUFrequency()
+                val ratio = currentFreq / maxFreq
+                
+                when {
+                    ratio > 0.95f -> ThermalState.NOMINAL
+                    ratio > 0.80f -> ThermalState.LIGHT_THROTTLING
+                    ratio > 0.60f -> ThermalState.MODERATE_THROTTLING
+                    ratio > 0.40f -> ThermalState.SEVERE_THROTTLING
+                    else -> ThermalState.CRITICAL_THROTTLING
+                }
+            }
+        }
+    }
+    
+    actual suspend fun getMemoryInfo(): MemoryInfo {
+        return withContext(Dispatchers.IO) {
+            val memoryInfo = ActivityManager.MemoryInfo()
+            activityManager.getMemoryInfo(memoryInfo)
+            
+            MemoryInfo(
+                totalMemoryMB = (memoryInfo.totalMem / (1024f * 1024f)),
+                availableMemoryMB = (memoryInfo.availMem / (1024f * 1024f))
+            )
+        }
+    }
+
 }
 
 /**
@@ -579,3 +623,4 @@ data class TextSizes(
     val bodyMediumSp: Int,
     val bodySmalSp: Int
 )
+

@@ -2,13 +2,13 @@ package com.hazardhawk.data.repositories.crew
 
 import com.hazardhawk.domain.repositories.*
 import com.hazardhawk.models.crew.*
+import com.hazardhawk.models.common.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 
-import com.hazardhawk.models.common.*
 /**
  * Implementation of CrewRepository with in-memory storage.
  * TODO: Replace with actual API client and database integration
@@ -325,74 +325,23 @@ class CrewRepositoryImpl(
         }
     }
 
-    // ===== Roster Operations =====
-
-    suspend fun getCrewRoster(
-        crewId: String,
-        date: LocalDate,
-        includeCertifications: Boolean
-    ): CrewRoster {
-        val crew = crews[crewId] ?: throw IllegalArgumentException("Crew not found: $crewId")
-        val members = getCrewMembers(crewId, includeWorkerDetails = true)
-
-        val rosterMembers = members.map { member ->
-            CrewRosterMember(
-                employeeNumber = member.worker?.employeeNumber ?: "",
-                name = member.worker?.workerProfile?.fullName ?: "",
-                role = member.worker?.role?.displayName ?: "",
-                certifications = if (includeCertifications) {
-                    member.worker?.certifications?.filter { it.isValid }
-                        ?.map { it.certificationType?.code ?: "" } ?: emptyList()
-                } else {
-                    emptyList()
-                },
-                photoUrl = member.worker?.workerProfile?.photoUrl
-            )
-        }
-
-        val foremanName = crew.foremanId?.let { foremanId ->
-            workerRepository.getWorker(foremanId)?.workerProfile?.fullName
-        }
-
-        return CrewRoster(
-            crewId = crewId,
-            crewName = crew.name,
-            date = date,
-            foremanName = foremanName,
-            location = crew.location,
-            members = rosterMembers
-        )
-    }
-
-    override suspend fun getPotentialForemen(crewId: String): List<CompanyWorker> {
-        val members = getCrewMembers(crewId, includeWorkerDetails = true)
-        return members.mapNotNull { it.worker }
-            .filter { worker ->
-                worker.role in listOf(
-                    WorkerRole.FOREMAN,
-                    WorkerRole.CREW_LEAD,
-                    WorkerRole.SUPERINTENDENT
-                )
-            }
-    }
-
     // ===== Statistics =====
 
-    override suspend fun getCrewCountByStatus(companyId: String): Map<CrewStatus, Int> {
+    suspend fun getCrewCountByStatus(companyId: String): Map<CrewStatus, Int> {
         return crews.values
             .filter { it.companyId == companyId }
             .groupingBy { it.status }
             .eachCount()
     }
 
-    override suspend fun getCrewCountByType(companyId: String): Map<CrewType, Int> {
+    suspend fun getCrewCountByType(companyId: String): Map<CrewType, Int> {
         return crews.values
             .filter { it.companyId == companyId }
             .groupingBy { it.crewType }
             .eachCount()
     }
 
-    override suspend fun getActiveCrewCount(companyId: String): Int {
+    suspend fun getActiveCrewCount(companyId: String): Int {
         return crews.values.count {
             it.companyId == companyId && it.status == CrewStatus.ACTIVE
         }
@@ -400,7 +349,7 @@ class CrewRepositoryImpl(
 
     // ===== Reactive Queries =====
 
-    override fun observeCrews(
+    fun observeCrews(
         companyId: String,
         projectId: String?
     ): Flow<List<Crew>> {
@@ -413,13 +362,13 @@ class CrewRepositoryImpl(
         }
     }
 
-    override fun observeCrew(crewId: String): Flow<Crew?> {
+    fun observeCrew(crewId: String): Flow<Crew?> {
         return crewsFlow.map { allCrews ->
             allCrews.find { it.id == crewId }
         }
     }
 
-    override fun observeCrewMembers(crewId: String): Flow<List<CrewMember>> {
+    fun observeCrewMembers(crewId: String): Flow<List<CrewMember>> {
         return crewsFlow.map {
             crewMembers[crewId] ?: emptyList()
         }

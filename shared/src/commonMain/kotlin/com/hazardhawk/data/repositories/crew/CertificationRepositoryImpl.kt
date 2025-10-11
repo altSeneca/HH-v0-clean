@@ -567,7 +567,7 @@ class CertificationRepositoryImpl : CertificationRepository {
             else -> filtered
         }
 
-        val finalSorted = if (filters.sortDirection == com.hazardhawk.models.common.SortDirection.DESC) {
+        val finalSorted = if (filters.sortDirection.name == "DESC") {
             sorted.reversed()
         } else {
             sorted

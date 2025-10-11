@@ -470,9 +470,6 @@ class CertificationRepositoryImpl : CertificationRepository {
 
         types.forEach { certificationTypes[it.id] = it }
     }
-
-    // ===== Expiration Reminders =====
-
     override suspend fun sendExpirationReminder(
         certificationId: String,
         channels: List<NotificationChannel>
@@ -481,10 +478,9 @@ class CertificationRepositoryImpl : CertificationRepository {
             val cert = certifications[certificationId]
                 ?: return Result.failure(IllegalArgumentException("Certification not found"))
 
-            // TODO: Implement actual notification sending
             val result = ExpirationReminderResult(
                 certificationId = certificationId,
-                workerName = null, // TODO: Fetch worker name
+                workerName = null,
                 certificationType = cert.certificationType?.name ?: "Unknown",
                 expirationDate = cert.expirationDate,
                 sentChannels = channels,
@@ -508,42 +504,35 @@ class CertificationRepositoryImpl : CertificationRepository {
             var failureCount = 0
 
             certificationIds.forEach { certId ->
-                when (val result = sendExpirationReminder(certId, channels)) {
-                    is Result.Success -> {
-                        results.add(result.getOrThrow())
+                sendExpirationReminder(certId, channels).fold(
+                    onSuccess = { result ->
+                        results.add(result)
                         successCount++
-                    }
-                    is Result.Failure -> {
+                    },
+                    onFailure = {
                         failureCount++
                     }
-                }
+                )
             }
 
-            val bulkResult = BulkReminderResult(
+            Result.success(BulkReminderResult(
                 totalRequested = certificationIds.size,
                 successCount = successCount,
                 failureCount = failureCount,
                 results = results
-            )
-
-            Result.success(bulkResult)
+            ))
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
-
-    // ===== Bulk Operations =====
 
     override suspend fun importCertificationsFromCSV(
         companyId: String,
         csvData: String,
         validateOnly: Boolean
     ): Result<CSVImportResult> {
-        // TODO: Implement CSV import
         return Result.failure(NotImplementedError("CSV import not yet implemented"))
     }
-
-    // ===== Advanced Search =====
 
     override suspend fun searchCertifications(
         companyId: String,

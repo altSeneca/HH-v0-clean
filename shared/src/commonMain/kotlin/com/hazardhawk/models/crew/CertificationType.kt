@@ -11,5 +11,9 @@ data class CertificationType(
     val region: String,
     val typicalDurationMonths: Int? = null,
     val renewalRequired: Boolean = true,
-    val description: String? = null
+    val description: String? = null,
+    // Additional fields for compatibility
+    val validityPeriodMonths: Int? = typicalDurationMonths,
+    val required: Boolean = false,
+    val oshaRequired: Boolean = false
 )

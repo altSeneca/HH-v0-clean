@@ -193,22 +193,6 @@ enum class AnalysisType {
 }
 
 @Serializable
-enum class WorkType {
-    GENERAL_CONSTRUCTION,
-    ELECTRICAL,
-    PLUMBING,
-    ROOFING,
-    SCAFFOLDING,
-    EXCAVATION,
-    CONCRETE,
-    WELDING,
-    PAINTING,
-    DEMOLITION,
-    FALL_PROTECTION,
-    CRANE_OPERATIONS
-}
-
-@Serializable
 enum class HazardType {
     FALL_PROTECTION,
     PPE_VIOLATION,
@@ -398,4 +382,38 @@ object SafetyAnalysisModelMigration {
             recommendations = recommendations
         )
     }
+}
+
+/**
+ * Alert types for production monitoring and safety systems
+ */
+@Serializable
+enum class AlertType {
+    // Safety alerts
+    CRITICAL_HAZARD_DETECTED,
+    OSHA_VIOLATION,
+    PPE_VIOLATION,
+    FALL_RISK,
+    CONFINED_SPACE,
+    
+    // Performance alerts
+    PERFORMANCE_DEGRADATION,
+    HIGH_ERROR_RATE,
+    SLOW_RESPONSE_TIME,
+    
+    // System alerts
+    COMPONENT_FAILURE,
+    RESOURCE_EXHAUSTION,
+    SERVICE_UNAVAILABLE,
+    DATABASE_ERROR,
+    NETWORK_ERROR,
+    
+    // Incident management
+    INCIDENT_ESCALATION,
+    INCIDENT_CRITICAL,
+    
+    // General alerts
+    WARNING,
+    INFO,
+    SYSTEM_ALERT
 }
